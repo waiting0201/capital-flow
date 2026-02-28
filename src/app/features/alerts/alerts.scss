@@ -66,11 +66,27 @@
 }
 .feed-empty { padding: 48px 20px; text-align: center; color: var(--gray-faint); p { font-size: 12.5px; margin-top: 10px; } }
 
+// ── Alert Type Tabs ──
+.alert-type-tabs {
+  display: flex; gap: 0; border-bottom: 1px solid var(--border);
+}
+.alert-type-tab {
+  flex: 1; display: flex; align-items: center; justify-content: center; gap: 5px;
+  padding: 10px 12px; font-family: var(--font-body); font-size: 11.5px; font-weight: 500;
+  color: var(--gray-light); border: none; background: none; cursor: pointer;
+  border-bottom: 2px solid transparent; transition: all 0.2s;
+  svg { width: 14px; height: 14px; }
+  &:hover { color: var(--olivine); background: var(--surface-elevated); }
+  &.active { color: var(--moss); border-bottom-color: var(--moss); font-weight: 600; }
+}
+
 // ── Quick Add Form ──
 .quick-add { padding: 16px 20px; background: var(--surface-elevated); border-bottom: 1px solid var(--border); display: flex; flex-direction: column; gap: 10px; animation: slideDown 0.25s ease; }
+.quick-add-hint { font-size: 11px; color: var(--gray-light); font-style: italic; margin-bottom: 2px; }
 .quick-add-row { display: flex; gap: 8px; align-items: center; }
 .quick-input { flex: 1; min-width: 0; }
 .quick-select { min-width: 100px; }
+.quick-label { font-size: 11.5px; color: var(--gray-light); font-weight: 500; white-space: nowrap; }
 
 // ── Alert List ──
 .alert-list { }

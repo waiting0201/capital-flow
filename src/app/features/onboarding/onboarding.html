@@ -1,4 +1,233 @@
-<div class="max-w-2xl mx-auto py-12">
-  <h1 class="text-2xl font-bold text-gray-900 mb-6">API Key 設定引導</h1>
-  <p class="text-gray-500">Step 1~4 引導流程 — 待實作</p>
+<div class="ob-container">
+  <!-- ══════ Stepper ══════ -->
+  <div class="ob-stepper">
+    @for (step of steps; track step.num) {
+      <div class="ob-step" [class.active]="currentStep() === step.num" [class.completed]="currentStep() > step.num" (click)="goToStep(step.num)">
+        <div class="ob-step-circle">
+          @if (currentStep() > step.num) {
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><polyline points="20 6 9 17 4 12"/></svg>
+          } @else {
+            {{ step.num }}
+          }
+        </div>
+        <span class="ob-step-label">{{ step.label }}</span>
+      </div>
+      @if (step.num < totalSteps) {
+        <div class="ob-step-line" [class.filled]="currentStep() > step.num"></div>
+      }
+    }
+  </div>
+
+  <!-- ══════ Card ══════ -->
+  <div class="ob-card">
+    <div class="ob-content">
+
+      <!-- ── Step 1: AI Providers ── -->
+      @if (currentStep() === 1) {
+        <div class="ob-step-head">
+          <h2 class="ob-title">設定 AI 模型 API Key</h2>
+          <p class="ob-desc">至少需要設定一組 AI 模型供應商的 API Key，系統才能為您提供智慧分析服務。</p>
+        </div>
+        <div class="ob-key-list">
+          @for (p of aiProviders(); track p.provider) {
+            <div class="ob-key-card" [class.configured]="p.isValid">
+              <div class="ob-key-icon">{{ p.icon }}</div>
+              <div class="ob-key-info">
+                <div class="ob-key-label">{{ p.label }}</div>
+                <div class="ob-key-desc">{{ p.description }}</div>
+              </div>
+              @if (p.isValid) {
+                <div class="ob-key-status">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>
+                  已驗證
+                </div>
+                <button class="ob-key-remove" (click)="removeKey('ai', p.provider)">移除</button>
+              } @else {
+                <div class="ob-key-input-group">
+                  <input class="ob-key-input" type="password" [placeholder]="p.placeholder"
+                    [ngModel]="p.keyValue" (ngModelChange)="updateKey('ai', p.provider, $event)">
+                  <button class="ob-key-verify" [disabled]="!p.keyValue || verifying() === p.provider" (click)="verifyKey('ai', p.provider)">
+                    @if (verifying() === p.provider) { <span class="ob-spinner"></span> } @else { 驗證 }
+                  </button>
+                </div>
+              }
+            </div>
+          }
+        </div>
+        <div class="ob-step-hint">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>
+          已設定 {{ aiConfigured() }}/{{ aiProviders().length }} 組 · 至少需要 1 組
+        </div>
+      }
+
+      <!-- ── Step 2: Data Sources ── -->
+      @if (currentStep() === 2) {
+        <div class="ob-step-head">
+          <h2 class="ob-title">設定金融數據 API Key</h2>
+          <p class="ob-desc">連接金融數據源以取得即時行情、財務報表等資料。至少需要一組。</p>
+        </div>
+        <div class="ob-key-list">
+          @for (p of dataSources(); track p.provider) {
+            <div class="ob-key-card" [class.configured]="p.isValid">
+              <div class="ob-key-icon">{{ p.icon }}</div>
+              <div class="ob-key-info">
+                <div class="ob-key-label">{{ p.label }}</div>
+                <div class="ob-key-desc">{{ p.description }}</div>
+              </div>
+              @if (p.isValid) {
+                <div class="ob-key-status">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>
+                  已驗證
+                </div>
+                <button class="ob-key-remove" (click)="removeKey('data', p.provider)">移除</button>
+              } @else {
+                <div class="ob-key-input-group">
+                  <input class="ob-key-input" type="password" [placeholder]="p.placeholder"
+                    [ngModel]="p.keyValue" (ngModelChange)="updateKey('data', p.provider, $event)">
+                  <button class="ob-key-verify" [disabled]="!p.keyValue || verifying() === p.provider" (click)="verifyKey('data', p.provider)">
+                    @if (verifying() === p.provider) { <span class="ob-spinner"></span> } @else { 驗證 }
+                  </button>
+                </div>
+              }
+            </div>
+          }
+        </div>
+        <div class="ob-step-hint">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>
+          已設定 {{ dataConfigured() }}/{{ dataSources().length }} 組 · 至少需要 1 組
+        </div>
+      }
+
+      <!-- ── Step 3: Media (Optional) ── -->
+      @if (currentStep() === 3) {
+        <div class="ob-step-head">
+          <h2 class="ob-title">設定新聞媒體 API Key <span class="ob-optional-badge">選填</span></h2>
+          <p class="ob-desc">連接新聞與媒體數據源，讓 AI 能為您整合最新市場資訊。此步驟可跳過。</p>
+        </div>
+        <div class="ob-key-list">
+          @for (p of mediaProviders(); track p.provider) {
+            <div class="ob-key-card" [class.configured]="p.isValid">
+              <div class="ob-key-icon">{{ p.icon }}</div>
+              <div class="ob-key-info">
+                <div class="ob-key-label">{{ p.label }}</div>
+                <div class="ob-key-desc">{{ p.description }}</div>
+              </div>
+              @if (p.isValid) {
+                <div class="ob-key-status">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>
+                  已驗證
+                </div>
+                <button class="ob-key-remove" (click)="removeKey('media', p.provider)">移除</button>
+              } @else {
+                <div class="ob-key-input-group">
+                  <input class="ob-key-input" type="password" [placeholder]="p.placeholder"
+                    [ngModel]="p.keyValue" (ngModelChange)="updateKey('media', p.provider, $event)">
+                  <button class="ob-key-verify" [disabled]="!p.keyValue || verifying() === p.provider" (click)="verifyKey('media', p.provider)">
+                    @if (verifying() === p.provider) { <span class="ob-spinner"></span> } @else { 驗證 }
+                  </button>
+                </div>
+              }
+            </div>
+          }
+        </div>
+        <div class="ob-step-hint">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>
+          已設定 {{ mediaConfigured() }}/{{ mediaProviders().length }} 組 · 此步驟為選填
+        </div>
+      }
+
+      <!-- ── Step 4: AI Preferences ── -->
+      @if (currentStep() === 4) {
+        <div class="ob-step-head">
+          <h2 class="ob-title">AI 偏好設定</h2>
+          <p class="ob-desc">自訂 AI 分析引擎的行為偏好，後續可在設定中隨時修改。</p>
+        </div>
+        <div class="ob-prefs">
+          <div class="ob-pref-group">
+            <label class="ob-pref-label">偏好 AI 供應商</label>
+            <select class="ob-pref-select" [ngModel]="aiPrefs().preferredProvider" (ngModelChange)="updateAiPref('preferredProvider', $event)">
+              <option value="anthropic">Anthropic (Claude)</option>
+              <option value="openai">OpenAI (GPT)</option>
+              <option value="gemini">Google (Gemini)</option>
+            </select>
+          </div>
+          <div class="ob-pref-row">
+            <div class="ob-pref-group">
+              <label class="ob-pref-label">輕量任務模型</label>
+              <select class="ob-pref-select" [ngModel]="aiPrefs().simpleTaskModel" (ngModelChange)="updateAiPref('simpleTaskModel', $event)">
+                @for (m of currentModels().simple; track m) {
+                  <option [value]="m">{{ m }}</option>
+                }
+              </select>
+            </div>
+            <div class="ob-pref-group">
+              <label class="ob-pref-label">深度分析模型</label>
+              <select class="ob-pref-select" [ngModel]="aiPrefs().complexTaskModel" (ngModelChange)="updateAiPref('complexTaskModel', $event)">
+                @for (m of currentModels().complex; track m) {
+                  <option [value]="m">{{ m }}</option>
+                }
+              </select>
+            </div>
+          </div>
+          <div class="ob-pref-group">
+            <label class="ob-pref-label">回應風格</label>
+            <div class="ob-temp-display">
+              <span class="ob-temp-value">{{ aiPrefs().temperature }}</span>
+              <span class="ob-temp-label-tag">{{ getTemperatureLabel() }}</span>
+            </div>
+            <input type="range" class="ob-range" min="0" max="1" step="0.1"
+              [ngModel]="aiPrefs().temperature" (ngModelChange)="updateAiPref('temperature', $event)">
+          </div>
+          <div class="ob-pref-group">
+            <label class="ob-pref-label">回應語言</label>
+            <select class="ob-pref-select" [ngModel]="aiPrefs().language" (ngModelChange)="updateAiPref('language', $event)">
+              <option value="zh-TW">繁體中文</option>
+              <option value="en">English</option>
+            </select>
+          </div>
+          <div class="ob-toggle-row">
+            <div class="ob-toggle-info">
+              <span class="ob-toggle-name">自動分析</span>
+              <span class="ob-toggle-desc">開盤前自動執行 AI 分析並推播摘要</span>
+            </div>
+            <label class="ob-toggle">
+              <input type="checkbox" [checked]="aiPrefs().autoAnalysis" (change)="updateAiPref('autoAnalysis', !aiPrefs().autoAnalysis)">
+              <div class="ob-toggle-track"><div class="ob-toggle-thumb"></div></div>
+            </label>
+          </div>
+        </div>
+      }
+
+    </div>
+
+    <!-- ══════ Navigation ══════ -->
+    <div class="ob-nav">
+      @if (currentStep() > 1) {
+        <button class="ob-btn-back" (click)="prevStep()">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 12H5M12 19l-7-7 7-7"/></svg>
+          上一步
+        </button>
+      } @else {
+        <div></div>
+      }
+      @if (currentStep() < totalSteps) {
+        @if (currentStep() === 3 && mediaConfigured() === 0) {
+          <button class="ob-btn-skip" (click)="nextStep()">
+            跳過此步
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
+          </button>
+        } @else {
+          <button class="ob-btn-next" (click)="nextStep()" [disabled]="!canProceed()">
+            下一步
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
+          </button>
+        }
+      } @else {
+        <button class="ob-btn-complete" (click)="completeOnboarding()">
+          開始使用 Capital Flow
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>
+        </button>
+      }
+    </div>
+  </div>
 </div>

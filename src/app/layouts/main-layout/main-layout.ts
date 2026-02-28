@@ -1,6 +1,7 @@
 import { Component, inject, signal, HostListener } from '@angular/core';
-import { Router, RouterOutlet, RouterLink, RouterLinkActive } from '@angular/router';
+import { Router, RouterOutlet, RouterLink, RouterLinkActive, NavigationEnd } from '@angular/router';
 import { AuthService } from '../../core/services/auth.service';
+import { filter } from 'rxjs/operators';
 
 @Component({
   selector: 'app-main-layout',
@@ -15,6 +16,13 @@ export class MainLayout {
 
   readonly market = signal<'tw' | 'us'>('tw');
   readonly menuOpen = signal(false);
+  readonly sidebarOpen = signal(false);
+
+  constructor() {
+    this.router.events
+      .pipe(filter((e) => e instanceof NavigationEnd))
+      .subscribe(() => this.sidebarOpen.set(false));
+  }
 
   toggleMarket(m: 'tw' | 'us'): void {
     this.market.set(m);
@@ -24,8 +32,17 @@ export class MainLayout {
     this.menuOpen.update((v) => !v);
   }
 
+  toggleSidebar(): void {
+    this.sidebarOpen.update((v) => !v);
+  }
+
+  closeSidebar(): void {
+    this.sidebarOpen.set(false);
+  }
+
   logout(): void {
     this.menuOpen.set(false);
+    this.sidebarOpen.set(false);
     this.auth.logout();
     this.router.navigate(['/auth/login']);
   }

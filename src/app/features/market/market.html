@@ -159,6 +159,63 @@
       </div>
     </div>
 
+    <!-- Commodities -->
+    <div class="card">
+      <div class="card-header">
+        <div class="card-title">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--amber)" stroke-width="2">
+            <path d="M20.59 13.41l-7.17 7.17a2 2 0 01-2.83 0L2 12V2h10l8.59 8.59a2 2 0 010 2.82z"/><line x1="7" y1="7" x2="7.01" y2="7"/>
+          </svg>
+          關鍵商品行情
+        </div>
+      </div>
+      <div class="mk-comm-grid">
+        @for (c of commodities; track c.name) {
+          <div class="mk-comm-card" [class.is-up]="c.change > 0" [class.is-down]="c.change < 0">
+            <div class="mk-comm-icon">
+              @switch (c.icon) {
+                @case ('dollar') {
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">
+                    <circle cx="12" cy="12" r="10"/><path d="M12 6v12"/><path d="M15.5 9.5c0-1.1-1.6-2-3.5-2s-3.5.9-3.5 2 1.6 2 3.5 2 3.5.9 3.5 2-1.6 2-3.5 2-3.5-.9-3.5-2"/>
+                  </svg>
+                }
+                @case ('bond') {
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">
+                    <rect x="2" y="3" width="20" height="18" rx="2"/><path d="M2 9h20"/><path d="M2 15h20"/><path d="M8 3v18"/>
+                  </svg>
+                }
+                @case ('vix') {
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">
+                    <polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/>
+                  </svg>
+                }
+                @case ('oil') {
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">
+                    <path d="M6 22V4a2 2 0 012-2h8a2 2 0 012 2v18"/><path d="M6 12h12"/><path d="M6 7h12"/><path d="M2 22h20"/>
+                  </svg>
+                }
+                @case ('gold') {
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">
+                    <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26"/>
+                  </svg>
+                }
+              }
+            </div>
+            <div class="mk-comm-body">
+              <div class="mk-comm-name">{{ c.name }}</div>
+              <div class="mk-comm-val">{{ c.value }}<span class="mk-comm-unit">{{ c.unit }}</span></div>
+            </div>
+            <div class="mk-comm-chg">
+              <span class="mk-comm-pct" [class.up]="c.change > 0" [class.down]="c.change < 0">
+                {{ getSign(c.changePercent) }}{{ c.changePercent.toFixed(2) }}%
+              </span>
+              <span class="mk-comm-abs">{{ getSign(c.change) }}{{ c.change.toFixed(2) }}</span>
+            </div>
+          </div>
+        }
+      </div>
+    </div>
+
     <!-- AI Insight -->
     <div class="mk-ai-card">
       <div class="ai-badge">

@@ -1,4 +1,5 @@
 import { Component, input, signal, computed, effect } from '@angular/core';
+import { DecimalPipe } from '@angular/common';
 import { RouterLink } from '@angular/router';
 import { NgApexchartsModule } from 'ng-apexcharts';
 import { Market, StockQuote, StockProfile, KLineData } from '../../../core/models';
@@ -13,7 +14,7 @@ type ChartRange = '1D' | '5D' | '1M' | '3M' | '6M' | '1Y' | 'YTD';
 @Component({
   selector: 'app-stock-detail',
   standalone: true,
-  imports: [RouterLink, NgApexchartsModule],
+  imports: [RouterLink, NgApexchartsModule, DecimalPipe],
   templateUrl: './stock-detail.html',
   styleUrl: './stock-detail.scss',
 })
@@ -151,6 +152,69 @@ export class StockDetail {
     { time: '02/26', title: '法人看好台積電 CoWoS 產能擴張效益', source: '財訊', tag: 'positive', category: 'analysis' },
     { time: '02/25', title: '台積電 3 奈米良率突破新高', source: '電子時報', tag: 'positive', category: 'company' },
   ];
+
+  // ── Watchlist & Alert State ──
+  readonly isInWatchlist = signal(false);
+  readonly showAlertModal = signal(false);
+
+  // ── Technical Indicators ──
+  readonly techIndicators = signal([
+    { key: 'ma', label: 'MA', active: true },
+    { key: 'kd', label: 'KD', active: false },
+    { key: 'rsi', label: 'RSI', active: false },
+    { key: 'macd', label: 'MACD', active: false },
+    { key: 'bband', label: 'BB', active: false },
+  ]);
+
+  // ── Monthly Revenue ──
+  readonly monthlyRevenue = [
+    { month: '2026/01', revenue: '2,894', mom: '+5.2%', yoy: '+33.8%' },
+    { month: '2025/12', revenue: '2,752', mom: '+1.8%', yoy: '+38.4%' },
+    { month: '2025/11', revenue: '2,703', mom: '+12.3%', yoy: '+34.1%' },
+    { month: '2025/10', revenue: '2,407', mom: '-1.5%', yoy: '+29.7%' },
+    { month: '2025/09', revenue: '2,444', mom: '+6.8%', yoy: '+39.6%' },
+    { month: '2025/08', revenue: '2,288', mom: '-2.1%', yoy: '+33.1%' },
+  ];
+
+  // ── Dividend / Ex-rights ──
+  readonly dividendData = [
+    { year: '2025', cashDiv: '17.50', stockDiv: '0.00', exDate: '2025/07/17', yieldPct: '2.15%' },
+    { year: '2024', cashDiv: '14.50', stockDiv: '0.00', exDate: '2024/07/18', yieldPct: '2.51%' },
+    { year: '2023', cashDiv: '12.50', stockDiv: '0.00', exDate: '2023/07/20', yieldPct: '2.18%' },
+    { year: '2022', cashDiv: '11.00', stockDiv: '0.00', exDate: '2022/09/15', yieldPct: '2.41%' },
+  ];
+
+  // ── Margin Trading ──
+  readonly marginData = [
+    { date: '02/28', marginBuy: 1250, marginSell: 980, marginBal: 18520, shortSell: 320, shortCover: 280, shortBal: 2150 },
+    { date: '02/27', marginBuy: 1180, marginSell: 1050, marginBal: 18250, shortSell: 290, shortCover: 310, shortBal: 2110 },
+    { date: '02/26', marginBuy: 1420, marginSell: 890, marginBal: 18120, shortSell: 350, shortCover: 260, shortBal: 2130 },
+    { date: '02/25', marginBuy: 980, marginSell: 1150, marginBal: 17590, shortSell: 280, shortCover: 320, shortBal: 2040 },
+    { date: '02/24', marginBuy: 1050, marginSell: 870, marginBal: 17760, shortSell: 310, shortCover: 290, shortBal: 2080 },
+  ];
+
+  // ── Shareholder Distribution ──
+  readonly shareholderDist = [
+    { range: '1,000 張以上', holders: 42, shares: 18250000, pct: 70.5 },
+    { range: '400-1,000 張', holders: 186, shares: 3850000, pct: 14.9 },
+    { range: '200-400 張', holders: 524, shares: 1680000, pct: 6.5 },
+    { range: '50-200 張', holders: 2150, shares: 1150000, pct: 4.4 },
+    { range: '10-50 張', holders: 8420, shares: 580000, pct: 2.2 },
+    { range: '1-10 張', holders: 45200, shares: 320000, pct: 1.2 },
+    { range: '未滿 1 張', holders: 128500, shares: 70000, pct: 0.3 },
+  ];
+
+  // ── Per-news AI Summaries ──
+  readonly newsAiSummaries: Record<string, string> = {
+    '台積電法說會釋出正面展望，AI 晶片需求強勁': '法說會確認 2026 Q1 營收可望季增 8-10%，CoWoS 產能持續供不應求，長線正面。',
+    '外資連五買台積電，累計買超逾 1.8 萬張': '外資持續站在買方，籌碼面穩定偏多，有助支撐股價。',
+    '半導體產業鏈庫存調整近尾聲，下半年展望樂觀': '庫存健康化利於後續需求回升，但幅度仍需觀察實際訂單。',
+    'NVIDIA 財報超預期，帶動亞洲半導體供應鏈走強': 'NVIDIA 強勁財報直接受惠台積電先進製程代工，利多明確。',
+    '台積電先進封裝產能滿載至 2027 年': 'CoWoS 產能能見度高，確保中長期營收成長動能。',
+    '美國晶片出口管制新規可能衝擊中國業務': '中國營收佔比約 10%，短期影響有限但需持續觀察政策走向。',
+    '法人看好台積電 CoWoS 產能擴張效益': '多家券商上調目標價，市場共識偏多。',
+    '台積電 3 奈米良率突破新高': '良率提升直接改善毛利率，基本面加分。',
+  };
 
   readonly socialBuzz = [
     { platform: 'PTT', mentions: 156, sentiment: 82, trend: 'up' as const },
@@ -321,5 +385,25 @@ export class StockDetail {
     if (v >= 1_000_000) return (v / 1_000_000).toFixed(1) + 'M';
     if (v >= 1_000) return (v / 1_000).toFixed(0) + 'K';
     return v.toString();
+  }
+
+  toggleWatchlist(): void {
+    this.isInWatchlist.update(v => !v);
+  }
+
+  toggleAlertModal(): void {
+    this.showAlertModal.update(v => !v);
+  }
+
+  toggleIndicator(key: string): void {
+    this.techIndicators.update(list =>
+      list.map(i => i.key === key ? { ...i, active: !i.active } : i)
+    );
+  }
+
+  fmtShares(n: number): string {
+    if (n >= 1_000_000) return (n / 1_000_000).toFixed(1) + 'M';
+    if (n >= 1_000) return (n / 1_000).toFixed(0) + 'K';
+    return n.toLocaleString();
   }
 }

@@ -311,6 +311,21 @@ input[type='text'] {
   }
 }
 
+// ── OAuth Buttons ──
+.oauth-buttons {
+  display: flex; flex-direction: column; gap: 10px; margin-bottom: 18px;
+  animation: fadeUp 0.5s 0.62s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+.btn-oauth {
+  width: 100%; display: flex; align-items: center; justify-content: center; gap: 10px;
+  padding: 11px 20px; background: var(--surface-elevated); border: 1.5px solid var(--border);
+  border-radius: 10px; font-family: var(--font-body); font-size: 13px; font-weight: 500;
+  color: var(--olivine); cursor: pointer; transition: all 0.25s;
+  &:hover { border-color: var(--border-strong); background: var(--surface-card); box-shadow: var(--shadow-sm); transform: translateY(-1px); }
+  svg { flex-shrink: 0; }
+}
+.btn-apple svg { color: var(--olivine); }
+
 // Mobile
 @media (max-width: 480px) {
   .register-card {

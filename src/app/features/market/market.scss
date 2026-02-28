@@ -150,6 +150,35 @@
 .mk-macro-prev { font-size: 10.5px; color: var(--gray-light); font-family: var(--font-mono); }
 .mk-macro-date { font-size: 9.5px; color: var(--gray-faint); margin-top: 4px; }
 
+// ── Commodities ──
+.mk-comm-grid { display: flex; flex-direction: column; gap: 1px; background: rgba(58,99,81,0.06); }
+.mk-comm-card {
+  display: grid; grid-template-columns: 32px 1fr auto; align-items: center; gap: 10px;
+  padding: 12px 16px; background: var(--surface-card); transition: background 0.15s;
+  &:hover { background: var(--surface-elevated); }
+  &.is-up .mk-comm-icon { color: var(--up); background: var(--up-bg); }
+  &.is-down .mk-comm-icon { color: var(--down); background: var(--down-bg); }
+}
+.mk-comm-icon {
+  width: 32px; height: 32px; border-radius: 8px; display: flex; align-items: center; justify-content: center;
+  color: var(--gray-light); background: var(--surface-elevated); transition: all 0.2s;
+  svg { width: 16px; height: 16px; }
+}
+.mk-comm-body { min-width: 0; }
+.mk-comm-name { font-size: 11px; color: var(--gray); margin-bottom: 2px; }
+.mk-comm-val {
+  font-family: var(--font-mono); font-size: 15px; font-weight: 700; color: var(--olivine); letter-spacing: -0.3px;
+}
+.mk-comm-unit { font-size: 10px; font-weight: 500; color: var(--gray-light); margin-left: 3px; }
+.mk-comm-chg { text-align: right; }
+.mk-comm-pct {
+  display: block; font-family: var(--font-mono); font-size: 12px; font-weight: 700;
+  padding: 2px 8px; border-radius: 4px; margin-bottom: 2px;
+  &.up { color: var(--up); background: var(--up-bg); }
+  &.down { color: var(--down); background: var(--down-bg); }
+}
+.mk-comm-abs { font-family: var(--font-mono); font-size: 10px; color: var(--gray-light); }
+
 // ── AI Insight ──
 .mk-ai-card {
   background: linear-gradient(135deg, var(--olivine) 0%, #1a1d1f 100%); border-radius: 14px;
@@ -191,4 +220,5 @@
   .mk-sector-row { grid-template-columns: 20px 1fr 56px; .mk-sector-bar-wrap { display: none; } }
   .mk-global-row { grid-template-columns: 24px 1fr 64px; .mk-global-val { display: none; } }
   .mk-macro-grid { grid-template-columns: 1fr; }
+  .mk-comm-val { font-size: 13px; }
 }

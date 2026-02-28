@@ -3,6 +3,7 @@ import { FormsModule } from '@angular/forms';
 import { AlertType, PriceAlert, NotificationItem } from '../../core/models';
 
 type FeedFilter = 'all' | 'price' | 'volume' | 'institutional' | 'news' | 'earnings' | 'ai';
+type AlertTab = 'price' | 'volume' | 'institutional' | 'news';
 
 @Component({
   selector: 'app-alerts',
@@ -15,6 +16,14 @@ export class Alerts {
   // ── Filter State ──
   readonly feedFilter = signal<FeedFilter>('all');
   readonly showCreateForm = signal(false);
+  readonly alertTab = signal<AlertTab>('price');
+
+  readonly alertTabs: { key: AlertTab; label: string; icon: string }[] = [
+    { key: 'price', label: '到價', icon: 'target' },
+    { key: 'volume', label: '量能', icon: 'bar' },
+    { key: 'institutional', label: '法人', icon: 'building' },
+    { key: 'news', label: '新聞', icon: 'newspaper' },
+  ];
 
   readonly filterTabs: { key: FeedFilter; label: string }[] = [
     { key: 'all', label: '全部' },
@@ -49,11 +58,33 @@ export class Alerts {
     { id: 'n10', type: 'ai', title: 'AI 週報摘要', message: '本週台股加權指數上漲 1.8%，您的自選股組合平均漲幅 2.4%，跑贏大盤。表現最佳：廣達 +4.1%。', timestamp: '2026-02-23T20:00:00', isRead: true, priority: 'low' },
   ]);
 
-  // ── New Alert Form ──
+  // ── New Alert Forms ──
   readonly newAlert = signal({
     symbol: '',
     condition: 'above' as 'above' | 'below',
     targetPrice: '',
+    note: '',
+  });
+
+  readonly newVolumeAlert = signal({
+    symbol: '',
+    multiplier: '2',
+    avgDays: '5',
+    note: '',
+  });
+
+  readonly newInstitutionalAlert = signal({
+    symbol: '',
+    institution: 'foreign' as 'foreign' | 'investment' | 'dealer',
+    direction: 'buy' as 'buy' | 'sell',
+    threshold: '1000',
+    note: '',
+  });
+
+  readonly newNewsAlert = signal({
+    symbol: '',
+    keywords: '',
+    sources: 'all' as 'all' | 'domestic' | 'international',
     note: '',
   });
 
@@ -122,8 +153,24 @@ export class Alerts {
     this.showCreateForm.update(v => !v);
   }
 
+  setAlertTab(tab: AlertTab): void {
+    this.alertTab.set(tab);
+  }
+
   updateNewAlert(field: string, value: string): void {
     this.newAlert.update(a => ({ ...a, [field]: value }));
+  }
+
+  updateNewVolumeAlert(field: string, value: string): void {
+    this.newVolumeAlert.update(a => ({ ...a, [field]: value }));
+  }
+
+  updateNewInstitutionalAlert(field: string, value: string): void {
+    this.newInstitutionalAlert.update(a => ({ ...a, [field]: value }));
+  }
+
+  updateNewNewsAlert(field: string, value: string): void {
+    this.newNewsAlert.update(a => ({ ...a, [field]: value }));
   }
 
   submitNewAlert(): void {
@@ -147,6 +194,49 @@ export class Alerts {
 
     this.priceAlerts.update(list => [newEntry, ...list]);
     this.newAlert.set({ symbol: '', condition: 'above', targetPrice: '', note: '' });
+    this.showCreateForm.set(false);
+  }
+
+  submitVolumeAlert(): void {
+    const form = this.newVolumeAlert();
+    if (!form.symbol) return;
+    this.notifications.update(list => [{
+      id: `vn-${Date.now()}`, type: 'volume' as const, title: '量能警示已建立',
+      message: `${form.symbol.toUpperCase()} 成交量突破 ${form.avgDays} 日均量 ${form.multiplier} 倍時通知`,
+      symbol: form.symbol.toUpperCase(), market: (/^\d/.test(form.symbol) ? 'tw' : 'us') as 'tw' | 'us',
+      timestamp: new Date().toISOString(), isRead: false, priority: 'medium' as const,
+    }, ...list]);
+    this.newVolumeAlert.set({ symbol: '', multiplier: '2', avgDays: '5', note: '' });
+    this.showCreateForm.set(false);
+  }
+
+  submitInstitutionalAlert(): void {
+    const form = this.newInstitutionalAlert();
+    if (!form.symbol) return;
+    const instLabel = form.institution === 'foreign' ? '外資' : form.institution === 'investment' ? '投信' : '自營商';
+    const dirLabel = form.direction === 'buy' ? '買超' : '賣超';
+    this.notifications.update(list => [{
+      id: `in-${Date.now()}`, type: 'institutional' as const, title: '法人動向警示已建立',
+      message: `${form.symbol.toUpperCase()} ${instLabel}${dirLabel}超過 ${form.threshold} 張時通知`,
+      symbol: form.symbol.toUpperCase(), market: (/^\d/.test(form.symbol) ? 'tw' : 'us') as 'tw' | 'us',
+      timestamp: new Date().toISOString(), isRead: false, priority: 'medium' as const,
+    }, ...list]);
+    this.newInstitutionalAlert.set({ symbol: '', institution: 'foreign', direction: 'buy', threshold: '1000', note: '' });
+    this.showCreateForm.set(false);
+  }
+
+  submitNewsAlert(): void {
+    const form = this.newNewsAlert();
+    if (!form.keywords && !form.symbol) return;
+    const target = form.symbol ? form.symbol.toUpperCase() : '全市場';
+    this.notifications.update(list => [{
+      id: `nn-${Date.now()}`, type: 'news' as const, title: '新聞關鍵字警示已建立',
+      message: `${target} 出現關鍵字「${form.keywords}」時通知`,
+      symbol: form.symbol ? form.symbol.toUpperCase() : undefined,
+      market: form.symbol ? ((/^\d/.test(form.symbol) ? 'tw' : 'us') as 'tw' | 'us') : undefined,
+      timestamp: new Date().toISOString(), isRead: false, priority: 'low' as const,
+    }, ...list]);
+    this.newNewsAlert.set({ symbol: '', keywords: '', sources: 'all', note: '' });
     this.showCreateForm.set(false);
   }
 

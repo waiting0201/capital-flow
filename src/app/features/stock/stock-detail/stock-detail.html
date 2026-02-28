@@ -21,6 +21,16 @@
       <span class="sd-price">{{ formatPrice(quote().price) }}</span>
       <span class="sd-change">{{ quote().change > 0 ? '▲' : '▼' }} {{ formatChange(quote()) }}</span>
     </div>
+    <div class="sd-header-actions">
+      <button class="sd-action-btn" [class.active]="isInWatchlist()" (click)="toggleWatchlist()">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2" [attr.fill]="isInWatchlist() ? 'currentColor' : 'none'"/></svg>
+        {{ isInWatchlist() ? '已加入自選' : '加入自選' }}
+      </button>
+      <button class="sd-action-btn sd-action-alert" (click)="toggleAlertModal()">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 8A6 6 0 006 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 01-3.46 0"/></svg>
+        設定警示
+      </button>
+    </div>
   </div>
   <div class="sd-metrics-strip">
     @for (m of keyMetrics(); track m.label) {
@@ -113,10 +123,17 @@
       <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--amber)" stroke-width="2"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
       技術線圖
     </div>
-    <div class="sd-range-pills">
-      @for (r of chartRanges; track r) {
-        <button class="sd-range-pill" [class.active]="chartRange() === r" (click)="setChartRange(r)">{{ r }}</button>
-      }
+    <div class="sd-chart-controls">
+      <div class="sd-range-pills">
+        @for (r of chartRanges; track r) {
+          <button class="sd-range-pill" [class.active]="chartRange() === r" (click)="setChartRange(r)">{{ r }}</button>
+        }
+      </div>
+      <div class="sd-tech-indicators">
+        @for (ind of techIndicators(); track ind.key) {
+          <button class="sd-tech-btn" [class.active]="ind.active" (click)="toggleIndicator(ind.key)">{{ ind.label }}</button>
+        }
+      </div>
     </div>
   </div>
   <div class="sd-chart-area">
@@ -220,6 +237,53 @@
       </table>
     </div>
 
+    <!-- Monthly Revenue -->
+    <div class="card">
+      <div class="card-header">
+        <div class="card-title">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--amber)" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+          月營收趨勢
+        </div>
+      </div>
+      <table class="data-table">
+        <thead><tr><th>月份</th><th>營收 (億)</th><th>MoM</th><th>YoY</th></tr></thead>
+        <tbody>
+          @for (row of monthlyRevenue; track row.month) {
+            <tr>
+              <td class="row-label">{{ row.month }}</td>
+              <td>{{ row.revenue }}</td>
+              <td [style.color]="row.mom.startsWith('+') ? 'var(--up)' : 'var(--down)'" style="font-weight:600">{{ row.mom }}</td>
+              <td [style.color]="row.yoy.startsWith('+') ? 'var(--up)' : 'var(--down)'" style="font-weight:600">{{ row.yoy }}</td>
+            </tr>
+          }
+        </tbody>
+      </table>
+    </div>
+
+    <!-- Dividend / Ex-rights -->
+    <div class="card">
+      <div class="card-header">
+        <div class="card-title">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--amber)" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="16"/><line x1="8" y1="12" x2="16" y2="12"/></svg>
+          除權息資訊
+        </div>
+      </div>
+      <table class="data-table">
+        <thead><tr><th>年度</th><th>現金股利</th><th>股票股利</th><th>除息日</th><th>殖利率</th></tr></thead>
+        <tbody>
+          @for (row of dividendData; track row.year) {
+            <tr>
+              <td class="row-label">{{ row.year }}</td>
+              <td>{{ row.cashDiv }}</td>
+              <td>{{ row.stockDiv }}</td>
+              <td>{{ row.exDate }}</td>
+              <td style="color:var(--amber); font-weight:600">{{ row.yieldPct }}</td>
+            </tr>
+          }
+        </tbody>
+      </table>
+    </div>
+
     <!-- Bull / Bear Reasons -->
     <div class="card">
       <div class="card-header"><div class="card-title">多空因素分析</div></div>
@@ -280,6 +344,54 @@
       </table>
     </div>
 
+    <!-- Margin Trading -->
+    <div class="card">
+      <div class="card-header">
+        <div class="card-title">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--amber)" stroke-width="2"><path d="M4 15s1-1 4-1 5 2 8 2 4-1 4-1V3s-1 1-4 1-5-2-8-2-4 1-4 1z"/><line x1="4" y1="22" x2="4" y2="15"/></svg>
+          融資融券
+        </div>
+      </div>
+      <table class="data-table sd-margin-table">
+        <thead><tr><th>日期</th><th>融資買</th><th>融資賣</th><th>融資餘額</th><th>融券賣</th><th>融券買</th><th>融券餘額</th></tr></thead>
+        <tbody>
+          @for (row of marginData; track row.date) {
+            <tr>
+              <td class="row-label">{{ row.date }}</td>
+              <td style="color:var(--up)">{{ row.marginBuy | number }}</td>
+              <td style="color:var(--down)">{{ row.marginSell | number }}</td>
+              <td style="font-weight:600">{{ row.marginBal | number }}</td>
+              <td style="color:var(--down)">{{ row.shortSell | number }}</td>
+              <td style="color:var(--up)">{{ row.shortCover | number }}</td>
+              <td style="font-weight:600">{{ row.shortBal | number }}</td>
+            </tr>
+          }
+        </tbody>
+      </table>
+    </div>
+
+    <!-- Shareholder Distribution -->
+    <div class="card">
+      <div class="card-header">
+        <div class="card-title">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--amber)" stroke-width="2"><path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 00-3-3.87"/><path d="M16 3.13a4 4 0 010 7.75"/></svg>
+          集保分散表
+        </div>
+      </div>
+      <div class="sd-shareholder-list">
+        @for (row of shareholderDist; track row.range) {
+          <div class="sd-sh-row">
+            <span class="sd-sh-range">{{ row.range }}</span>
+            <span class="sd-sh-holders">{{ row.holders | number }} 人</span>
+            <div class="sd-sh-bar-wrap">
+              <div class="sd-sh-bar" [style.width.%]="row.pct"></div>
+            </div>
+            <span class="sd-sh-pct">{{ row.pct }}%</span>
+          </div>
+        }
+      </div>
+    </div>
+
     <!-- Sentiment + News -->
     <div class="card">
       <div class="card-header">
@@ -313,6 +425,12 @@
             <div class="sd-news-tag" [attr.data-tag]="item.tag"></div>
             <div class="sd-news-body">
               <div class="sd-news-title">{{ item.title }}</div>
+              @if (newsAiSummaries[item.title]) {
+                <div class="sd-news-ai">
+                  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2L2 7l10 5 10-5-10-5z"/><path d="M2 17l10 5 10-5"/><path d="M2 12l10 5 10-5"/></svg>
+                  {{ newsAiSummaries[item.title] }}
+                </div>
+              }
               <div class="sd-news-meta">
                 <span class="sd-news-source">{{ item.source }}</span>
                 <span class="sd-news-time">{{ item.time }}</span>

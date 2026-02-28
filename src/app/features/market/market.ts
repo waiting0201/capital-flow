@@ -32,6 +32,15 @@ interface MacroIndicator {
   date: string;
 }
 
+interface CommodityItem {
+  icon: string;
+  name: string;
+  value: string;
+  unit: string;
+  change: number;
+  changePercent: number;
+}
+
 interface GlobalIndex {
   flag: string;
   name: string;
@@ -114,6 +123,15 @@ export class Market {
     { label: '非農就業(萬)', value: '22.8', prev: '25.6', trend: 'down', region: 'us', date: '2026/01' },
     { label: 'ISM 製造 PMI', value: '50.9', prev: '49.2', trend: 'up', region: 'us', date: '2026/01' },
     { label: 'Fed 利率', value: '4.25–4.50%', prev: '4.50–4.75%', trend: 'down', region: 'us', date: '2026/01' },
+  ];
+
+  // ── Commodities ──
+  readonly commodities: CommodityItem[] = [
+    { icon: 'dollar', name: '美元指數', value: '104.25', unit: '', change: 0.32, changePercent: 0.31 },
+    { icon: 'bond', name: '美10Y殖利率', value: '4.35', unit: '%', change: -0.02, changePercent: -0.46 },
+    { icon: 'vix', name: 'VIX 恐慌指數', value: '15.82', unit: '', change: -0.87, changePercent: -5.21 },
+    { icon: 'oil', name: 'WTI 原油', value: '78.52', unit: 'USD', change: 0.85, changePercent: 1.09 },
+    { icon: 'gold', name: '黃金', value: '2,185.40', unit: 'USD', change: 17.60, changePercent: 0.81 },
   ];
 
   // ── Global Markets ──
