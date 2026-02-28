@@ -1,6 +1,7 @@
 import { Routes } from '@angular/router';
 import { MainLayout } from './layouts/main-layout/main-layout';
 import { AuthLayout } from './layouts/auth-layout/auth-layout';
+import { authGuard } from './core/guards/auth.guard';
 
 export const routes: Routes = [
   // Auth routes (no guard)
@@ -21,14 +22,14 @@ export const routes: Routes = [
     path: 'onboarding',
     loadComponent: () =>
       import('./features/onboarding/onboarding').then(m => m.Onboarding),
-    // canActivate: [authGuard],  // TODO: enable after auth implementation
+    canActivate: [authGuard],
   },
 
   // Main app routes (requires auth)
   {
     path: '',
     component: MainLayout,
-    // canActivate: [authGuard],  // TODO: enable after auth implementation
+    canActivate: [authGuard],
     children: [
       {
         path: 'home',
