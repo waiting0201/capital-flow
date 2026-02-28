@@ -1,4 +1,185 @@
-<div>
-  <h1 class="text-2xl font-bold text-gray-900 mb-6">大盤與總體經濟</h1>
-  <p class="text-gray-500">大盤指數 + 類股排行 + 總經指標 — 待實作</p>
+<!-- ══════ Header ══════ -->
+<div class="section-label">Market Overview</div>
+<div class="mk-header">
+  <div class="section-title">大盤與總體經濟</div>
+  <div class="mk-tabs">
+    <button class="mk-tab" [class.active]="activeTab() === 'tw'" (click)="setTab('tw')">🇹🇼 台股</button>
+    <button class="mk-tab" [class.active]="activeTab() === 'us'" (click)="setTab('us')">🇺🇸 美股</button>
+  </div>
+</div>
+
+<!-- ══════ Indices Strip ══════ -->
+<div class="mk-indices">
+  @for (idx of (activeTab() === 'tw' ? twIndices : usIndices); track idx.name) {
+    <div class="mk-idx" [class.is-up]="idx.change > 0" [class.is-down]="idx.change < 0">
+      <div class="mk-idx-head">
+        <span class="mk-idx-name">{{ idx.name }}</span>
+        <span class="mk-idx-status" [class.open]="idx.status === 'open'">{{ idx.status === 'open' ? '交易中' : '已收盤' }}</span>
+      </div>
+      <div class="mk-idx-val">{{ idx.value }}</div>
+      <div class="mk-idx-chg">
+        {{ idx.change > 0 ? '▲' : '▼' }} {{ getSign(idx.change) }}{{ idx.change.toFixed(2) }}
+        ({{ getSign(idx.changePercent) }}{{ idx.changePercent.toFixed(2) }}%)
+      </div>
+    </div>
+  }
+</div>
+
+<!-- ══════ Breadth + Institutional ══════ -->
+@if (activeTab() === 'tw') {
+  <div class="mk-dual">
+    <!-- Breadth -->
+    <div class="card">
+      <div class="card-header">
+        <div class="card-title">漲跌家數</div>
+        <div class="mk-breadth-extra">漲停 {{ breadth.limitUp }} ｜ 跌停 {{ breadth.limitDown }}</div>
+      </div>
+      <div class="mk-breadth">
+        <div class="mk-breadth-row">
+          <span class="mk-breadth-label up">上漲 {{ breadth.advancers }}</span>
+          <div class="mk-breadth-meter">
+            <div class="mk-bm-up" [style.width.%]="breadth.advancersPct"></div>
+            <div class="mk-bm-flat" [style.width.%]="breadth.unchangedPct"></div>
+            <div class="mk-bm-down" [style.width.%]="breadth.declinersPct"></div>
+          </div>
+          <span class="mk-breadth-label down">下跌 {{ breadth.decliners }}</span>
+        </div>
+        <div class="mk-breadth-summary">持平 {{ breadth.unchanged }} 家 · 上漲佔比 {{ breadth.advancersPct }}%</div>
+      </div>
+    </div>
+
+    <!-- Institutional -->
+    <div class="card">
+      <div class="card-header">
+        <div class="card-title">三大法人</div>
+        <div class="mk-inst-total" [class.up]="institutionalTotal > 0" [class.down]="institutionalTotal < 0">
+          合計 {{ getSign(institutionalTotal) }}{{ institutionalTotal.toFixed(1) }} 億
+        </div>
+      </div>
+      <div class="mk-inst-list">
+        @for (inst of institutions; track inst.name) {
+          <div class="mk-inst-row">
+            <span class="mk-inst-name">{{ inst.name }}</span>
+            <div class="mk-inst-bars">
+              <div class="mk-inst-bar buy" [style.width]="getFlowBarWidth(inst.buy)">
+                <span>{{ inst.buy.toFixed(1) }}</span>
+              </div>
+              <div class="mk-inst-bar sell" [style.width]="getFlowBarWidth(inst.sell)">
+                <span>{{ inst.sell.toFixed(1) }}</span>
+              </div>
+            </div>
+            <span class="mk-inst-net" [class.up]="inst.net > 0" [class.down]="inst.net < 0">
+              {{ getSign(inst.net) }}{{ inst.net.toFixed(1) }}
+            </span>
+          </div>
+        }
+      </div>
+    </div>
+  </div>
+}
+
+<!-- ══════ Dashboard Grid ══════ -->
+<div class="mk-grid">
+  <!-- Left Column -->
+  <div class="mk-col">
+    <!-- Sector Performance -->
+    @if (activeTab() === 'tw') {
+      <div class="card">
+        <div class="card-header">
+          <div class="card-title">類股表現</div>
+        </div>
+        <div class="mk-sector-list">
+          @for (sec of sectors; track sec.name; let i = $index) {
+            <div class="mk-sector-row">
+              <span class="mk-sector-rank">{{ i + 1 }}</span>
+              <div class="mk-sector-info">
+                <span class="mk-sector-name">{{ sec.name }}</span>
+                <span class="mk-sector-leader">{{ sec.leader }}</span>
+              </div>
+              <div class="mk-sector-bar-wrap">
+                <div class="mk-sector-bar" [class.up]="sec.change >= 0" [class.down]="sec.change < 0" [style.width]="getBarWidth(sec.change)"></div>
+              </div>
+              <span class="mk-sector-chg" [class.up]="sec.change >= 0" [class.down]="sec.change < 0">
+                {{ getSign(sec.change) }}{{ sec.change.toFixed(2) }}%
+              </span>
+              <span class="mk-sector-vol">{{ sec.volume }}</span>
+            </div>
+          }
+        </div>
+      </div>
+    }
+
+    <!-- Global Markets -->
+    <div class="card">
+      <div class="card-header">
+        <div class="card-title">全球市場</div>
+      </div>
+      <div class="mk-global-list">
+        @for (g of globalIndices; track g.name) {
+          <div class="mk-global-row">
+            <span class="mk-global-flag">{{ g.flag }}</span>
+            <span class="mk-global-name">{{ g.name }}</span>
+            <span class="mk-global-val">{{ g.value }}</span>
+            <span class="mk-global-chg" [class.up]="g.change > 0" [class.down]="g.change < 0">
+              {{ getSign(g.changePercent) }}{{ g.changePercent.toFixed(2) }}%
+            </span>
+          </div>
+        }
+      </div>
+    </div>
+  </div>
+
+  <!-- Right Column -->
+  <div class="mk-col">
+    <!-- Macro Indicators -->
+    <div class="card">
+      <div class="card-header">
+        <div class="card-title">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--amber)" stroke-width="2">
+            <polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/>
+          </svg>
+          總體經濟指標
+        </div>
+        <span class="mk-macro-region">{{ activeTab() === 'tw' ? '台灣' : '美國' }}</span>
+      </div>
+      <div class="mk-macro-grid">
+        @for (m of (activeTab() === 'tw' ? macroTW : macroUS); track m.label) {
+          <div class="mk-macro-card">
+            <div class="mk-macro-label">{{ m.label }}</div>
+            <div class="mk-macro-val">{{ m.value }}</div>
+            <div class="mk-macro-foot">
+              <span class="mk-macro-trend" [class]="m.trend">
+                {{ m.trend === 'up' ? '↑' : m.trend === 'down' ? '↓' : '→' }}
+              </span>
+              <span class="mk-macro-prev">前值 {{ m.prev }}</span>
+            </div>
+            <div class="mk-macro-date">{{ m.date }}</div>
+          </div>
+        }
+      </div>
+    </div>
+
+    <!-- AI Insight -->
+    <div class="mk-ai-card">
+      <div class="ai-badge">
+        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M12 2L2 7l10 5 10-5-10-5z"/><path d="M2 17l10 5 10-5"/><path d="M2 12l10 5 10-5"/>
+        </svg>
+        AI 大盤趨勢分析
+      </div>
+      <div class="mk-ai-sentiment" [class]="aiInsight.sentiment">
+        {{ aiInsight.sentiment === 'bullish' ? '偏多' : aiInsight.sentiment === 'bearish' ? '偏空' : '中性' }}
+      </div>
+      <p class="mk-ai-summary">{{ aiInsight.summary }}</p>
+      <div class="mk-ai-points">
+        @for (pt of aiInsight.keyPoints; track pt) {
+          <div class="mk-ai-point">
+            <span class="mk-ai-dot"></span>
+            {{ pt }}
+          </div>
+        }
+      </div>
+      <div class="ai-disclaimer">⚠️ 僅供參考，非投資建議 · 更新：{{ aiInsight.updatedAt }}</div>
+    </div>
+  </div>
 </div>
