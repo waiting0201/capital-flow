@@ -1,0 +1,288 @@
+<div class="section-label">Alerts & Notifications</div>
+<div class="section-title">警示通知</div>
+
+<!-- ══════ Stats Strip ══════ -->
+<div class="stats-strip">
+  <div class="stat-card">
+    <div class="stat-icon stat-icon--active">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <circle cx="12" cy="12" r="10"/>
+        <polyline points="12 6 12 12 16 14"/>
+      </svg>
+    </div>
+    <div class="stat-body">
+      <div class="stat-value">{{ stats().activeAlerts }}</div>
+      <div class="stat-label">進行中警示</div>
+    </div>
+  </div>
+  <div class="stat-card">
+    <div class="stat-icon stat-icon--unread">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <path d="M18 8A6 6 0 006 8c0 7-3 9-3 9h18s-3-2-3-9"/>
+        <path d="M13.73 21a2 2 0 01-3.46 0"/>
+      </svg>
+    </div>
+    <div class="stat-body">
+      <div class="stat-value">{{ stats().unread }}</div>
+      <div class="stat-label">未讀通知</div>
+    </div>
+  </div>
+  <div class="stat-card">
+    <div class="stat-icon stat-icon--triggered">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/>
+      </svg>
+    </div>
+    <div class="stat-body">
+      <div class="stat-value">{{ stats().triggeredToday }}</div>
+      <div class="stat-label">今日觸發</div>
+    </div>
+  </div>
+  <div class="stat-card">
+    <div class="stat-icon stat-icon--total">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/>
+        <polyline points="14 2 14 8 20 8"/>
+        <line x1="16" y1="13" x2="8" y2="13"/>
+        <line x1="16" y1="17" x2="8" y2="17"/>
+      </svg>
+    </div>
+    <div class="stat-body">
+      <div class="stat-value">{{ stats().totalNotifs }}</div>
+      <div class="stat-label">歷史通知</div>
+    </div>
+  </div>
+</div>
+
+<!-- ══════ Main Layout ══════ -->
+<div class="alerts-grid">
+
+  <!-- ── Left: Notification Feed ── -->
+  <div class="feed-column">
+    <div class="card">
+      <div class="card-header">
+        <div class="card-title">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--amber)" stroke-width="2">
+            <path d="M18 8A6 6 0 006 8c0 7-3 9-3 9h18s-3-2-3-9"/>
+            <path d="M13.73 21a2 2 0 01-3.46 0"/>
+          </svg>
+          通知動態
+        </div>
+        @if (stats().unread > 0) {
+          <button class="card-action" (click)="markAllRead()">全部已讀</button>
+        }
+      </div>
+
+      <!-- Filter Tabs -->
+      <div class="feed-filters">
+        @for (tab of filterTabs; track tab.key) {
+          <button
+            class="filter-chip"
+            [class.active]="feedFilter() === tab.key"
+            (click)="setFilter(tab.key)">
+            {{ tab.label }}
+          </button>
+        }
+      </div>
+
+      <!-- Notification Groups -->
+      <div class="feed-list">
+        @for (group of groupedNotifications(); track group.label) {
+          <div class="feed-date-label">{{ group.label }}</div>
+          @for (notif of group.items; track notif.id) {
+            <div
+              class="feed-item"
+              [class.unread]="!notif.isRead"
+              (click)="markAsRead(notif.id)">
+              <!-- Type Icon -->
+              <div class="feed-icon" [attr.data-type]="notif.type">
+                @switch (notif.type) {
+                  @case ('price') {
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                      <circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="16"/><line x1="8" y1="12" x2="16" y2="12"/>
+                    </svg>
+                  }
+                  @case ('volume') {
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                      <line x1="12" y1="20" x2="12" y2="10"/><line x1="18" y1="20" x2="18" y2="4"/><line x1="6" y1="20" x2="6" y2="16"/>
+                    </svg>
+                  }
+                  @case ('institutional') {
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                      <path d="M3 21h18M3 10h18M5 6l7-3 7 3M4 10v11M20 10v11M8 14v3M12 14v3M16 14v3"/>
+                    </svg>
+                  }
+                  @case ('news') {
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                      <path d="M4 22h16a2 2 0 002-2V4a2 2 0 00-2-2H8a2 2 0 00-2 2v16a2 2 0 01-2 2zm0 0a2 2 0 01-2-2v-9c0-1.1.9-2 2-2h2"/>
+                    </svg>
+                  }
+                  @case ('earnings') {
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                      <rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/>
+                    </svg>
+                  }
+                  @case ('ai') {
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                      <path d="M12 2L2 7l10 5 10-5-10-5z"/><path d="M2 17l10 5 10-5"/><path d="M2 12l10 5 10-5"/>
+                    </svg>
+                  }
+                }
+              </div>
+
+              <!-- Content -->
+              <div class="feed-content">
+                <div class="feed-top">
+                  <span class="feed-type-badge" [attr.data-type]="notif.type">{{ getTypeLabel(notif.type) }}</span>
+                  @if (notif.symbol) {
+                    <span class="feed-symbol">{{ notif.symbol }}</span>
+                  }
+                  <span class="feed-time">{{ formatTime(notif.timestamp) }}</span>
+                </div>
+                <div class="feed-title">{{ notif.title }}</div>
+                <div class="feed-message">{{ notif.message }}</div>
+              </div>
+
+              <!-- Unread dot -->
+              @if (!notif.isRead) {
+                <div class="unread-dot"></div>
+              }
+
+              <!-- Delete -->
+              <button class="feed-delete" (click)="deleteNotification(notif.id); $event.stopPropagation()">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>
+                </svg>
+              </button>
+            </div>
+          }
+        }
+
+        @if (filteredNotifications().length === 0) {
+          <div class="feed-empty">
+            <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="var(--gray-faint)" stroke-width="1.5">
+              <path d="M18 8A6 6 0 006 8c0 7-3 9-3 9h18s-3-2-3-9"/>
+              <path d="M13.73 21a2 2 0 01-3.46 0"/>
+            </svg>
+            <p>此分類暫無通知</p>
+          </div>
+        }
+      </div>
+    </div>
+  </div>
+
+  <!-- ── Right: Active Alerts ── -->
+  <div class="alerts-column">
+    <!-- Create New Alert -->
+    <div class="card" style="margin-bottom: 20px;">
+      <div class="card-header">
+        <div class="card-title">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--amber)" stroke-width="2">
+            <circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="16"/><line x1="8" y1="12" x2="16" y2="12"/>
+          </svg>
+          到價警示
+        </div>
+        <button class="card-action" (click)="toggleCreateForm()">
+          {{ showCreateForm() ? '取消' : '+ 新增' }}
+        </button>
+      </div>
+
+      <!-- Quick Add Form -->
+      @if (showCreateForm()) {
+        <div class="quick-add">
+          <div class="quick-add-row">
+            <input
+              class="form-input quick-input"
+              type="text"
+              placeholder="股票代碼"
+              [ngModel]="newAlert().symbol"
+              (ngModelChange)="updateNewAlert('symbol', $event)">
+            <select
+              class="select-input quick-select"
+              [ngModel]="newAlert().condition"
+              (ngModelChange)="updateNewAlert('condition', $event)">
+              <option value="above">漲破 ▲</option>
+              <option value="below">跌破 ▼</option>
+            </select>
+            <input
+              class="form-input quick-input"
+              type="number"
+              placeholder="目標價"
+              [ngModel]="newAlert().targetPrice"
+              (ngModelChange)="updateNewAlert('targetPrice', $event)">
+          </div>
+          <div class="quick-add-row">
+            <input
+              class="form-input"
+              type="text"
+              placeholder="備註（選填）"
+              [ngModel]="newAlert().note"
+              (ngModelChange)="updateNewAlert('note', $event)"
+              style="flex:1">
+            <button class="btn-sm btn-sm-primary" (click)="submitNewAlert()">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+                <polyline points="20 6 9 17 4 12"/>
+              </svg>
+              建立
+            </button>
+          </div>
+        </div>
+      }
+
+      <!-- Active Alerts List -->
+      <div class="alert-list">
+        @for (alert of priceAlerts(); track alert.id) {
+          <div class="alert-row">
+            <div class="alert-stock">
+              <span class="alert-symbol">{{ alert.symbol }}</span>
+              <span class="alert-name">{{ alert.name }}</span>
+            </div>
+            <div class="alert-target">
+              <div class="alert-condition">
+                @if (alert.condition === 'above') {
+                  <span class="condition-badge condition-up">▲ 漲破</span>
+                } @else {
+                  <span class="condition-badge condition-down">▼ 跌破</span>
+                }
+                <span class="target-price">{{ alert.targetPrice }}</span>
+              </div>
+              <div class="alert-current">
+                現價 <span class="current-val">{{ alert.currentPrice }}</span>
+                <span class="alert-distance" [class.near]="getAlertProgress(alert) > 95">
+                  {{ getAlertDistance(alert) }}
+                </span>
+              </div>
+            </div>
+            <div class="alert-progress-wrap">
+              <div class="alert-progress-track">
+                <div class="alert-progress-fill" [style.width.%]="getAlertProgress(alert)"></div>
+              </div>
+            </div>
+            @if (alert.note) {
+              <div class="alert-note">{{ alert.note }}</div>
+            }
+            <button class="alert-remove" (click)="removeAlert(alert.id)">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>
+              </svg>
+            </button>
+          </div>
+        }
+      </div>
+    </div>
+
+    <!-- AI Insight Mini -->
+    <div class="ai-insight-mini">
+      <div class="ai-badge">
+        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M12 2L2 7l10 5 10-5-10-5z"/><path d="M2 17l10 5 10-5"/><path d="M2 12l10 5 10-5"/>
+        </svg>
+        AI 警示建議
+      </div>
+      <p class="ai-insight-text">
+        根據您的自選股分析，建議為台積電設定 920 停利點與 810 停損點。NVIDIA 近期波動加大，建議將警示條件調整至 ±5% 區間以避免頻繁觸發。
+      </p>
+      <div class="ai-disclaimer">⚠️ 僅供參考，非投資建議</div>
+    </div>
+  </div>
+</div>

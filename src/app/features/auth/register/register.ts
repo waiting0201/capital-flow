@@ -1,0 +1,113 @@
+import { Component, inject, signal } from '@angular/core';
+import { AbstractControl, FormBuilder, ReactiveFormsModule, ValidationErrors, Validators } from '@angular/forms';
+import { Router, RouterLink } from '@angular/router';
+import { AuthService } from '../../../core/services/auth.service';
+
+@Component({
+  selector: 'app-register',
+  standalone: true,
+  imports: [ReactiveFormsModule, RouterLink],
+  templateUrl: './register.html',
+  styleUrl: './register.scss',
+})
+export class Register {
+  private readonly fb = inject(FormBuilder);
+  private readonly auth = inject(AuthService);
+  private readonly router = inject(Router);
+
+  protected readonly showPassword = signal(false);
+  protected readonly showConfirm = signal(false);
+  protected readonly isLoading = signal(false);
+  protected readonly errorMessage = signal('');
+  protected readonly agreedTerms = signal(false);
+
+  protected readonly form = this.fb.nonNullable.group(
+    {
+      displayName: ['', [Validators.required, Validators.minLength(2)]],
+      email: ['', [Validators.required, Validators.email]],
+      password: ['', [Validators.required, Validators.minLength(8)]],
+      confirmPassword: ['', [Validators.required]],
+    },
+    { validators: [this.passwordMatchValidator] },
+  );
+
+  private passwordMatchValidator(group: AbstractControl): ValidationErrors | null {
+    const pw = group.get('password')?.value;
+    const confirm = group.get('confirmPassword')?.value;
+    return pw === confirm ? null : { passwordMismatch: true };
+  }
+
+  protected togglePassword(): void {
+    this.showPassword.update(v => !v);
+  }
+
+  protected toggleConfirm(): void {
+    this.showConfirm.update(v => !v);
+  }
+
+  protected toggleTerms(): void {
+    this.agreedTerms.update(v => !v);
+  }
+
+  protected onSubmit(): void {
+    if (this.form.invalid) {
+      this.form.markAllAsTouched();
+      return;
+    }
+
+    if (!this.agreedTerms()) {
+      this.errorMessage.set('請先同意服務條款與隱私權政策');
+      return;
+    }
+
+    this.isLoading.set(true);
+    this.errorMessage.set('');
+
+    // TODO: replace with real API call
+    setTimeout(() => {
+      this.isLoading.set(false);
+      this.router.navigate(['/auth/login']);
+    }, 1500);
+  }
+
+  protected get nameInvalid(): boolean {
+    const ctrl = this.form.controls.displayName;
+    return ctrl.touched && ctrl.invalid;
+  }
+
+  protected get emailInvalid(): boolean {
+    const ctrl = this.form.controls.email;
+    return ctrl.touched && ctrl.invalid;
+  }
+
+  protected get passwordInvalid(): boolean {
+    const ctrl = this.form.controls.password;
+    return ctrl.touched && ctrl.invalid;
+  }
+
+  protected get confirmInvalid(): boolean {
+    const ctrl = this.form.controls.confirmPassword;
+    return ctrl.touched && (ctrl.invalid || this.form.hasError('passwordMismatch'));
+  }
+
+  protected get passwordStrength(): number {
+    const pw = this.form.controls.password.value;
+    if (!pw) return 0;
+    let score = 0;
+    if (pw.length >= 8) score++;
+    if (/[a-z]/.test(pw) && /[A-Z]/.test(pw)) score++;
+    if (/\d/.test(pw)) score++;
+    if (/[^a-zA-Z0-9]/.test(pw)) score++;
+    return score;
+  }
+
+  protected get strengthLabel(): string {
+    const labels = ['', '弱', '尚可', '良好', '強'];
+    return labels[this.passwordStrength];
+  }
+
+  protected get strengthColor(): string {
+    const colors = ['', 'var(--up)', 'var(--amber)', 'var(--moss-light)', 'var(--moss)'];
+    return colors[this.passwordStrength];
+  }
+}

@@ -1,0 +1,157 @@
+<!-- ══════ Hero Search ══════ -->
+<div class="sr-hero">
+  <div class="sr-hero-label">Search</div>
+  <div class="sr-hero-title">探索股票與投資主題</div>
+  <div class="sr-search-box">
+    <svg class="sr-search-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+      <circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/>
+    </svg>
+    <input
+      class="sr-search-input"
+      type="text"
+      [ngModel]="query()"
+      (ngModelChange)="onSearch($event)"
+      placeholder="輸入股票代碼、名稱或概念主題（如 AI、半導體、電動車）..."
+      autofocus>
+    @if (hasQuery()) {
+      <button class="sr-clear-btn" (click)="onSearch('')">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+      </button>
+    }
+  </div>
+  <div class="sr-filters">
+    <button class="sr-filter-chip" [class.active]="marketFilter() === 'all'" (click)="setMarketFilter('all')">全部</button>
+    <button class="sr-filter-chip" [class.active]="marketFilter() === 'tw'" (click)="setMarketFilter('tw')">🇹🇼 台股</button>
+    <button class="sr-filter-chip" [class.active]="marketFilter() === 'us'" (click)="setMarketFilter('us')">🇺🇸 美股</button>
+  </div>
+</div>
+
+<!-- ══════ Results Mode ══════ -->
+@if (hasQuery()) {
+  <div class="sr-results-info">
+    搜尋「<strong>{{ query() }}</strong>」找到 <strong>{{ totalResults() }}</strong> 筆結果
+  </div>
+
+  <!-- Theme Results -->
+  @if (filteredThemes().length > 0) {
+    <div class="sr-section">
+      <div class="sr-section-head">
+        <span class="sr-section-label">概念主題</span>
+        <span class="sr-section-count">{{ filteredThemes().length }}</span>
+      </div>
+      <div class="sr-theme-grid">
+        @for (t of filteredThemes(); track t.name) {
+          <button class="sr-theme-card" (click)="applyKeyword(t.name)">
+            <span class="sr-theme-icon">{{ t.icon }}</span>
+            <div class="sr-theme-info">
+              <span class="sr-theme-name">{{ t.name }}</span>
+              <span class="sr-theme-meta">{{ t.count }} 檔 · <span [style.color]="t.change >= 0 ? 'var(--up)' : 'var(--down)'">{{ t.change >= 0 ? '+' : '' }}{{ t.change }}%</span></span>
+            </div>
+            <svg class="sr-theme-arrow" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="9 18 15 12 9 6"/></svg>
+          </button>
+        }
+      </div>
+    </div>
+  }
+
+  <!-- Stock Results -->
+  @if (filteredStocks().length > 0) {
+    <div class="sr-section">
+      <div class="sr-section-head">
+        <span class="sr-section-label">個股</span>
+        <span class="sr-section-count">{{ filteredStocks().length }}</span>
+      </div>
+      <div class="sr-stock-list">
+        @for (s of filteredStocks(); track s.symbol) {
+          <a class="sr-stock-row" [routerLink]="getStockLink(s)" (click)="addToRecent(s.symbol)">
+            <div class="sr-stock-dot" [attr.data-market]="s.market"></div>
+            <div class="sr-stock-info">
+              <span class="sr-stock-symbol">{{ s.symbol }}</span>
+              <span class="sr-stock-name">{{ s.name }}</span>
+            </div>
+            <div class="sr-stock-price" [class.is-up]="s.change > 0" [class.is-down]="s.change < 0">
+              {{ formatPrice(s.price) }}
+            </div>
+            <div class="sr-stock-change" [class.up]="s.change > 0" [class.down]="s.change < 0">
+              {{ formatChange(s) }}
+            </div>
+            <div class="sr-stock-vol">{{ formatVolume(s) }}</div>
+            <svg class="sr-stock-arrow" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="9 18 15 12 9 6"/></svg>
+          </a>
+        }
+      </div>
+    </div>
+  }
+
+  <!-- No Results -->
+  @if (totalResults() === 0) {
+    <div class="sr-empty">
+      <svg viewBox="0 0 24 24" fill="none" stroke="var(--gray-faint)" stroke-width="1.5">
+        <circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/>
+        <line x1="8" y1="8" x2="14" y2="14"/><line x1="14" y1="8" x2="8" y2="14"/>
+      </svg>
+      <p>找不到符合「{{ query() }}」的結果</p>
+      <span>請嘗試其他關鍵字或股票代碼</span>
+    </div>
+  }
+}
+
+<!-- ══════ Discovery Mode (no query) ══════ -->
+@if (!hasQuery()) {
+  <!-- Trending Keywords -->
+  <div class="sr-section">
+    <div class="sr-section-head">
+      <span class="sr-section-label">熱門搜尋</span>
+    </div>
+    <div class="sr-keyword-tags">
+      @for (kw of trendingKeywords; track kw) {
+        <button class="sr-keyword-tag" (click)="applyKeyword(kw)">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="23 6 13.5 15.5 8.5 10.5 1 18"/></svg>
+          {{ kw }}
+        </button>
+      }
+    </div>
+  </div>
+
+  <!-- Recent Searches -->
+  @if (recentSearches().length > 0) {
+    <div class="sr-section">
+      <div class="sr-section-head">
+        <span class="sr-section-label">近期搜尋</span>
+        <button class="sr-section-action" (click)="clearRecent()">清除全部</button>
+      </div>
+      <div class="sr-recent-list">
+        @for (term of recentSearches(); track term) {
+          <div class="sr-recent-item">
+            <button class="sr-recent-text" (click)="applyKeyword(term)">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+              {{ term }}
+            </button>
+            <button class="sr-recent-remove" (click)="removeRecent(term)">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+            </button>
+          </div>
+        }
+      </div>
+    </div>
+  }
+
+  <!-- Concept Themes -->
+  <div class="sr-section">
+    <div class="sr-section-head">
+      <span class="sr-section-label">概念主題</span>
+    </div>
+    <div class="sr-theme-grid">
+      @for (t of themes; track t.name) {
+        <button class="sr-theme-card" (click)="applyKeyword(t.name)">
+          <span class="sr-theme-icon">{{ t.icon }}</span>
+          <div class="sr-theme-info">
+            <span class="sr-theme-name">{{ t.name }}</span>
+            <span class="sr-theme-meta">{{ t.count }} 檔 · <span [style.color]="t.change >= 0 ? 'var(--up)' : 'var(--down)'">{{ t.change >= 0 ? '+' : '' }}{{ t.change }}%</span></span>
+          </div>
+          <svg class="sr-theme-arrow" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="9 18 15 12 9 6"/></svg>
+        </button>
+      }
+    </div>
+  </div>
+}

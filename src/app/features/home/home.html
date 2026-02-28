@@ -1,0 +1,168 @@
+<div class="section-label">Market Overview</div>
+<div class="section-title">大盤即時總覽</div>
+
+<!-- Indices Strip -->
+<div class="indices-strip">
+  <div class="index-card is-up">
+    <div class="index-flag">🇹🇼</div>
+    <div class="index-name">加權指數</div>
+    <div class="index-value">22,156.38</div>
+    <div class="index-change">▲ +268.45 (+1.23%)</div>
+  </div>
+  <div class="index-card is-up">
+    <div class="index-flag">🇹🇼</div>
+    <div class="index-name">櫃買指數</div>
+    <div class="index-value">235.82</div>
+    <div class="index-change">▲ +1.87 (+0.80%)</div>
+  </div>
+  <div class="index-card is-down">
+    <div class="index-flag">🇺🇸</div>
+    <div class="index-name">S&P 500</div>
+    <div class="index-value">5,842.15</div>
+    <div class="index-change">▼ -17.53 (-0.30%)</div>
+  </div>
+  <div class="index-card is-up">
+    <div class="index-flag">🇺🇸</div>
+    <div class="index-name">NASDAQ</div>
+    <div class="index-value">18,523.40</div>
+    <div class="index-change">▲ +92.67 (+0.50%)</div>
+  </div>
+  <div class="index-card is-up">
+    <div class="index-flag">🇺🇸</div>
+    <div class="index-name">道瓊工業</div>
+    <div class="index-value">42,156.80</div>
+    <div class="index-change">▲ +84.31 (+0.20%)</div>
+  </div>
+</div>
+
+<!-- Market Breadth -->
+<div class="breadth-bar">
+  <div class="breadth-stat">
+    <span class="breadth-dot" style="background:var(--up)"></span>
+    上漲 523
+  </div>
+  <div class="breadth-meter">
+    <div class="breadth-up" style="width:56.6%"></div>
+    <div class="breadth-flat" style="width:9.6%"></div>
+    <div class="breadth-down" style="width:33.8%"></div>
+  </div>
+  <div class="breadth-stat">
+    下跌 312
+    <span class="breadth-dot" style="background:var(--down)"></span>
+  </div>
+  <div class="breadth-stat breadth-extra">
+    持平 89 ｜ 漲停 8 ｜ 跌停 2
+  </div>
+</div>
+
+<!-- Dashboard Grid -->
+<div class="dashboard-grid">
+  <!-- Watchlist -->
+  <div>
+    <div class="card" style="margin-bottom: 20px;">
+      <div class="card-header">
+        <div class="card-title">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--amber)" stroke-width="2">
+            <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/>
+          </svg>
+          我的自選股
+        </div>
+        <a class="card-action" routerLink="/watchlist">管理 →</a>
+      </div>
+      <div class="watchlist-table">
+        <a class="watchlist-row" routerLink="/stock/2330">
+          <div class="stock-info">
+            <span class="stock-symbol">2330</span>
+            <span class="stock-name">台積電 TSMC</span>
+          </div>
+          <div class="stock-price" style="color:var(--up)">850.00</div>
+          <div class="stock-change up">+2.30%</div>
+          <div class="stock-volume">28,543</div>
+        </a>
+        <a class="watchlist-row" routerLink="/stock/AAPL">
+          <div class="stock-info">
+            <span class="stock-symbol">AAPL</span>
+            <span class="stock-name">Apple Inc.</span>
+          </div>
+          <div class="stock-price" style="color:var(--down)">178.52</div>
+          <div class="stock-change down">-0.53%</div>
+          <div class="stock-volume">52.1M</div>
+        </a>
+        <a class="watchlist-row" routerLink="/stock/2382">
+          <div class="stock-info">
+            <span class="stock-symbol">2382</span>
+            <span class="stock-name">廣達電腦</span>
+          </div>
+          <div class="stock-price" style="color:var(--up)">312.00</div>
+          <div class="stock-change up">+4.12%</div>
+          <div class="stock-volume">15,231</div>
+        </a>
+        <a class="watchlist-row" routerLink="/stock/NVDA">
+          <div class="stock-info">
+            <span class="stock-symbol">NVDA</span>
+            <span class="stock-name">NVIDIA Corp.</span>
+          </div>
+          <div class="stock-price" style="color:var(--up)">875.30</div>
+          <div class="stock-change up">+1.82%</div>
+          <div class="stock-volume">41.2M</div>
+        </a>
+        <a class="watchlist-row" routerLink="/stock/3231">
+          <div class="stock-info">
+            <span class="stock-symbol">3231</span>
+            <span class="stock-name">緯創資通</span>
+          </div>
+          <div class="stock-price" style="color:var(--up)">118.50</div>
+          <div class="stock-change up">+1.50%</div>
+          <div class="stock-volume">22,874</div>
+        </a>
+        <a class="watchlist-row" routerLink="/stock/2317">
+          <div class="stock-info">
+            <span class="stock-symbol">2317</span>
+            <span class="stock-name">鴻海精密</span>
+          </div>
+          <div class="stock-price" style="color:var(--down)">178.00</div>
+          <div class="stock-change down">-0.84%</div>
+          <div class="stock-volume">18,562</div>
+        </a>
+      </div>
+    </div>
+
+    <!-- Sector Heat -->
+    <div class="card">
+      <div class="card-header">
+        <div class="card-title">類股表現</div>
+        <div class="card-action">詳細 →</div>
+      </div>
+      <div class="sector-strip">
+        <span class="sector-chip up">半導體 +2.8%</span>
+        <span class="sector-chip up">電腦週邊 +2.1%</span>
+        <span class="sector-chip up">光電 +1.5%</span>
+        <span class="sector-chip up">通信網路 +1.2%</span>
+        <span class="sector-chip up">生技 +0.8%</span>
+        <span class="sector-chip up">金融 +0.3%</span>
+        <span class="sector-chip down">食品 -0.2%</span>
+        <span class="sector-chip down">營建 -0.6%</span>
+        <span class="sector-chip down">航運 -1.2%</span>
+        <span class="sector-chip down">鋼鐵 -1.8%</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- Right column: AI Insight -->
+  <div>
+    <div class="ai-insight-card">
+      <div class="ai-badge">
+        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M12 2L2 7l10 5 10-5-10-5z"/>
+          <path d="M2 17l10 5 10-5"/>
+          <path d="M2 12l10 5 10-5"/>
+        </svg>
+        AI 大盤趨勢分析
+      </div>
+      <p class="ai-insight-text">
+        台股加權指數站穩 22,000 點上方，短線多方格局確立。外資連續第三日買超合計 186 億，資金集中流入 AI 與半導體族群。技術面觀察，指數站上 5 日均線且月線翻揚，短線偏多操作。但量能尚未有效放大至 3,500 億以上，中線仍需觀察。
+      </p>
+      <div class="ai-disclaimer">⚠️ 僅供參考，非投資建議</div>
+    </div>
+  </div>
+</div>

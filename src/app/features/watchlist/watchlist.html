@@ -1,0 +1,182 @@
+<div class="section-label">Watchlist</div>
+<div class="section-title">自選股清單</div>
+
+<!-- ══════ Stats Strip ══════ -->
+<div class="wl-stats">
+  <div class="wl-stat">
+    <span class="wl-stat-val">{{ stats().total }}</span>
+    <span class="wl-stat-lbl">追蹤中</span>
+  </div>
+  <div class="wl-stat-divider"></div>
+  <div class="wl-stat">
+    <span class="wl-stat-val" style="color:var(--up)">{{ stats().up }}</span>
+    <span class="wl-stat-lbl">上漲</span>
+  </div>
+  <div class="wl-stat">
+    <span class="wl-stat-val" style="color:var(--down)">{{ stats().down }}</span>
+    <span class="wl-stat-lbl">下跌</span>
+  </div>
+  <div class="wl-stat-divider"></div>
+  <div class="wl-stat">
+    <span class="wl-stat-val">{{ stats().avgChange > 0 ? '+' : '' }}{{ stats().avgChange.toFixed(2) }}%</span>
+    <span class="wl-stat-lbl">平均漲跌</span>
+  </div>
+  <div class="wl-stat-spacer"></div>
+  <div class="wl-market-pills">
+    <span class="wl-market-pill">
+      🇹🇼 {{ marketBreakdown().tw.count }} 檔
+      <span [style.color]="marketBreakdown().tw.avgChange >= 0 ? 'var(--up)' : 'var(--down)'">
+        {{ marketBreakdown().tw.avgChange >= 0 ? '+' : '' }}{{ marketBreakdown().tw.avgChange.toFixed(2) }}%
+      </span>
+    </span>
+    <span class="wl-market-pill">
+      🇺🇸 {{ marketBreakdown().us.count }} 檔
+      <span [style.color]="marketBreakdown().us.avgChange >= 0 ? 'var(--up)' : 'var(--down)'">
+        {{ marketBreakdown().us.avgChange >= 0 ? '+' : '' }}{{ marketBreakdown().us.avgChange.toFixed(2) }}%
+      </span>
+    </span>
+  </div>
+</div>
+
+<!-- ══════ Toolbar ══════ -->
+<div class="wl-toolbar">
+  <div class="wl-groups">
+    @for (g of groups; track g.id) {
+      <button
+        class="wl-group-chip"
+        [class.active]="activeGroup() === g.id"
+        (click)="setGroup(g.id)">
+        @switch (g.icon) {
+          @case ('list') {
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/><line x1="8" y1="18" x2="21" y2="18"/><line x1="3" y1="6" x2="3.01" y2="6"/><line x1="3" y1="12" x2="3.01" y2="12"/><line x1="3" y1="18" x2="3.01" y2="18"/></svg>
+          }
+          @case ('tw') {
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 014 10 15.3 15.3 0 01-4 10 15.3 15.3 0 01-4-10 15.3 15.3 0 014-10z"/></svg>
+          }
+          @case ('us') {
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 014 10 15.3 15.3 0 01-4 10 15.3 15.3 0 01-4-10 15.3 15.3 0 014-10z"/></svg>
+          }
+          @case ('cpu') {
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="4" y="4" width="16" height="16" rx="2"/><rect x="9" y="9" width="6" height="6"/><line x1="9" y1="1" x2="9" y2="4"/><line x1="15" y1="1" x2="15" y2="4"/><line x1="9" y1="20" x2="9" y2="23"/><line x1="15" y1="20" x2="15" y2="23"/><line x1="20" y1="9" x2="23" y2="9"/><line x1="20" y1="14" x2="23" y2="14"/><line x1="1" y1="9" x2="4" y2="9"/><line x1="1" y1="14" x2="4" y2="14"/></svg>
+          }
+          @case ('coin') {
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 000 7h5a3.5 3.5 0 010 7H6"/></svg>
+          }
+        }
+        {{ g.name }}
+      </button>
+    }
+  </div>
+  <div class="wl-actions">
+    <div class="wl-search">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/>
+      </svg>
+      <input
+        type="text"
+        placeholder="搜尋代碼或名稱..."
+        [ngModel]="searchQuery()"
+        (ngModelChange)="searchQuery.set($event)">
+    </div>
+    <button class="btn-sm btn-sm-primary" (click)="toggleAddForm()">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+        <line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/>
+      </svg>
+      新增
+    </button>
+  </div>
+</div>
+
+<!-- ══════ Add Form ══════ -->
+@if (showAddForm()) {
+  <div class="wl-add-form">
+    <input
+      class="form-input"
+      type="text"
+      placeholder="輸入股票代碼（如 2330 或 NVDA）"
+      [ngModel]="newSymbol()"
+      (ngModelChange)="newSymbol.set($event)"
+      (keydown.enter)="addStock()">
+    <button class="btn-sm btn-sm-primary" (click)="addStock()">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+        <polyline points="20 6 9 17 4 12"/>
+      </svg>
+      加入
+    </button>
+    <button class="btn-sm btn-sm-outline" (click)="toggleAddForm()">取消</button>
+  </div>
+}
+
+<!-- ══════ Stock Table ══════ -->
+<div class="card">
+  <!-- Table Header -->
+  <div class="wl-table-head">
+    <button class="wl-th wl-th-stock" (click)="toggleSort('symbol')">
+      股票
+      @if (sortField() === 'symbol') {
+        <span class="sort-arrow">{{ sortDir() === 'asc' ? '▲' : '▼' }}</span>
+      }
+    </button>
+    <button class="wl-th wl-th-price" (click)="toggleSort('price')">
+      現價
+      @if (sortField() === 'price') {
+        <span class="sort-arrow">{{ sortDir() === 'asc' ? '▲' : '▼' }}</span>
+      }
+    </button>
+    <button class="wl-th wl-th-change" (click)="toggleSort('change')">
+      漲跌幅
+      @if (sortField() === 'change') {
+        <span class="sort-arrow">{{ sortDir() === 'asc' ? '▲' : '▼' }}</span>
+      }
+    </button>
+    <button class="wl-th wl-th-vol" (click)="toggleSort('volume')">
+      成交量
+      @if (sortField() === 'volume') {
+        <span class="sort-arrow">{{ sortDir() === 'asc' ? '▲' : '▼' }}</span>
+      }
+    </button>
+    <div class="wl-th wl-th-action"></div>
+  </div>
+
+  <!-- Stock Rows -->
+  <div class="wl-table-body">
+    @for (stock of filteredStocks(); track stock.symbol) {
+      <a class="wl-row" [routerLink]="getStockLink(stock)">
+        <div class="wl-cell-stock">
+          <div class="wl-market-dot" [attr.data-market]="stock.market"></div>
+          <div class="wl-stock-info">
+            <span class="wl-symbol">{{ stock.symbol }}</span>
+            <span class="wl-name">{{ stock.name }}</span>
+          </div>
+        </div>
+        <div class="wl-cell-price" [class.is-up]="stock.change > 0" [class.is-down]="stock.change < 0">
+          {{ formatPrice(stock.price) }}
+        </div>
+        <div class="wl-cell-change">
+          <span class="wl-change-badge" [class.up]="stock.change > 0" [class.down]="stock.change < 0" [class.flat]="stock.change === 0">
+            {{ formatChange(stock) }}
+          </span>
+        </div>
+        <div class="wl-cell-vol">
+          {{ formatVolume(stock.volume, stock.market) }}
+        </div>
+        <div class="wl-cell-action">
+          <button class="wl-remove-btn" (click)="removeStock(stock.symbol, $event)">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>
+            </svg>
+          </button>
+        </div>
+      </a>
+    }
+
+    @if (filteredStocks().length === 0) {
+      <div class="wl-empty">
+        <svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="var(--gray-faint)" stroke-width="1.5">
+          <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/>
+        </svg>
+        <p>尚無符合條件的自選股</p>
+      </div>
+    }
+  </div>
+</div>

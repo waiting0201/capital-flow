@@ -1,0 +1,226 @@
+// ═══════════ INDICES STRIP ═══════════
+.indices-strip {
+  display: flex;
+  gap: 0;
+  margin-bottom: 28px;
+  border-radius: 14px;
+  overflow: hidden;
+  background: var(--surface-card);
+  border: 1px solid var(--border);
+  box-shadow: var(--shadow-sm);
+}
+
+.index-card {
+  flex: 1;
+  padding: 18px 20px;
+  border-right: 1px solid var(--border);
+  cursor: pointer;
+  transition: background 0.2s;
+
+  &:last-child { border-right: none; }
+  &:hover { background: var(--surface-elevated); }
+}
+
+.index-flag { font-size: 11px; margin-bottom: 2px; }
+.index-name {
+  font-size: 11px;
+  color: var(--gray);
+  font-weight: 500;
+  margin-bottom: 6px;
+}
+.index-value {
+  font-family: var(--font-mono);
+  font-size: 20px;
+  font-weight: 600;
+  margin-bottom: 4px;
+  letter-spacing: -0.5px;
+}
+.index-change {
+  font-family: var(--font-mono);
+  font-size: 12px;
+  font-weight: 500;
+}
+
+.is-up .index-value,
+.is-up .index-change { color: var(--up); }
+.is-down .index-value,
+.is-down .index-change { color: var(--down); }
+
+// ═══════════ BREADTH BAR ═══════════
+.breadth-bar {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  margin-bottom: 28px;
+  padding: 12px 20px;
+  background: var(--surface-card);
+  border-radius: 10px;
+  border: 1px solid var(--border);
+}
+
+.breadth-meter {
+  flex: 1;
+  height: 6px;
+  border-radius: 3px;
+  background: var(--linen-warm);
+  overflow: hidden;
+  display: flex;
+}
+.breadth-up { background: var(--up); height: 100%; border-radius: 3px 0 0 3px; }
+.breadth-flat { background: var(--gray-faint); height: 100%; }
+.breadth-down { background: var(--down); height: 100%; border-radius: 0 3px 3px 0; }
+
+.breadth-stat {
+  font-size: 12px;
+  font-weight: 500;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+.breadth-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+}
+.breadth-extra {
+  margin-left: 8px;
+  color: var(--gray-light);
+  font-size: 11px;
+}
+
+// ═══════════ DASHBOARD GRID ═══════════
+.dashboard-grid {
+  display: grid;
+  grid-template-columns: 1fr 360px;
+  gap: 24px;
+}
+
+// ═══════════ WATCHLIST ═══════════
+.watchlist-table { width: 100%; }
+
+.watchlist-row {
+  display: grid;
+  grid-template-columns: 1fr auto auto auto;
+  align-items: center;
+  padding: 14px 20px;
+  gap: 16px;
+  border-bottom: 1px solid rgba(58, 99, 81, 0.06);
+  cursor: pointer;
+  transition: background 0.2s;
+  text-decoration: none;
+  color: inherit;
+
+  &:hover { background: var(--surface-elevated); }
+  &:last-child { border-bottom: none; }
+}
+
+.stock-info { display: flex; flex-direction: column; }
+.stock-symbol {
+  font-family: var(--font-mono);
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--olivine);
+}
+.stock-name {
+  font-size: 11px;
+  color: var(--gray);
+  margin-top: 1px;
+}
+
+.stock-price {
+  font-family: var(--font-mono);
+  font-size: 15px;
+  font-weight: 600;
+  text-align: right;
+}
+
+.stock-change {
+  font-family: var(--font-mono);
+  font-size: 12px;
+  font-weight: 500;
+  padding: 3px 8px;
+  border-radius: 6px;
+  text-align: right;
+  min-width: 72px;
+
+  &.up { color: var(--up); background: var(--up-bg); }
+  &.down { color: var(--down); background: var(--down-bg); }
+}
+
+.stock-volume {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  color: var(--gray-light);
+  text-align: right;
+}
+
+// ═══════════ SECTOR STRIP ═══════════
+.sector-strip {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+  padding: 16px 20px;
+}
+
+.sector-chip {
+  font-size: 11px;
+  padding: 5px 10px;
+  border-radius: 6px;
+  font-weight: 500;
+  font-family: var(--font-mono);
+  cursor: pointer;
+  transition: transform 0.2s;
+
+  &:hover { transform: scale(1.05); }
+  &.up {
+    background: var(--up-bg);
+    color: var(--up);
+    border: 1px solid rgba(225, 79, 79, 0.15);
+  }
+  &.down {
+    background: var(--down-bg);
+    color: var(--down);
+    border: 1px solid rgba(34, 193, 161, 0.15);
+  }
+}
+
+// ═══════════ AI INSIGHT ═══════════
+.ai-insight-card {
+  background: linear-gradient(135deg, var(--olivine) 0%, #3d4347 100%);
+  border-radius: 14px;
+  padding: 20px;
+  color: #fff;
+  position: relative;
+  overflow: hidden;
+
+  &::before {
+    content: '';
+    position: absolute;
+    top: -40px;
+    right: -40px;
+    width: 120px;
+    height: 120px;
+    border-radius: 50%;
+    background: radial-gradient(circle, rgba(197, 160, 89, 0.15), transparent 70%);
+  }
+}
+
+.ai-insight-text {
+  font-size: 13px;
+  line-height: 1.7;
+  color: rgba(255, 255, 255, 0.85);
+  margin: 12px 0 16px;
+}
+
+// ═══════════ RESPONSIVE ═══════════
+@media (max-width: 1200px) {
+  .dashboard-grid { grid-template-columns: 1fr; }
+}
+
+@media (max-width: 768px) {
+  .indices-strip { flex-direction: column; }
+  .index-card {
+    border-right: none;
+    border-bottom: 1px solid var(--border);
+  }
+}

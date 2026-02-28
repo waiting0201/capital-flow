@@ -1,0 +1,359 @@
+<!-- ══════ Back Link ══════ -->
+<a class="sd-back" routerLink="/watchlist">
+  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+    <line x1="19" y1="12" x2="5" y2="12"/><polyline points="12 19 5 12 12 5"/>
+  </svg>
+  返回自選股
+</a>
+
+<!-- ══════ Compact Header ══════ -->
+<div class="sd-header">
+  <div class="sd-header-top">
+    <span class="sd-market-badge" [attr.data-market]="quote().market">
+      {{ quote().market === 'tw' ? '🇹🇼 台股' : '🇺🇸 美股' }}
+    </span>
+    <span class="sd-symbol">{{ quote().symbol }}</span>
+    <span class="sd-name">{{ quote().name }}</span>
+    @if (profile().industry) {
+      <span class="sd-industry">{{ profile().industry }}</span>
+    }
+    <div class="sd-price-group" [class.is-up]="quote().change > 0" [class.is-down]="quote().change < 0">
+      <span class="sd-price">{{ formatPrice(quote().price) }}</span>
+      <span class="sd-change">{{ quote().change > 0 ? '▲' : '▼' }} {{ formatChange(quote()) }}</span>
+    </div>
+  </div>
+  <div class="sd-metrics-strip">
+    @for (m of keyMetrics(); track m.label) {
+      <div class="sd-metric">
+        <span class="sd-metric-lbl">{{ m.label }}</span>
+        <span class="sd-metric-val">{{ m.value }}</span>
+      </div>
+    }
+  </div>
+</div>
+
+<!-- ══════ Company Info ══════ -->
+<div class="sd-company">
+  <div class="sd-company-desc">
+    <span class="sd-company-label">公司簡介</span>
+    {{ profile().description }}
+  </div>
+  <div class="sd-company-details">
+    @if (profile().mainBusiness) {
+      <div class="sd-company-item">
+        <span class="sd-company-key">主要業務</span>
+        <span class="sd-company-val">{{ profile().mainBusiness }}</span>
+      </div>
+    }
+    @if (profile().chairman || profile().ceo) {
+      <div class="sd-company-item">
+        <span class="sd-company-key">{{ profile().chairman ? '董事長' : 'CEO' }}</span>
+        <span class="sd-company-val">{{ profile().chairman || profile().ceo }}</span>
+      </div>
+    }
+    @if (profile().capital) {
+      <div class="sd-company-item">
+        <span class="sd-company-key">資本額</span>
+        <span class="sd-company-val">{{ formatCapital(profile().capital, profile().market) }}</span>
+      </div>
+    }
+    @if (profile().establishedDate) {
+      <div class="sd-company-item">
+        <span class="sd-company-key">成立</span>
+        <span class="sd-company-val">{{ formatEstDate(profile().establishedDate) }}</span>
+      </div>
+    }
+  </div>
+</div>
+
+<!-- ══════ AI Action Banner ══════ -->
+<div class="sd-ai-banner">
+  <div class="sd-ai-banner-top">
+    <div class="sd-ai-banner-left">
+      <span class="ai-badge">
+        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2L2 7l10 5 10-5-10-5z"/><path d="M2 17l10 5 10-5"/><path d="M2 12l10 5 10-5"/></svg>
+        AI 投資建議
+      </span>
+      <span class="sd-ai-action-label">{{ aiInvestment.action }}</span>
+      <span class="sd-ai-confidence">信心度 {{ aiInvestment.confidence }}% · {{ aiAnalysis.rating }}</span>
+    </div>
+    <div class="sd-ai-banner-prices">
+      <span class="sd-ai-meta">進場 <strong>{{ aiInvestment.entryZone.low }}-{{ aiInvestment.entryZone.high }}</strong></span>
+      <span class="sd-ai-meta">目標 <strong style="color:#8edb8e">{{ aiInvestment.targetPrice }}</strong></span>
+      <span class="sd-ai-meta">停損 <strong style="color:#f09090">{{ aiInvestment.stopLoss }}</strong></span>
+    </div>
+    <div class="sd-ai-banner-right">
+      <div class="sd-mini-ring">
+        <svg viewBox="0 0 60 60">
+          <circle cx="30" cy="30" r="25" fill="none" stroke="rgba(255,255,255,0.15)" stroke-width="4"/>
+          <circle cx="30" cy="30" r="25" fill="none" stroke="#fff" stroke-width="4"
+            stroke-linecap="round" stroke-dasharray="157" [attr.stroke-dashoffset]="157 - (157 * aiAnalysis.score / 100)"
+            transform="rotate(-90 30 30)"/>
+        </svg>
+        <span class="sd-mini-ring-val">{{ aiAnalysis.score }}</span>
+      </div>
+    </div>
+  </div>
+  <div class="sd-ai-banner-detail">
+    <p class="sd-ai-summary">{{ aiAnalysis.summary }}</p>
+    <div class="sd-ai-tags">
+      <span class="sd-ai-tag">{{ aiInvestment.horizon }}</span>
+      <span class="sd-ai-tag">風險：{{ aiInvestment.riskLevel }}</span>
+      <span class="sd-ai-tag">預期報酬 {{ aiInvestment.expectedReturn }}</span>
+      <span class="sd-ai-tag">風報比 {{ aiInvestment.riskRewardRatio }}</span>
+      <span class="sd-ai-tag-time">更新 {{ aiAnalysis.updatedAt }}</span>
+    </div>
+  </div>
+</div>
+
+<!-- ══════ Chart Section ══════ -->
+<div class="card" style="margin-bottom:16px">
+  <div class="card-header">
+    <div class="card-title">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--amber)" stroke-width="2"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
+      技術線圖
+    </div>
+    <div class="sd-range-pills">
+      @for (r of chartRanges; track r) {
+        <button class="sd-range-pill" [class.active]="chartRange() === r" (click)="setChartRange(r)">{{ r }}</button>
+      }
+    </div>
+  </div>
+  <div class="sd-chart-area">
+    <apx-chart
+      [series]="candleSeries()"
+      [chart]="candleChart"
+      [xaxis]="xAxis"
+      [yaxis]="candleYAxis"
+      [plotOptions]="candleOptions"
+      [dataLabels]="dataLabels"
+      [stroke]="stroke"
+      [grid]="grid"
+      [tooltip]="candleTooltip"
+    ></apx-chart>
+    <div class="sd-volume-label">成交量</div>
+    <apx-chart
+      [series]="volumeSeries()"
+      [chart]="volumeChart"
+      [xaxis]="xAxis"
+      [yaxis]="volumeYAxis"
+      [dataLabels]="dataLabels"
+      [plotOptions]="{ bar: { columnWidth: '60%' } }"
+      [grid]="grid"
+      [legend]="legend"
+      [tooltip]="volumeTooltip"
+    ></apx-chart>
+  </div>
+</div>
+
+<!-- ══════ Dashboard Grid ══════ -->
+<div class="sd-dashboard">
+  <!-- Left Column -->
+  <div class="sd-dash-col">
+
+    <!-- AI Strategy + Catalysts -->
+    <div class="card">
+      <div class="card-header">
+        <div class="card-title">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--amber)" stroke-width="2"><path d="M12 2L2 7l10 5 10-5-10-5z"/><path d="M2 17l10 5 10-5"/><path d="M2 12l10 5 10-5"/></svg>
+          操作策略
+        </div>
+      </div>
+      <div class="sd-strategy-body">
+        <p class="sd-strategy-text">{{ aiInvestment.strategy }}</p>
+        <div class="sd-strategy-note">{{ aiInvestment.positionSuggestion }}</div>
+        <div class="sd-catalyst-label">關鍵催化事件</div>
+        @for (c of aiInvestment.catalysts; track c.event) {
+          <div class="sd-catalyst-row">
+            <span class="sd-catalyst-dot" [style.background]="getImpactColor(c.impact)"></span>
+            <span class="sd-catalyst-event">{{ c.event }}</span>
+            <span class="sd-catalyst-date">{{ c.date }}</span>
+          </div>
+        }
+      </div>
+    </div>
+
+    <!-- Factor Scores -->
+    <div class="card">
+      <div class="card-header"><div class="card-title">四維度評分</div></div>
+      <div class="sd-factor-list-wrap">
+        @for (f of aiAnalysis.factors; track f.label) {
+          <div class="sd-factor">
+            <div class="sd-factor-head">
+              <span class="sd-factor-name">{{ f.label }}</span>
+              <span class="sd-factor-score" [style.color]="getScoreColor(f.score)">{{ f.score }}</span>
+            </div>
+            <div class="sd-factor-bar">
+              <div class="sd-factor-fill" [style.width.%]="f.score" [style.background]="getScoreColor(f.score)"></div>
+            </div>
+            <div class="sd-factor-detail">{{ f.detail }}</div>
+          </div>
+        }
+      </div>
+    </div>
+
+    <!-- Financials -->
+    <div class="card">
+      <div class="card-header">
+        <div class="card-title">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--amber)" stroke-width="2"><line x1="12" y1="20" x2="12" y2="10"/><line x1="18" y1="20" x2="18" y2="4"/><line x1="6" y1="20" x2="6" y2="16"/></svg>
+          季度財務
+        </div>
+      </div>
+      <table class="data-table">
+        <thead>
+          <tr>
+            <th>季度</th><th>營收 (億)</th><th>毛利率</th><th>EPS</th><th>YoY</th>
+          </tr>
+        </thead>
+        <tbody>
+          @for (row of financialData; track row.period) {
+            <tr>
+              <td class="row-label">{{ row.period }}</td>
+              <td>{{ row.revenue }}</td>
+              <td>{{ row.grossMargin }}</td>
+              <td>{{ row.eps }}</td>
+              <td style="color:var(--up); font-weight:600">{{ row.yoy }}</td>
+            </tr>
+          }
+        </tbody>
+      </table>
+    </div>
+
+    <!-- Bull / Bear Reasons -->
+    <div class="card">
+      <div class="card-header"><div class="card-title">多空因素分析</div></div>
+      <div class="sd-reasons-grid">
+        <div class="sd-reasons-col">
+          <div class="sd-reasons-head" style="color:var(--up)">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="23 6 13.5 15.5 8.5 10.5 1 18"/><polyline points="17 6 23 6 23 12"/></svg>
+            看多
+          </div>
+          @for (r of aiInvestment.reasons; track r.text) {
+            @if (r.type === 'bull') {
+              <div class="sd-reason-item sd-reason-bull">{{ r.text }}</div>
+            }
+          }
+        </div>
+        <div class="sd-reasons-col">
+          <div class="sd-reasons-head" style="color:var(--down)">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="23 18 13.5 8.5 8.5 13.5 1 6"/><polyline points="17 18 23 18 23 12"/></svg>
+            看空
+          </div>
+          @for (r of aiInvestment.reasons; track r.text) {
+            @if (r.type === 'bear') {
+              <div class="sd-reason-item sd-reason-bear">{{ r.text }}</div>
+            }
+          }
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- Right Column -->
+  <div class="sd-dash-col">
+
+    <!-- Institutional -->
+    <div class="card">
+      <div class="card-header">
+        <div class="card-title">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--amber)" stroke-width="2"><path d="M3 21h18M3 10h18M5 6l7-3 7 3M4 10v11M20 10v11M8 14v3M12 14v3M16 14v3"/></svg>
+          三大法人（張）
+        </div>
+      </div>
+      <table class="data-table">
+        <thead>
+          <tr><th>日期</th><th>外資</th><th>投信</th><th>自營商</th><th>合計</th></tr>
+        </thead>
+        <tbody>
+          @for (row of institutionalData; track row.date) {
+            <tr>
+              <td class="row-label">{{ row.date }}</td>
+              <td [style.color]="row.foreign.startsWith('+') ? 'var(--up)' : 'var(--down)'">{{ row.foreign }}</td>
+              <td [style.color]="row.investment.startsWith('+') ? 'var(--up)' : 'var(--down)'">{{ row.investment }}</td>
+              <td [style.color]="row.dealer.startsWith('+') ? 'var(--up)' : 'var(--down)'">{{ row.dealer }}</td>
+              <td style="font-weight:700" [style.color]="row.total.startsWith('+') ? 'var(--up)' : 'var(--down)'">{{ row.total }}</td>
+            </tr>
+          }
+        </tbody>
+      </table>
+    </div>
+
+    <!-- Sentiment + News -->
+    <div class="card">
+      <div class="card-header">
+        <div class="card-title">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--amber)" stroke-width="2"><path d="M22 12h-4l-3 9L9 3l-3 9H2"/></svg>
+          輿情 &amp; 新聞
+        </div>
+        <span class="sd-buzz-score" [style.color]="getSentimentColor(mediaSentiment.buzzScore)">
+          熱度 {{ mediaSentiment.buzzScore }}
+          @if (mediaSentiment.buzzTrend === 'up') { ▲ }
+          @if (mediaSentiment.buzzTrend === 'down') { ▼ }
+        </span>
+      </div>
+      <!-- Sentiment Bar -->
+      <div class="sd-sentiment-compact">
+        <div class="sd-sentiment-bar">
+          <div class="sd-sent-pos" [style.width.%]="mediaSentiment.positive"></div>
+          <div class="sd-sent-neu" [style.width.%]="mediaSentiment.neutral"></div>
+          <div class="sd-sent-neg" [style.width.%]="mediaSentiment.negative"></div>
+        </div>
+        <div class="sd-sentiment-legend">
+          <span class="sd-sent-label"><span class="sd-dot" style="background:var(--up)"></span>正面 {{ mediaSentiment.positive }}%</span>
+          <span class="sd-sent-label"><span class="sd-dot" style="background:var(--gray-faint)"></span>中性 {{ mediaSentiment.neutral }}%</span>
+          <span class="sd-sent-label"><span class="sd-dot" style="background:var(--down)"></span>負面 {{ mediaSentiment.negative }}%</span>
+        </div>
+      </div>
+      <!-- News List -->
+      <div class="sd-news-list">
+        @for (item of newsItems; track item.title) {
+          <div class="sd-news-item">
+            <div class="sd-news-tag" [attr.data-tag]="item.tag"></div>
+            <div class="sd-news-body">
+              <div class="sd-news-title">{{ item.title }}</div>
+              <div class="sd-news-meta">
+                <span class="sd-news-source">{{ item.source }}</span>
+                <span class="sd-news-time">{{ item.time }}</span>
+              </div>
+            </div>
+          </div>
+        }
+      </div>
+    </div>
+
+    <!-- Analyst + Social compact -->
+    <div class="sd-analyst-social">
+      <div class="card">
+        <div class="card-header"><div class="card-title">券商評等</div></div>
+        @for (a of analystRatings; track a.firm) {
+          <div class="sd-analyst-row">
+            <div class="sd-analyst-firm">{{ a.firm }}</div>
+            <div class="sd-analyst-rating" [style.color]="getRatingColor(a.rating)">{{ a.rating }}</div>
+            <div class="sd-analyst-target">目標 <strong>{{ a.target }}</strong></div>
+            <div class="sd-analyst-date">{{ a.date }}</div>
+          </div>
+        }
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<!-- ══════ Scenario Analysis ══════ -->
+<div class="card" style="margin-top:16px">
+  <div class="card-header"><div class="card-title">情境分析</div></div>
+  <div class="sd-scenario-list">
+    @for (s of aiInvestment.scenarios; track s.label) {
+      <div class="sd-scenario-row">
+        <div class="sd-scenario-label" [class.optimistic]="s.label === '樂觀'" [class.base]="s.label === '基準'" [class.pessimistic]="s.label === '悲觀'">{{ s.label }}</div>
+        <div class="sd-scenario-prob">{{ s.probability }}</div>
+        <div class="sd-scenario-target">目標 {{ s.target }}</div>
+        <div class="sd-scenario-trigger">{{ s.trigger }}</div>
+      </div>
+    }
+  </div>
+</div>
+
+<div class="ai-disclaimer" style="margin-top:12px">⚠️ 以上分析由 AI 模型生成，僅供參考，不構成任何投資建議。投資有風險，決策請審慎評估。</div>

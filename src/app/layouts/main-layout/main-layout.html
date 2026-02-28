@@ -1,0 +1,111 @@
+<!-- ═══════════ SIDEBAR ═══════════ -->
+<aside class="sidebar">
+  <img src="brand-assets/logo2_w.png" class="sidebar-logo" alt="Capital Flow">
+
+  <nav class="sidebar-nav">
+    <a routerLink="/home" routerLinkActive="active" class="nav-item">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z"/>
+        <polyline points="9 22 9 12 15 12 15 22"/>
+      </svg>
+      <span class="nav-tooltip">首頁</span>
+    </a>
+    <a routerLink="/market" routerLinkActive="active" class="nav-item">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <line x1="12" y1="20" x2="12" y2="10"/>
+        <line x1="18" y1="20" x2="18" y2="4"/>
+        <line x1="6" y1="20" x2="6" y2="16"/>
+      </svg>
+      <span class="nav-tooltip">大盤</span>
+    </a>
+    <a routerLink="/search" routerLinkActive="active" class="nav-item">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/>
+      </svg>
+      <span class="nav-tooltip">搜尋</span>
+    </a>
+    <a routerLink="/watchlist" routerLinkActive="active" class="nav-item">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/>
+      </svg>
+      <span class="nav-tooltip">自選股</span>
+    </a>
+    <a routerLink="/alerts" routerLinkActive="active" class="nav-item">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <path d="M18 8A6 6 0 006 8c0 7-3 9-3 9h18s-3-2-3-9"/>
+        <path d="M13.73 21a2 2 0 01-3.46 0"/>
+      </svg>
+      <span class="nav-tooltip">警示</span>
+    </a>
+  </nav>
+
+  <div class="sidebar-bottom">
+    <a routerLink="/settings" routerLinkActive="active" class="nav-item">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <circle cx="12" cy="12" r="3"/>
+        <path d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 010 2.83 2 2 0 01-2.83 0l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 01-4 0v-.09A1.65 1.65 0 009 19.4a1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 01-2.83-2.83l.06-.06A1.65 1.65 0 004.68 15a1.65 1.65 0 00-1.51-1H3a2 2 0 010-4h.09A1.65 1.65 0 004.6 9a1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 012.83-2.83l.06.06A1.65 1.65 0 009 4.68a1.65 1.65 0 001-1.51V3a2 2 0 014 0v.09a1.65 1.65 0 001 1.51 1.65 1.65 0 001.82-.33l.06-.06a2 2 0 012.83 2.83l-.06.06A1.65 1.65 0 0019.4 9a1.65 1.65 0 001.51 1H21a2 2 0 010 4h-.09a1.65 1.65 0 00-1.51 1z"/>
+      </svg>
+      <span class="nav-tooltip">設定</span>
+    </a>
+  </div>
+</aside>
+
+<!-- ═══════════ MAIN AREA ═══════════ -->
+<main class="main">
+  <!-- Header -->
+  <header class="header">
+    <div class="search-container">
+      <svg class="search-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <circle cx="11" cy="11" r="8"/>
+        <line x1="21" y1="21" x2="16.65" y2="16.65"/>
+      </svg>
+      <input class="search-input" type="text" readonly
+             placeholder="搜尋股票代碼、名稱，或輸入概念關鍵字如「AI」「電動車」..."
+             (focus)="goToSearch()" (click)="goToSearch()">
+      <span class="search-kbd">⌘K</span>
+    </div>
+
+    <div class="market-toggle">
+      <button class="market-btn" [class.active]="market() === 'tw'" (click)="toggleMarket('tw')">台股</button>
+      <button class="market-btn" [class.active]="market() === 'us'" (click)="toggleMarket('us')">美股</button>
+    </div>
+
+    <div class="header-actions">
+      <button class="notification-btn" routerLink="/alerts">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M18 8A6 6 0 006 8c0 7-3 9-3 9h18s-3-2-3-9"/>
+          <path d="M13.73 21a2 2 0 01-3.46 0"/>
+        </svg>
+        <span class="notification-badge"></span>
+      </button>
+      <div class="avatar-wrapper">
+        <button class="avatar" (click)="toggleMenu()">T</button>
+        @if (menuOpen()) {
+          <div class="avatar-menu">
+            <a routerLink="/settings" class="menu-item" (click)="menuOpen.set(false)">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">
+                <circle cx="12" cy="12" r="3"/>
+                <path d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 010 2.83 2 2 0 01-2.83 0l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 01-4 0v-.09A1.65 1.65 0 009 19.4a1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 01-2.83-2.83l.06-.06A1.65 1.65 0 004.68 15a1.65 1.65 0 00-1.51-1H3a2 2 0 010-4h.09A1.65 1.65 0 004.6 9a1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 012.83-2.83l.06.06A1.65 1.65 0 009 4.68a1.65 1.65 0 001-1.51V3a2 2 0 014 0v.09a1.65 1.65 0 001 1.51 1.65 1.65 0 001.82-.33l.06-.06a2 2 0 012.83 2.83l-.06.06A1.65 1.65 0 0019.4 9a1.65 1.65 0 001.51 1H21a2 2 0 010 4h-.09a1.65 1.65 0 00-1.51 1z"/>
+              </svg>
+              <span>帳戶設定</span>
+            </a>
+            <div class="menu-divider"></div>
+            <button class="menu-item menu-item--danger" (click)="logout()">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">
+                <path d="M9 21H5a2 2 0 01-2-2V5a2 2 0 012-2h4"/>
+                <polyline points="16 17 21 12 16 7"/>
+                <line x1="21" y1="12" x2="9" y2="12"/>
+              </svg>
+              <span>登出</span>
+            </button>
+          </div>
+        }
+      </div>
+    </div>
+  </header>
+
+  <!-- Page Content -->
+  <div class="page-content animate-fade-in">
+    <router-outlet />
+  </div>
+</main>

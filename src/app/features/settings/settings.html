@@ -1,0 +1,806 @@
+<!-- ═══════════ SETTINGS PAGE ═══════════ -->
+<div class="settings-header">
+  <div class="settings-eyebrow">Account</div>
+  <h1 class="settings-title">帳戶設定</h1>
+</div>
+
+<div class="settings-layout">
+  <!-- ── Sidebar Navigation ── -->
+  <nav class="settings-nav">
+    @for (tab of tabs; track tab.key) {
+      <button
+        class="nav-tab"
+        [class.active]="activeTab() === tab.key"
+        (click)="setTab(tab.key)">
+        @switch (tab.icon) {
+          @case ('user') {
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2"/>
+              <circle cx="12" cy="7" r="4"/>
+            </svg>
+          }
+          @case ('key') {
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M21 2l-2 2m-7.61 7.61a5.5 5.5 0 11-7.778 7.778 5.5 5.5 0 017.777-7.777zm0 0L15.5 7.5m0 0l3 3L22 7l-3-3m-3.5 3.5L19 4"/>
+            </svg>
+          }
+          @case ('brain') {
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M12 2L2 7l10 5 10-5-10-5z"/>
+              <path d="M2 17l10 5 10-5"/>
+              <path d="M2 12l10 5 10-5"/>
+            </svg>
+          }
+          @case ('shield') {
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
+            </svg>
+          }
+          @case ('bell') {
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M18 8A6 6 0 006 8c0 7-3 9-3 9h18s-3-2-3-9"/>
+              <path d="M13.73 21a2 2 0 01-3.46 0"/>
+            </svg>
+          }
+        }
+        {{ tab.label }}
+      </button>
+    }
+  </nav>
+
+  <!-- ── Content Area ── -->
+  <div class="settings-content">
+
+    <!-- ━━━━━━━━━━━ PROFILE TAB ━━━━━━━━━━━ -->
+    @if (activeTab() === 'profile') {
+      <div class="tab-panel">
+        <div class="section-card">
+          <div class="section-card-header">
+            <div>
+              <div class="section-card-title">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2"/>
+                  <circle cx="12" cy="7" r="4"/>
+                </svg>
+                個人檔案
+              </div>
+              <div class="section-card-subtitle">管理您的公開資料與聯絡資訊</div>
+            </div>
+          </div>
+          <div class="section-card-body">
+            <!-- Avatar + Name Display -->
+            <div class="profile-top">
+              <div class="avatar-large">{{ avatarInitial() }}</div>
+              <div class="profile-meta">
+                <div class="profile-name-display">{{ profile().displayName }}</div>
+                <div class="profile-email-display">{{ profile().email }}</div>
+                <div class="profile-badges">
+                  <span class="badge badge-plan">
+                    <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+                      <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/>
+                    </svg>
+                    {{ profile().plan }}
+                  </span>
+                  <span class="badge badge-member">
+                    加入於 {{ profile().memberSince }}
+                  </span>
+                </div>
+              </div>
+            </div>
+
+            <!-- Profile Form -->
+            <div class="form-grid">
+              <div class="form-group">
+                <label class="form-label">顯示名稱</label>
+                <input
+                  class="form-input"
+                  type="text"
+                  [value]="profile().displayName"
+                  (input)="updateProfile('displayName', $any($event.target).value)"
+                  placeholder="您的名稱">
+              </div>
+              <div class="form-group">
+                <label class="form-label">電子信箱</label>
+                <input
+                  class="form-input"
+                  type="email"
+                  [value]="profile().email"
+                  (input)="updateProfile('email', $any($event.target).value)"
+                  placeholder="email@example.com">
+              </div>
+              <div class="form-group">
+                <label class="form-label">聯絡電話</label>
+                <input
+                  class="form-input"
+                  type="tel"
+                  [value]="profile().phone"
+                  (input)="updateProfile('phone', $any($event.target).value)"
+                  placeholder="+886 XXX-XXX-XXX">
+              </div>
+              <div class="form-group">
+                <label class="form-label">訂閱方案</label>
+                <input
+                  class="form-input"
+                  type="text"
+                  [value]="profile().plan"
+                  disabled
+                  style="opacity: 0.6; cursor: not-allowed;">
+                <div class="form-hint">如需升級方案，請聯繫客服</div>
+              </div>
+              <div class="form-group full-width">
+                <label class="form-label">個人簡介</label>
+                <textarea
+                  class="form-input"
+                  [value]="profile().bio"
+                  (input)="updateProfile('bio', $any($event.target).value)"
+                  placeholder="簡短介紹您的投資風格或專注領域..."
+                  rows="3"></textarea>
+              </div>
+            </div>
+
+            <div class="form-actions">
+              @if (saveSuccess()) {
+                <div class="save-toast">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+                    <polyline points="20 6 9 17 4 12"/>
+                  </svg>
+                  已儲存
+                </div>
+              }
+              <button class="btn-save" (click)="saveProfile()" [disabled]="saving()">
+                @if (saving()) {
+                  <span class="spinner-sm"></span>
+                  儲存中...
+                } @else {
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <polyline points="20 6 9 17 4 12"/>
+                  </svg>
+                  儲存變更
+                }
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    }
+
+    <!-- ━━━━━━━━━━━ API KEYS TAB ━━━━━━━━━━━ -->
+    @if (activeTab() === 'apiKeys') {
+      <div class="tab-panel">
+        <div class="section-card">
+          <div class="section-card-header">
+            <div>
+              <div class="section-card-title">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <path d="M21 2l-2 2m-7.61 7.61a5.5 5.5 0 11-7.778 7.778 5.5 5.5 0 017.777-7.777zm0 0L15.5 7.5m0 0l3 3L22 7l-3-3m-3.5 3.5L19 4"/>
+                </svg>
+                API 金鑰管理
+              </div>
+              <div class="section-card-subtitle">連接 AI 模型、資料來源與新聞媒體服務</div>
+            </div>
+          </div>
+
+          <!-- Progress Bar -->
+          <div class="setup-progress">
+            <div class="progress-header">
+              <span class="progress-label">設定進度</span>
+              <span class="progress-count">{{ apiKeySetupProgress().configured }} / {{ apiKeySetupProgress().total }} 已連接</span>
+            </div>
+            <div class="progress-track">
+              <div class="progress-fill" [style.width.%]="apiKeySetupProgress().percent"></div>
+            </div>
+          </div>
+
+          <div class="section-card-body">
+            <!-- AI Providers -->
+            <div class="api-group-label">AI 模型服務</div>
+            <div class="api-key-list">
+              @for (key of aiProviders(); track key.provider) {
+                <div class="api-key-row">
+                  <div class="api-provider-icon">{{ key.icon }}</div>
+                  <div class="api-provider-info">
+                    <div class="api-provider-name">{{ key.label }}</div>
+                    @if (key.isValid) {
+                      <div class="api-key-masked">{{ key.maskedKey }}</div>
+                      <div class="api-key-verified">
+                        <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3">
+                          <polyline points="20 6 9 17 4 12"/>
+                        </svg>
+                        驗證於 {{ key.lastVerified }}
+                      </div>
+                    }
+                  </div>
+                  <div class="api-status">
+                    <span class="status-dot" [class.connected]="key.isValid" [class.disconnected]="!key.isValid"></span>
+                    <span class="status-label" [class.connected]="key.isValid" [class.disconnected]="!key.isValid">
+                      {{ key.isValid ? '已連接' : '未設定' }}
+                    </span>
+                  </div>
+                  <div class="api-actions">
+                    @if (key.isValid) {
+                      <button class="btn-sm btn-sm-outline" (click)="startEditApiKey(key.provider)">更新</button>
+                      <button class="btn-sm btn-sm-danger" (click)="removeApiKey(key.provider, 'ai')">移除</button>
+                    } @else {
+                      <button class="btn-sm btn-sm-primary" (click)="startEditApiKey(key.provider)">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+                          <line x1="12" y1="5" x2="12" y2="19"/>
+                          <line x1="5" y1="12" x2="19" y2="12"/>
+                        </svg>
+                        設定
+                      </button>
+                    }
+                  </div>
+                </div>
+                @if (editingApiKey() === key.provider) {
+                  <div class="api-key-edit">
+                    <input
+                      class="form-input"
+                      type="text"
+                      [ngModel]="newApiKeyValue()"
+                      (ngModelChange)="newApiKeyValue.set($event)"
+                      placeholder="貼上您的 API Key...">
+                    <button class="btn-sm btn-sm-primary" (click)="saveApiKey(key.provider, 'ai')">確認</button>
+                    <button class="btn-sm btn-sm-outline" (click)="cancelEditApiKey()">取消</button>
+                  </div>
+                }
+              }
+            </div>
+
+            <!-- Data Sources -->
+            <div class="api-group-label">市場資料來源</div>
+            <div class="api-key-list">
+              @for (key of dataSources(); track key.provider) {
+                <div class="api-key-row">
+                  <div class="api-provider-icon">{{ key.icon }}</div>
+                  <div class="api-provider-info">
+                    <div class="api-provider-name">{{ key.label }}</div>
+                    @if (key.isValid) {
+                      <div class="api-key-masked">{{ key.maskedKey }}</div>
+                      <div class="api-key-verified">
+                        <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3">
+                          <polyline points="20 6 9 17 4 12"/>
+                        </svg>
+                        驗證於 {{ key.lastVerified }}
+                      </div>
+                    }
+                  </div>
+                  <div class="api-status">
+                    <span class="status-dot" [class.connected]="key.isValid" [class.disconnected]="!key.isValid"></span>
+                    <span class="status-label" [class.connected]="key.isValid" [class.disconnected]="!key.isValid">
+                      {{ key.isValid ? '已連接' : '未設定' }}
+                    </span>
+                  </div>
+                  <div class="api-actions">
+                    @if (key.isValid) {
+                      <button class="btn-sm btn-sm-outline" (click)="startEditApiKey(key.provider)">更新</button>
+                      <button class="btn-sm btn-sm-danger" (click)="removeApiKey(key.provider, 'data')">移除</button>
+                    } @else {
+                      <button class="btn-sm btn-sm-primary" (click)="startEditApiKey(key.provider)">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+                          <line x1="12" y1="5" x2="12" y2="19"/>
+                          <line x1="5" y1="12" x2="19" y2="12"/>
+                        </svg>
+                        設定
+                      </button>
+                    }
+                  </div>
+                </div>
+                @if (editingApiKey() === key.provider) {
+                  <div class="api-key-edit">
+                    <input
+                      class="form-input"
+                      type="text"
+                      [ngModel]="newApiKeyValue()"
+                      (ngModelChange)="newApiKeyValue.set($event)"
+                      placeholder="貼上您的 API Key...">
+                    <button class="btn-sm btn-sm-primary" (click)="saveApiKey(key.provider, 'data')">確認</button>
+                    <button class="btn-sm btn-sm-outline" (click)="cancelEditApiKey()">取消</button>
+                  </div>
+                }
+              }
+            </div>
+
+            <!-- Media Providers -->
+            <div class="api-group-label">新聞與媒體</div>
+            <div class="api-key-list">
+              @for (key of mediaProviders(); track key.provider) {
+                <div class="api-key-row">
+                  <div class="api-provider-icon">{{ key.icon }}</div>
+                  <div class="api-provider-info">
+                    <div class="api-provider-name">{{ key.label }}</div>
+                    @if (key.isValid) {
+                      <div class="api-key-masked">{{ key.maskedKey }}</div>
+                      <div class="api-key-verified">
+                        <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3">
+                          <polyline points="20 6 9 17 4 12"/>
+                        </svg>
+                        驗證於 {{ key.lastVerified }}
+                      </div>
+                    }
+                  </div>
+                  <div class="api-status">
+                    <span class="status-dot" [class.connected]="key.isValid" [class.disconnected]="!key.isValid"></span>
+                    <span class="status-label" [class.connected]="key.isValid" [class.disconnected]="!key.isValid">
+                      {{ key.isValid ? '已連接' : '未設定' }}
+                    </span>
+                  </div>
+                  <div class="api-actions">
+                    @if (key.isValid) {
+                      <button class="btn-sm btn-sm-outline" (click)="startEditApiKey(key.provider)">更新</button>
+                      <button class="btn-sm btn-sm-danger" (click)="removeApiKey(key.provider, 'media')">移除</button>
+                    } @else {
+                      <button class="btn-sm btn-sm-primary" (click)="startEditApiKey(key.provider)">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+                          <line x1="12" y1="5" x2="12" y2="19"/>
+                          <line x1="5" y1="12" x2="19" y2="12"/>
+                        </svg>
+                        設定
+                      </button>
+                    }
+                  </div>
+                </div>
+                @if (editingApiKey() === key.provider) {
+                  <div class="api-key-edit">
+                    <input
+                      class="form-input"
+                      type="text"
+                      [ngModel]="newApiKeyValue()"
+                      (ngModelChange)="newApiKeyValue.set($event)"
+                      placeholder="貼上您的 API Key...">
+                    <button class="btn-sm btn-sm-primary" (click)="saveApiKey(key.provider, 'media')">確認</button>
+                    <button class="btn-sm btn-sm-outline" (click)="cancelEditApiKey()">取消</button>
+                  </div>
+                }
+              }
+            </div>
+          </div>
+        </div>
+      </div>
+    }
+
+    <!-- ━━━━━━━━━━━ AI PREFERENCES TAB ━━━━━━━━━━━ -->
+    @if (activeTab() === 'aiPrefs') {
+      <div class="tab-panel">
+        <div class="section-card">
+          <div class="section-card-header">
+            <div>
+              <div class="section-card-title">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <path d="M12 2L2 7l10 5 10-5-10-5z"/>
+                  <path d="M2 17l10 5 10-5"/>
+                  <path d="M2 12l10 5 10-5"/>
+                </svg>
+                AI 偏好設定
+              </div>
+              <div class="section-card-subtitle">調整 AI 分析行為與模型偏好</div>
+            </div>
+          </div>
+          <div class="section-card-body">
+            <!-- Provider Selection -->
+            <div class="pref-row">
+              <div class="pref-info">
+                <div class="pref-label">偏好 AI 供應商</div>
+                <div class="pref-description">選擇預設用於分析的 AI 模型供應商</div>
+              </div>
+              <div class="pref-control">
+                <select
+                  class="select-input"
+                  [ngModel]="aiPrefs().preferredProvider"
+                  (ngModelChange)="updateAiPref('preferredProvider', $event)">
+                  <option value="anthropic">Anthropic (Claude)</option>
+                  <option value="openai">OpenAI (GPT)</option>
+                  <option value="gemini">Google (Gemini)</option>
+                </select>
+              </div>
+            </div>
+
+            <!-- Simple Task Model -->
+            <div class="pref-row">
+              <div class="pref-info">
+                <div class="pref-label">簡單任務模型</div>
+                <div class="pref-description">用於快速查詢、摘要、基本分析等輕量任務</div>
+              </div>
+              <div class="pref-control">
+                <select
+                  class="select-input"
+                  [ngModel]="aiPrefs().simpleTaskModel"
+                  (ngModelChange)="updateAiPref('simpleTaskModel', $event)">
+                  @for (model of currentModels().simple; track model) {
+                    <option [value]="model">{{ model }}</option>
+                  }
+                </select>
+              </div>
+            </div>
+
+            <!-- Complex Task Model -->
+            <div class="pref-row">
+              <div class="pref-info">
+                <div class="pref-label">複雜任務模型</div>
+                <div class="pref-description">用於深度研究、多步推理、投資建議等重量任務</div>
+              </div>
+              <div class="pref-control">
+                <select
+                  class="select-input"
+                  [ngModel]="aiPrefs().complexTaskModel"
+                  (ngModelChange)="updateAiPref('complexTaskModel', $event)">
+                  @for (model of currentModels().complex; track model) {
+                    <option [value]="model">{{ model }}</option>
+                  }
+                </select>
+              </div>
+            </div>
+
+            <!-- Temperature -->
+            <div class="temperature-control">
+              <div class="temperature-header">
+                <div class="pref-label">創意溫度 (Temperature)</div>
+                <div class="temperature-value">
+                  {{ aiPrefs().temperature }}
+                  <span>{{ getTemperatureLabel() }}</span>
+                </div>
+              </div>
+              <input
+                type="range"
+                class="temperature-slider"
+                min="0"
+                max="1"
+                step="0.1"
+                [ngModel]="aiPrefs().temperature"
+                (ngModelChange)="updateAiPref('temperature', $event)">
+              <div class="temperature-labels">
+                <span>精確穩定</span>
+                <span>平衡</span>
+                <span>創意發散</span>
+              </div>
+            </div>
+
+            <!-- Language -->
+            <div class="pref-row">
+              <div class="pref-info">
+                <div class="pref-label">分析語言</div>
+                <div class="pref-description">AI 回覆與分析報告使用的語言</div>
+              </div>
+              <div class="pref-control">
+                <select
+                  class="select-input"
+                  [ngModel]="aiPrefs().language"
+                  (ngModelChange)="updateAiPref('language', $event)">
+                  <option value="zh-TW">繁體中文</option>
+                  <option value="en">English</option>
+                  <option value="ja">日本語</option>
+                </select>
+              </div>
+            </div>
+
+            <!-- Toggles -->
+            <div class="pref-row">
+              <div class="pref-info">
+                <div class="pref-label">自動分析</div>
+                <div class="pref-description">瀏覽個股頁面時自動觸發 AI 分析</div>
+              </div>
+              <label class="toggle">
+                <input
+                  type="checkbox"
+                  [checked]="aiPrefs().autoAnalysis"
+                  (change)="updateAiPref('autoAnalysis', !aiPrefs().autoAnalysis)">
+                <span class="toggle-track"></span>
+              </label>
+            </div>
+
+            <div class="pref-row">
+              <div class="pref-info">
+                <div class="pref-label">顯示信心指數</div>
+                <div class="pref-description">在 AI 分析結果中顯示模型的信心程度</div>
+              </div>
+              <label class="toggle">
+                <input
+                  type="checkbox"
+                  [checked]="aiPrefs().showConfidence"
+                  (change)="updateAiPref('showConfidence', !aiPrefs().showConfidence)">
+                <span class="toggle-track"></span>
+              </label>
+            </div>
+
+            <div class="form-actions">
+              @if (saveSuccess()) {
+                <div class="save-toast">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+                    <polyline points="20 6 9 17 4 12"/>
+                  </svg>
+                  已儲存
+                </div>
+              }
+              <button class="btn-save" (click)="saveAiPrefs()" [disabled]="saving()">
+                @if (saving()) {
+                  <span class="spinner-sm"></span>
+                  儲存中...
+                } @else {
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <polyline points="20 6 9 17 4 12"/>
+                  </svg>
+                  儲存偏好
+                }
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    }
+
+    <!-- ━━━━━━━━━━━ SECURITY TAB ━━━━━━━━━━━ -->
+    @if (activeTab() === 'security') {
+      <div class="tab-panel">
+        <!-- Two-Factor -->
+        <div class="section-card">
+          <div class="section-card-header">
+            <div>
+              <div class="section-card-title">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
+                </svg>
+                安全設定
+              </div>
+              <div class="section-card-subtitle">保護您的帳戶安全</div>
+            </div>
+          </div>
+          <div class="section-card-body">
+            <!-- 2FA Banner -->
+            <div class="two-factor-banner">
+              <div class="two-factor-info">
+                <div class="two-factor-icon">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <rect x="3" y="11" width="18" height="11" rx="2" ry="2"/>
+                    <path d="M7 11V7a5 5 0 0110 0v4"/>
+                  </svg>
+                </div>
+                <div class="two-factor-text">
+                  <div class="title">雙重驗證 (2FA)</div>
+                  <div class="desc">{{ twoFactorEnabled() ? '已啟用 — 您的帳戶受到額外保護' : '建議啟用以增強帳戶安全性' }}</div>
+                </div>
+              </div>
+              <label class="toggle">
+                <input
+                  type="checkbox"
+                  [checked]="twoFactorEnabled()"
+                  (change)="toggleTwoFactor()">
+                <span class="toggle-track"></span>
+              </label>
+            </div>
+
+            <!-- Change Password -->
+            <div class="api-group-label">變更密碼</div>
+            <div class="form-grid" style="margin-bottom: 0;">
+              <div class="form-group full-width">
+                <label class="form-label">目前密碼</label>
+                <div class="password-wrapper">
+                  <input
+                    class="form-input"
+                    [type]="showCurrentPassword() ? 'text' : 'password'"
+                    [ngModel]="passwordForm().currentPassword"
+                    (ngModelChange)="updatePasswordField('currentPassword', $event)"
+                    placeholder="輸入目前的密碼">
+                  <button class="password-toggle" (click)="showCurrentPassword.set(!showCurrentPassword())">
+                    @if (showCurrentPassword()) {
+                      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M17.94 17.94A10.07 10.07 0 0112 20c-7 0-11-8-11-8a18.45 18.45 0 015.06-5.94M9.9 4.24A9.12 9.12 0 0112 4c7 0 11 8 11 8a18.5 18.5 0 01-2.16 3.19m-6.72-1.07a3 3 0 11-4.24-4.24"/>
+                        <line x1="1" y1="1" x2="23" y2="23"/>
+                      </svg>
+                    } @else {
+                      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/>
+                        <circle cx="12" cy="12" r="3"/>
+                      </svg>
+                    }
+                  </button>
+                </div>
+              </div>
+              <div class="form-group">
+                <label class="form-label">新密碼</label>
+                <div class="password-wrapper">
+                  <input
+                    class="form-input"
+                    [type]="showNewPassword() ? 'text' : 'password'"
+                    [ngModel]="passwordForm().newPassword"
+                    (ngModelChange)="updatePasswordField('newPassword', $event)"
+                    placeholder="至少 8 個字元">
+                  <button class="password-toggle" (click)="showNewPassword.set(!showNewPassword())">
+                    @if (showNewPassword()) {
+                      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M17.94 17.94A10.07 10.07 0 0112 20c-7 0-11-8-11-8a18.45 18.45 0 015.06-5.94M9.9 4.24A9.12 9.12 0 0112 4c7 0 11 8 11 8a18.5 18.5 0 01-2.16 3.19m-6.72-1.07a3 3 0 11-4.24-4.24"/>
+                        <line x1="1" y1="1" x2="23" y2="23"/>
+                      </svg>
+                    } @else {
+                      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/>
+                        <circle cx="12" cy="12" r="3"/>
+                      </svg>
+                    }
+                  </button>
+                </div>
+              </div>
+              <div class="form-group">
+                <label class="form-label">確認新密碼</label>
+                <input
+                  class="form-input"
+                  type="password"
+                  [ngModel]="passwordForm().confirmPassword"
+                  (ngModelChange)="updatePasswordField('confirmPassword', $event)"
+                  placeholder="再次輸入新密碼">
+              </div>
+            </div>
+
+            <div class="form-actions">
+              @if (saveSuccess()) {
+                <div class="save-toast">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+                    <polyline points="20 6 9 17 4 12"/>
+                  </svg>
+                  密碼已更新
+                </div>
+              }
+              <button class="btn-save" (click)="changePassword()" [disabled]="saving()">
+                @if (saving()) {
+                  <span class="spinner-sm"></span>
+                  更新中...
+                } @else {
+                  更新密碼
+                }
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Active Sessions -->
+        <div class="section-card">
+          <div class="section-card-header">
+            <div>
+              <div class="section-card-title">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <rect x="2" y="3" width="20" height="14" rx="2" ry="2"/>
+                  <line x1="8" y1="21" x2="16" y2="21"/>
+                  <line x1="12" y1="17" x2="12" y2="21"/>
+                </svg>
+                登入裝置
+              </div>
+              <div class="section-card-subtitle">管理目前已登入的裝置與工作階段</div>
+            </div>
+          </div>
+          <div class="section-card-body">
+            <div class="session-list">
+              @for (session of sessions(); track session.device; let i = $index) {
+                <div class="session-row">
+                  <div class="session-info">
+                    <div class="session-icon">
+                      @if (session.device.includes('MacBook') || session.device.includes('Windows')) {
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                          <rect x="2" y="3" width="20" height="14" rx="2" ry="2"/>
+                          <line x1="8" y1="21" x2="16" y2="21"/>
+                          <line x1="12" y1="17" x2="12" y2="21"/>
+                        </svg>
+                      } @else {
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                          <rect x="5" y="2" width="14" height="20" rx="2" ry="2"/>
+                          <line x1="12" y1="18" x2="12.01" y2="18"/>
+                        </svg>
+                      }
+                    </div>
+                    <div class="session-details">
+                      <div class="device">{{ session.device }}</div>
+                      <div class="location">{{ session.location }}</div>
+                    </div>
+                  </div>
+                  <div class="session-status">
+                    <span class="session-time">{{ session.lastActive }}</span>
+                    @if (session.isCurrent) {
+                      <span class="current-badge">目前裝置</span>
+                    } @else {
+                      <button class="btn-sm btn-sm-danger" (click)="revokeSession(i)">登出</button>
+                    }
+                  </div>
+                </div>
+              }
+            </div>
+          </div>
+        </div>
+      </div>
+    }
+
+    <!-- ━━━━━━━━━━━ NOTIFICATIONS TAB ━━━━━━━━━━━ -->
+    @if (activeTab() === 'notifications') {
+      <div class="tab-panel">
+        <!-- Channels -->
+        <div class="section-card">
+          <div class="section-card-header">
+            <div>
+              <div class="section-card-title">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <path d="M18 8A6 6 0 006 8c0 7-3 9-3 9h18s-3-2-3-9"/>
+                  <path d="M13.73 21a2 2 0 01-3.46 0"/>
+                </svg>
+                通知偏好
+              </div>
+              <div class="section-card-subtitle">設定您希望接收通知的方式與內容</div>
+            </div>
+          </div>
+          <div class="section-card-body">
+            <!-- Delivery Channels -->
+            <div class="api-group-label">通知管道</div>
+            <div class="channel-grid" style="margin-bottom: 24px;">
+              <button
+                class="channel-chip"
+                [class.active]="notifyChannels().inApp"
+                (click)="toggleChannel('inApp')">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <path d="M18 8A6 6 0 006 8c0 7-3 9-3 9h18s-3-2-3-9"/>
+                  <path d="M13.73 21a2 2 0 01-3.46 0"/>
+                </svg>
+                站內通知
+              </button>
+              <button
+                class="channel-chip"
+                [class.active]="notifyChannels().email"
+                (click)="toggleChannel('email')">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/>
+                  <polyline points="22,6 12,13 2,6"/>
+                </svg>
+                Email
+              </button>
+              <button
+                class="channel-chip"
+                [class.active]="notifyChannels().push"
+                (click)="toggleChannel('push')">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <rect x="5" y="2" width="14" height="20" rx="2" ry="2"/>
+                  <line x1="12" y1="18" x2="12.01" y2="18"/>
+                </svg>
+                推播通知
+              </button>
+            </div>
+
+            <!-- Notification Types -->
+            <div class="api-group-label">通知項目</div>
+            @for (notif of notifications(); track notif.key) {
+              <div class="notif-row">
+                <div class="notif-info">
+                  <div class="notif-label">{{ notif.label }}</div>
+                  <div class="notif-description">{{ notif.description }}</div>
+                </div>
+                <label class="toggle">
+                  <input
+                    type="checkbox"
+                    [checked]="notif.enabled"
+                    (change)="toggleNotification(notif.key)">
+                  <span class="toggle-track"></span>
+                </label>
+              </div>
+            }
+
+            <div class="form-actions">
+              @if (saveSuccess()) {
+                <div class="save-toast">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+                    <polyline points="20 6 9 17 4 12"/>
+                  </svg>
+                  已儲存
+                </div>
+              }
+              <button class="btn-save" (click)="saveNotifications()" [disabled]="saving()">
+                @if (saving()) {
+                  <span class="spinner-sm"></span>
+                  儲存中...
+                } @else {
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <polyline points="20 6 9 17 4 12"/>
+                  </svg>
+                  儲存設定
+                }
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    }
+
+  </div>
+</div>

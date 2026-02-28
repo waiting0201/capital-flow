@@ -1,0 +1,55 @@
+// ═══════════════════════════════════════════
+//  CAPITAL FLOW AI-INVEST — Design Tokens
+//  Aesthetic: Editorial Luxury Finance
+// ═══════════════════════════════════════════
+
+:root {
+  // ── Brand CIS ──
+  --moss: #3A6351;
+  --moss-light: #4a7d66;
+  --moss-dark: #2d4e40;
+  --linen: #F1F1E8;
+  --linen-warm: #E8E6D9;
+  --olivine: #323639;
+  --olivine-light: #3d4145;
+  --amber: #C5A059;
+  --amber-light: #d4b472;
+  --amber-glow: rgba(197, 160, 89, 0.15);
+
+  // ── Market Sentiment (Asian Convention: Red = Up) ──
+  --up: #E14F4F;
+  --up-bg: rgba(225, 79, 79, 0.08);
+  --up-glow: rgba(225, 79, 79, 0.15);
+  --down: #22C1A1;
+  --down-bg: rgba(34, 193, 161, 0.08);
+  --down-glow: rgba(34, 193, 161, 0.15);
+
+  // ── Neutral Palette ──
+  --gray: #666D71;
+  --gray-light: #999EA2;
+  --gray-faint: #B8BCBF;
+
+  // ── Surfaces ──
+  --surface-primary: #F1F1E8;
+  --surface-card: #FFFFFF;
+  --surface-elevated: #FAFAF5;
+  --surface-sidebar: #2A2D30;
+  --surface-header: rgba(241, 241, 232, 0.92);
+  --border: rgba(58, 99, 81, 0.12);
+  --border-strong: rgba(58, 99, 81, 0.25);
+
+  // ── Typography ──
+  --font-display: 'Cormorant Garamond', 'Noto Serif TC', Georgia, serif;
+  --font-body: 'Noto Sans TC', -apple-system, sans-serif;
+  --font-mono: 'JetBrains Mono', 'SF Mono', monospace;
+
+  // ── Spacing ──
+  --sidebar-width: 72px;
+  --header-height: 60px;
+
+  // ── Shadows ──
+  --shadow-sm: 0 1px 3px rgba(50, 54, 57, 0.06), 0 1px 2px rgba(50, 54, 57, 0.04);
+  --shadow-md: 0 4px 12px rgba(50, 54, 57, 0.08), 0 2px 4px rgba(50, 54, 57, 0.04);
+  --shadow-lg: 0 12px 40px rgba(50, 54, 57, 0.12), 0 4px 12px rgba(50, 54, 57, 0.06);
+  --shadow-gold: 0 4px 20px rgba(197, 160, 89, 0.2);
+}
