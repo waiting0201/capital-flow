@@ -1,5 +1,4 @@
 import { Component, signal } from '@angular/core';
-import { RouterLink } from '@angular/router';
 
 interface IndexData {
   flag: string;
@@ -44,7 +43,7 @@ interface GlobalIndex {
 @Component({
   selector: 'app-market',
   standalone: true,
-  imports: [RouterLink],
+  imports: [],
   templateUrl: './market.html',
   styleUrl: './market.scss',
 })
