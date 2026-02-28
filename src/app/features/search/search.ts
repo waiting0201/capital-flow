@@ -70,12 +70,21 @@ export class Search {
     const q = this.query().trim().toLowerCase();
     const mkt = this.marketFilter();
     if (!q) return [];
+
+    // Collect stock symbols from matching themes
+    const themeSymbols = new Set<string>();
+    for (const t of this.themes) {
+      if (t.name.toLowerCase().includes(q)) {
+        t.stocks.forEach(sym => themeSymbols.add(sym));
+      }
+    }
+
     return this.allStocks
       .filter(s => {
         if (mkt !== 'all' && s.market !== mkt) return false;
-        return s.symbol.toLowerCase().includes(q) || s.name.toLowerCase().includes(q);
+        return s.symbol.toLowerCase().includes(q) || s.name.toLowerCase().includes(q) || themeSymbols.has(s.symbol);
       })
-      .slice(0, 8);
+      .slice(0, 12);
   });
 
   readonly filteredThemes = computed(() => {
