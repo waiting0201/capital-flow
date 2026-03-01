@@ -21,23 +21,23 @@
   &:hover { background: var(--surface-elevated); }
 }
 
-.index-flag { font-size: 11px; margin-bottom: 2px; }
+.index-flag { font-size: var(--text-xs); margin-bottom: 2px; }
 .index-name {
-  font-size: 11px;
+  font-size: var(--text-xs);
   color: var(--gray);
   font-weight: 500;
   margin-bottom: 6px;
 }
 .index-value {
   font-family: var(--font-mono);
-  font-size: 20px;
+  font-size: var(--text-2xl);
   font-weight: 600;
   margin-bottom: 4px;
   letter-spacing: -0.5px;
 }
 .index-change {
   font-family: var(--font-mono);
-  font-size: 12px;
+  font-size: var(--text-sm);
   font-weight: 500;
 }
 
@@ -71,7 +71,7 @@
 .breadth-down { background: var(--down); height: 100%; border-radius: 0 3px 3px 0; }
 
 .breadth-stat {
-  font-size: 12px;
+  font-size: var(--text-sm);
   font-weight: 500;
   display: flex;
   align-items: center;
@@ -85,7 +85,7 @@
 .breadth-extra {
   margin-left: 8px;
   color: var(--gray-light);
-  font-size: 11px;
+  font-size: var(--text-xs);
 }
 
 // ═══════════ DASHBOARD GRID ═══════════
@@ -117,26 +117,26 @@
 .stock-info { display: flex; flex-direction: column; }
 .stock-symbol {
   font-family: var(--font-mono);
-  font-size: 13px;
+  font-size: var(--text-base);
   font-weight: 600;
   color: var(--olivine);
 }
 .stock-name {
-  font-size: 11px;
+  font-size: var(--text-xs);
   color: var(--gray);
   margin-top: 1px;
 }
 
 .stock-price {
   font-family: var(--font-mono);
-  font-size: 15px;
+  font-size: var(--text-lg);
   font-weight: 600;
   text-align: right;
 }
 
 .stock-change {
   font-family: var(--font-mono);
-  font-size: 12px;
+  font-size: var(--text-sm);
   font-weight: 500;
   padding: 3px 8px;
   border-radius: 6px;
@@ -149,7 +149,7 @@
 
 .stock-volume {
   font-family: var(--font-mono);
-  font-size: 11px;
+  font-size: var(--text-xs);
   color: var(--gray-light);
   text-align: right;
 }
@@ -163,7 +163,7 @@
 }
 
 .sector-chip {
-  font-size: 11px;
+  font-size: var(--text-xs);
   padding: 5px 10px;
   border-radius: 6px;
   font-weight: 500;
@@ -206,7 +206,7 @@
 }
 
 .ai-insight-text {
-  font-size: 13px;
+  font-size: var(--text-base);
   line-height: 1.7;
   color: rgba(255, 255, 255, 0.85);
   margin: 12px 0 16px;

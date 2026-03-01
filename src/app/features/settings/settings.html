@@ -31,6 +31,13 @@
               <path d="M2 12l10 5 10-5"/>
             </svg>
           }
+          @case ('monitor') {
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <rect x="2" y="3" width="20" height="14" rx="2" ry="2"/>
+              <line x1="8" y1="21" x2="16" y2="21"/>
+              <line x1="12" y1="17" x2="12" y2="21"/>
+            </svg>
+          }
           @case ('shield') {
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
               <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
@@ -521,6 +528,68 @@
                   儲存偏好
                 }
               </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    }
+
+    <!-- ━━━━━━━━━━━ DISPLAY TAB ━━━━━━━━━━━ -->
+    @if (activeTab() === 'display') {
+      <div class="tab-panel">
+        <div class="section-card">
+          <div class="section-card-header">
+            <div>
+              <div class="section-card-title">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <polyline points="4 7 4 4 20 4 20 7"/>
+                  <line x1="9" y1="20" x2="15" y2="20"/>
+                  <line x1="12" y1="4" x2="12" y2="20"/>
+                </svg>
+                文字大小
+              </div>
+              <div class="section-card-subtitle">調整介面文字尺寸，適合不同閱讀需求</div>
+            </div>
+          </div>
+          <div class="section-card-body">
+            <!-- Segmented Control -->
+            <div class="text-size-selector">
+              @for (option of textSizeOptions; track option.key) {
+                <button
+                  class="text-size-option"
+                  [class.active]="currentTextSize() === option.key"
+                  (click)="setTextSize(option.key)">
+                  <span class="text-size-label">{{ option.label }}</span>
+                  <span class="text-size-desc">{{ option.description }}</span>
+                  @if (currentTextSize() === option.key) {
+                    <span class="text-size-check">
+                      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3">
+                        <polyline points="20 6 9 17 4 12"/>
+                      </svg>
+                    </span>
+                  }
+                </button>
+              }
+            </div>
+
+            <!-- Live Preview -->
+            <div class="text-size-preview">
+              <div class="preview-eyebrow">Preview</div>
+              <div class="preview-card">
+                <div class="preview-header">
+                  <span class="preview-symbol">2330.TW</span>
+                  <span class="preview-name">台積電</span>
+                  <span class="preview-price">NT$ 1,045.00</span>
+                </div>
+                <div class="preview-body">
+                  台積電為全球最大半導體代工廠，市佔率超過 56%。受惠 AI 晶片需求強勁，先進製程產能利用率維持高檔。
+                </div>
+                <div class="preview-meta">
+                  <span class="preview-tag">AI 半導體</span>
+                  <span class="preview-tag">先進製程</span>
+                  <span class="preview-date">2026-03-01 更新</span>
+                </div>
+              </div>
             </div>
           </div>
         </div>

@@ -1,7 +1,8 @@
-import { Component, signal, computed } from '@angular/core';
+import { Component, signal, computed, inject } from '@angular/core';
 import { FormsModule } from '@angular/forms';
+import { DisplaySettingsService, TextSize } from '../../core/services/display-settings.service';
 
-type SettingsTab = 'profile' | 'apiKeys' | 'aiPrefs' | 'security' | 'notifications';
+type SettingsTab = 'profile' | 'apiKeys' | 'aiPrefs' | 'display' | 'security' | 'notifications';
 type AiProvider = 'anthropic' | 'openai' | 'gemini';
 
 interface ApiKeyEntry {
@@ -28,6 +29,9 @@ interface NotificationPref {
   styleUrl: './settings.scss',
 })
 export class Settings {
+  // ── Services ──
+  private readonly displaySettings = inject(DisplaySettingsService);
+
   // ── Tab State ──
   readonly activeTab = signal<SettingsTab>('profile');
 
@@ -35,9 +39,23 @@ export class Settings {
     { key: 'profile', label: '個人檔案', icon: 'user' },
     { key: 'apiKeys', label: 'API 金鑰', icon: 'key' },
     { key: 'aiPrefs', label: 'AI 偏好', icon: 'brain' },
+    { key: 'display', label: '顯示設定', icon: 'monitor' },
     { key: 'security', label: '安全設定', icon: 'shield' },
     { key: 'notifications', label: '通知偏好', icon: 'bell' },
   ];
+
+  // ── Display Settings ──
+  readonly currentTextSize = this.displaySettings.textSize;
+
+  readonly textSizeOptions: { key: TextSize; label: string; description: string }[] = [
+    { key: 'sm', label: '小', description: '精緻緊湊' },
+    { key: 'md', label: '中', description: '舒適閱讀' },
+    { key: 'lg', label: '大', description: '清晰醒目' },
+  ];
+
+  setTextSize(size: TextSize): void {
+    this.displaySettings.setTextSize(size);
+  }
 
   // ── Profile ──
   readonly profile = signal({

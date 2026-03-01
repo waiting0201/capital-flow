@@ -41,13 +41,14 @@
 <!-- ══════ Toolbar ══════ -->
 <div class="wl-toolbar">
   <div class="wl-groups">
-    @for (g of groups; track g.id) {
+    <!-- System Groups -->
+    @for (g of systemGroups; track g.id) {
       <button
         class="wl-group-chip"
         [class.active]="activeGroup() === g.id"
         (click)="setGroup(g.id)">
-        @switch (g.icon) {
-          @case ('list') {
+        @switch (g.id) {
+          @case ('all') {
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/><line x1="8" y1="18" x2="21" y2="18"/><line x1="3" y1="6" x2="3.01" y2="6"/><line x1="3" y1="12" x2="3.01" y2="12"/><line x1="3" y1="18" x2="3.01" y2="18"/></svg>
           }
           @case ('tw') {
@@ -56,17 +57,38 @@
           @case ('us') {
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 014 10 15.3 15.3 0 01-4 10 15.3 15.3 0 01-4-10 15.3 15.3 0 014-10z"/></svg>
           }
-          @case ('cpu') {
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="4" y="4" width="16" height="16" rx="2"/><rect x="9" y="9" width="6" height="6"/><line x1="9" y1="1" x2="9" y2="4"/><line x1="15" y1="1" x2="15" y2="4"/><line x1="9" y1="20" x2="9" y2="23"/><line x1="15" y1="20" x2="15" y2="23"/><line x1="20" y1="9" x2="23" y2="9"/><line x1="20" y1="14" x2="23" y2="14"/><line x1="1" y1="9" x2="4" y2="9"/><line x1="1" y1="14" x2="4" y2="14"/></svg>
-          }
-          @case ('coin') {
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 000 7h5a3.5 3.5 0 010 7H6"/></svg>
-          }
         }
         {{ g.name }}
       </button>
     }
+
+    <span class="wl-group-sep"></span>
+
+    <!-- User Categories -->
+    @for (cat of categories(); track cat.id) {
+      <button
+        class="wl-group-chip wl-group-chip--cat"
+        [class.active]="activeGroup() === cat.id"
+        (click)="setGroup(cat.id)"
+        (contextmenu)="openContextMenu(cat.id, $event)">
+        <span class="wl-cat-dot" [style.background]="cat.color"></span>
+        {{ cat.name }}
+        <span class="wl-cat-count">{{ getCategoryStockCount(cat.id) }}</span>
+      </button>
+    }
+
+    <!-- Add Category Button -->
+    <button class="wl-group-chip wl-group-chip--add" (click)="toggleCategoryPanel()">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        @if (showCategoryPanel()) {
+          <line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>
+        } @else {
+          <line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/>
+        }
+      </svg>
+    </button>
   </div>
+
   <div class="wl-actions">
     <div class="wl-search">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
@@ -87,7 +109,107 @@
   </div>
 </div>
 
-<!-- ══════ Add Form ══════ -->
+<!-- ══════ Category Management Panel ══════ -->
+@if (showCategoryPanel()) {
+  <div class="wl-cat-panel">
+    <div class="wl-cat-panel-header">
+      <span class="wl-cat-panel-title">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20.59 13.41l-7.17 7.17a2 2 0 01-2.83 0L2 12V2h10l8.59 8.59a2 2 0 010 2.82z"/><line x1="7" y1="7" x2="7.01" y2="7"/></svg>
+        分類管理
+      </span>
+      <span class="wl-cat-panel-hint">右鍵點擊分類標籤可快速編輯</span>
+    </div>
+
+    <div class="wl-cat-list">
+      @for (cat of categories(); track cat.id) {
+        <div class="wl-cat-item" [class.is-editing]="editingCategoryId() === cat.id">
+          @if (editingCategoryId() === cat.id) {
+            <!-- Edit Mode -->
+            <div class="wl-cat-edit-row">
+              <div class="wl-cat-color-picker">
+                @for (color of categoryColors; track color) {
+                  <button
+                    class="wl-color-dot"
+                    [class.active]="editingCategoryColor() === color"
+                    [style.background]="color"
+                    (click)="editingCategoryColor.set(color)">
+                  </button>
+                }
+              </div>
+              <input
+                class="wl-cat-edit-input"
+                type="text"
+                [ngModel]="editingCategoryName()"
+                (ngModelChange)="editingCategoryName.set($event)"
+                (keydown.enter)="saveEditCategory()"
+                (keydown.escape)="cancelEditCategory()">
+              <button class="btn-sm btn-sm-primary" (click)="saveEditCategory()">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>
+              </button>
+              <button class="btn-sm btn-sm-outline" (click)="cancelEditCategory()">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+              </button>
+            </div>
+          } @else {
+            <!-- View Mode -->
+            <div class="wl-cat-item-left">
+              <span class="wl-cat-dot-lg" [style.background]="cat.color"></span>
+              <span class="wl-cat-item-name">{{ cat.name }}</span>
+              <span class="wl-cat-item-count">{{ getCategoryStockCount(cat.id) }} 檔</span>
+            </div>
+            <div class="wl-cat-item-actions">
+              <button class="wl-cat-action-btn" (click)="startEditCategory(cat, $event)" title="編輯">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+              </button>
+              <button class="wl-cat-action-btn wl-cat-action-btn--danger" (click)="confirmDeleteCategory(cat.id, $event)" title="刪除">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6m3 0V4a2 2 0 012-2h4a2 2 0 012 2v2"/></svg>
+              </button>
+            </div>
+          }
+        </div>
+      }
+
+      @if (categories().length === 0) {
+        <div class="wl-cat-empty">尚未建立任何分類</div>
+      }
+    </div>
+
+    <!-- New Category Form -->
+    @if (showNewCategoryForm()) {
+      <div class="wl-cat-new-form">
+        <div class="wl-cat-color-picker">
+          @for (color of categoryColors; track color) {
+            <button
+              class="wl-color-dot"
+              [class.active]="newCategoryColor() === color"
+              [style.background]="color"
+              (click)="newCategoryColor.set(color)">
+            </button>
+          }
+        </div>
+        <input
+          class="wl-cat-edit-input"
+          type="text"
+          placeholder="分類名稱"
+          [ngModel]="newCategoryName()"
+          (ngModelChange)="newCategoryName.set($event)"
+          (keydown.enter)="createCategory()"
+          (keydown.escape)="showNewCategoryForm.set(false)">
+        <button class="btn-sm btn-sm-primary" (click)="createCategory()">建立</button>
+        <button class="btn-sm btn-sm-outline" (click)="showNewCategoryForm.set(false)">取消</button>
+      </div>
+    } @else {
+      <button class="wl-cat-add-btn" (click)="openNewCategoryForm()">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/>
+        </svg>
+        新增分類
+      </button>
+    }
+  </div>
+}
+
+<!-- ══════ Add Stock Form ══════ -->
 @if (showAddForm()) {
   <div class="wl-add-form">
     <input
@@ -117,6 +239,7 @@
         <span class="sort-arrow">{{ sortDir() === 'asc' ? '▲' : '▼' }}</span>
       }
     </button>
+    <div class="wl-th wl-th-cat">分類</div>
     <button class="wl-th wl-th-price" (click)="toggleSort('price')">
       現價
       @if (sortField() === 'price') {
@@ -149,6 +272,40 @@
             <span class="wl-name">{{ stock.name }}</span>
           </div>
         </div>
+
+        <!-- Category Tags -->
+        <div class="wl-cell-cat">
+          @for (cat of getStockCategories(stock.symbol); track cat.id) {
+            <span class="wl-cat-tag" [style.--cat-color]="cat.color">{{ cat.name }}</span>
+          }
+          <button class="wl-cat-assign-btn" (click)="toggleAssignPanel(stock.symbol, $event)" title="管理分類">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M20.59 13.41l-7.17 7.17a2 2 0 01-2.83 0L2 12V2h10l8.59 8.59a2 2 0 010 2.82z"/><line x1="7" y1="7" x2="7.01" y2="7"/>
+            </svg>
+          </button>
+
+          <!-- Assign Dropdown -->
+          @if (assigningStockSymbol() === stock.symbol) {
+            <div class="wl-assign-dropdown" (click)="$event.stopPropagation(); $event.preventDefault()">
+              <div class="wl-assign-title">加入分類</div>
+              @for (cat of categories(); track cat.id) {
+                <label class="wl-assign-option" (click)="toggleStockCategory(stock.symbol, cat.id, $event)">
+                  <span class="wl-assign-check" [class.checked]="isStockInCategory(stock.symbol, cat.id)">
+                    @if (isStockInCategory(stock.symbol, cat.id)) {
+                      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><polyline points="20 6 9 17 4 12"/></svg>
+                    }
+                  </span>
+                  <span class="wl-cat-dot" [style.background]="cat.color"></span>
+                  <span>{{ cat.name }}</span>
+                </label>
+              }
+              @if (categories().length === 0) {
+                <div class="wl-assign-empty">尚無分類，請先建立</div>
+              }
+            </div>
+          }
+        </div>
+
         <div class="wl-cell-price" [class.is-up]="stock.change > 0" [class.is-down]="stock.change < 0">
           {{ formatPrice(stock.price) }}
         </div>
@@ -180,3 +337,49 @@
     }
   </div>
 </div>
+
+<!-- ══════ Context Menu (Category Right-Click) ══════ -->
+@if (contextMenuCategoryId()) {
+  <div class="wl-ctx-backdrop" (click)="closeContextMenu()"></div>
+  <div class="wl-ctx-menu" [style.left.px]="contextMenuPos().x" [style.top.px]="contextMenuPos().y">
+    <button class="wl-ctx-item" (click)="startEditCategory(categories()[0], $event)"
+      [hidden]="true">
+    </button>
+    @for (cat of categories(); track cat.id) {
+      @if (cat.id === contextMenuCategoryId()) {
+        <button class="wl-ctx-item" (click)="startEditCategory(cat, $event); toggleCategoryPanel()">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+          重新命名
+        </button>
+        <button class="wl-ctx-item wl-ctx-item--danger" (click)="confirmDeleteCategory(cat.id, $event)">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6m3 0V4a2 2 0 012-2h4a2 2 0 012 2v2"/></svg>
+          刪除分類
+        </button>
+      }
+    }
+  </div>
+}
+
+<!-- ══════ Delete Confirmation Modal ══════ -->
+@if (deletingCategoryId()) {
+  <div class="wl-modal-backdrop" (click)="cancelDelete()">
+    <div class="wl-modal" (click)="$event.stopPropagation()">
+      <div class="wl-modal-icon">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/>
+        </svg>
+      </div>
+      <div class="wl-modal-title">確定刪除此分類？</div>
+      <div class="wl-modal-desc">分類刪除後，股票仍會保留在自選股清單中，僅移除分類標記。</div>
+      <div class="wl-modal-actions">
+        <button class="btn-sm btn-sm-outline" (click)="cancelDelete()">取消</button>
+        <button class="btn-sm btn-sm-danger" (click)="deleteCategory(deletingCategoryId()!)">確定刪除</button>
+      </div>
+    </div>
+  </div>
+}
+
+<!-- ══════ Click-away backdrop for assign dropdown ══════ -->
+@if (assigningStockSymbol()) {
+  <div class="wl-assign-backdrop" (click)="onBackdropClick()"></div>
+}
