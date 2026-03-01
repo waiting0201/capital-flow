@@ -39,7 +39,7 @@
   display: flex; justify-content: center; gap: 6px;
 }
 .sr-filter-chip {
-  padding: 6px 14px; border-radius: 8px; font-size: var(--text-sm); font-weight: 500;
+  padding: 0.45em 1em; border-radius: 8px; font-size: var(--text-sm); font-weight: 500;
   border: 1px solid var(--border); background: none; color: var(--gray); cursor: pointer;
   transition: all 0.2s; font-family: var(--font-body);
   &:hover { border-color: var(--border-strong); color: var(--olivine); }
@@ -132,14 +132,14 @@
 }
 .sr-stock-info { display: flex; flex-direction: column; min-width: 0; }
 .sr-stock-symbol { font-family: var(--font-mono); font-size: var(--text-base); font-weight: 700; color: var(--olivine); }
-.sr-stock-name { font-size: var(--text-xs); color: var(--gray); margin-top: 1px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.sr-stock-name { font-size: var(--text-xs); color: var(--gray); margin-top: 1px; overflow: hidden; text-overflow: ellipsis; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; }
 .sr-stock-price {
   font-family: var(--font-mono); font-size: var(--text-md); font-weight: 600; text-align: right;
   &.is-up { color: var(--up); } &.is-down { color: var(--down); }
 }
 .sr-stock-change {
   font-family: var(--font-mono); font-size: var(--text-sm); font-weight: 600; text-align: right;
-  padding: 2px 8px; border-radius: 5px; justify-self: end;
+  padding: 0.2em 0.55em; border-radius: 5px; justify-self: end;
   &.up { color: var(--up); background: var(--up-bg); }
   &.down { color: var(--down); background: var(--down-bg); }
 }

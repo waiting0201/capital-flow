@@ -107,7 +107,7 @@ input[type='email'],
 input[type='password'],
 input[type='text'] {
   width: 100%;
-  padding: 12px 14px 12px 44px;
+  padding: 0.75em 1em 0.75em 2.8em;
   background: var(--surface-elevated);
   border: 1.5px solid var(--border);
   border-radius: 10px;
@@ -137,8 +137,8 @@ input[type='text'] {
   display: flex;
   align-items: center;
   justify-content: center;
-  width: 32px;
-  height: 32px;
+  width: 2em;
+  height: 2em;
   border: none;
   background: none;
   color: var(--gray-faint);
@@ -236,7 +236,7 @@ input[type='text'] {
   align-items: center;
   justify-content: center;
   gap: 8px;
-  padding: 13px 24px;
+  padding: 0.85em 1.5em;
   background: var(--moss);
   color: #fff;
   border: none;
@@ -318,7 +318,7 @@ input[type='text'] {
 }
 .btn-oauth {
   width: 100%; display: flex; align-items: center; justify-content: center; gap: 10px;
-  padding: 11px 20px; background: var(--surface-elevated); border: 1.5px solid var(--border);
+  padding: 0.75em 1.3em; background: var(--surface-elevated); border: 1.5px solid var(--border);
   border-radius: 10px; font-family: var(--font-body); font-size: var(--text-base); font-weight: 500;
   color: var(--olivine); cursor: pointer; transition: all 0.25s;
   &:hover { border-color: var(--border-strong); background: var(--surface-card); box-shadow: var(--shadow-sm); transform: translateY(-1px); }
