@@ -28,7 +28,7 @@ export class StockDetail {
   candleSeries = signal<ApexAxisChartSeries>([]);
   volumeSeries = signal<ApexAxisChartSeries>([]);
 
-  readonly candleChart: ApexChart = { type: 'candlestick', height: 340, toolbar: { show: true, tools: { download: false, selection: true, zoom: true, zoomin: true, zoomout: true, pan: true, reset: true } }, background: 'transparent' };
+  readonly candleChart: ApexChart = { type: 'candlestick', height: 340, toolbar: { show: true, autoSelected: 'pan', tools: { download: false, selection: true, zoom: true, zoomin: true, zoomout: true, pan: true, reset: true } }, background: 'transparent' };
   readonly volumeChart: ApexChart = { type: 'bar', height: 120, toolbar: { show: false }, background: 'transparent' };
 
   readonly candleOptions: ApexPlotOptions = { candlestick: { colors: { upward: '#E14F4F', downward: '#22C1A1' }, wick: { useFillColor: true } } };
