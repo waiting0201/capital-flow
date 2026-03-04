@@ -3,10 +3,10 @@
   <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
     <line x1="19" y1="12" x2="5" y2="12"/><polyline points="12 19 5 12 12 5"/>
   </svg>
-  返回自選股
+  返回
 </a>
 
-<!-- ══════ Compact Header ══════ -->
+<!-- ══════ Header: Quote + Actions ══════ -->
 <div class="sd-header">
   <div class="sd-header-top">
     <span class="sd-market-badge" [attr.data-market]="quote().market">
@@ -26,9 +26,9 @@
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2" [attr.fill]="isInWatchlist() ? 'currentColor' : 'none'"/></svg>
         {{ isInWatchlist() ? '已加入自選' : '加入自選' }}
       </button>
-      <button class="sd-action-btn sd-action-alert" (click)="toggleAlertModal()">
+      <button class="sd-action-btn sd-action-alert" routerLink="/alerts">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 8A6 6 0 006 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 01-3.46 0"/></svg>
-        設定警示
+        設定預警
       </button>
     </div>
   </div>
@@ -42,457 +42,365 @@
   </div>
 </div>
 
-<!-- ══════ Company Info ══════ -->
-<div class="sd-company">
-  <div class="sd-company-desc">
-    <span class="sd-company-label">公司簡介</span>
-    {{ profile().description }}
+<!-- ══════ AI 產業鏈定位 ══════ -->
+@if (profile().aiIntroduction) {
+  <div class="sd-ai-position">
+    <span class="ai-badge">
+      <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2L2 7l10 5 10-5-10-5z"/><path d="M2 17l10 5 10-5"/><path d="M2 12l10 5 10-5"/></svg>
+      AI 產業鏈定位
+    </span>
+    <p class="sd-ai-position-text">{{ profile().aiIntroduction }}</p>
   </div>
-  <div class="sd-company-details">
-    @if (profile().mainBusiness) {
-      <div class="sd-company-item">
-        <span class="sd-company-key">主要業務</span>
-        <span class="sd-company-val">{{ profile().mainBusiness }}</span>
-      </div>
-    }
-    @if (profile().chairman || profile().ceo) {
-      <div class="sd-company-item">
-        <span class="sd-company-key">{{ profile().chairman ? '董事長' : 'CEO' }}</span>
-        <span class="sd-company-val">{{ profile().chairman || profile().ceo }}</span>
-      </div>
-    }
-    @if (profile().capital) {
-      <div class="sd-company-item">
-        <span class="sd-company-key">資本額</span>
-        <span class="sd-company-val">{{ formatCapital(profile().capital, profile().market) }}</span>
-      </div>
-    }
-    @if (profile().establishedDate) {
-      <div class="sd-company-item">
-        <span class="sd-company-key">成立</span>
-        <span class="sd-company-val">{{ formatEstDate(profile().establishedDate) }}</span>
-      </div>
-    }
-  </div>
-</div>
+}
 
-<!-- ══════ AI Action Banner ══════ -->
-<div class="sd-ai-banner">
-  <div class="sd-ai-banner-top">
-    <div class="sd-ai-banner-left">
-      <span class="ai-badge">
-        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2L2 7l10 5 10-5-10-5z"/><path d="M2 17l10 5 10-5"/><path d="M2 12l10 5 10-5"/></svg>
-        AI 投資建議
-      </span>
-      <span class="sd-ai-action-label">{{ aiInvestment.action }}</span>
-      <span class="sd-ai-confidence">信心度 {{ aiInvestment.confidence }}% · {{ aiAnalysis.rating }}</span>
+<!-- ══════ 資金流向摘要卡片（Hero） ══════ -->
+<div class="sd-flow-hero" [class.flow-in]="moneyFlowSummary().direction === 'inflow'"
+  [class.flow-out]="moneyFlowSummary().direction === 'outflow'"
+  [class.flow-neutral]="moneyFlowSummary().direction === 'neutral'">
+  <div class="sd-flow-hero-top">
+    <div class="sd-flow-badge-lg">
+      @if (moneyFlowSummary().direction === 'inflow') { ▲ }
+      @else if (moneyFlowSummary().direction === 'outflow') { ▼ }
+      @else { ─ }
+      {{ moneyFlowSummary().label }}
     </div>
-    <div class="sd-ai-banner-prices">
-      <span class="sd-ai-meta">進場 <strong>{{ aiInvestment.entryZone.low }}-{{ aiInvestment.entryZone.high }}</strong></span>
-      <span class="sd-ai-meta">目標 <strong style="color:#8edb8e">{{ aiInvestment.targetPrice }}</strong></span>
-      <span class="sd-ai-meta">停損 <strong style="color:#f09090">{{ aiInvestment.stopLoss }}</strong></span>
-    </div>
-    <div class="sd-ai-banner-right">
-      <div class="sd-mini-ring">
-        <svg viewBox="0 0 60 60">
-          <circle cx="30" cy="30" r="25" fill="none" stroke="rgba(255,255,255,0.15)" stroke-width="4"/>
-          <circle cx="30" cy="30" r="25" fill="none" stroke="#fff" stroke-width="4"
-            stroke-linecap="round" stroke-dasharray="157" [attr.stroke-dashoffset]="157 - (157 * aiAnalysis.score / 100)"
-            transform="rotate(-90 30 30)"/>
-        </svg>
-        <span class="sd-mini-ring-val">{{ aiAnalysis.score }}</span>
-      </div>
-    </div>
+    <span class="sd-flow-strength">力道：{{ moneyFlowSummary().strength }}</span>
   </div>
-  <div class="sd-ai-banner-detail">
-    <p class="sd-ai-summary">{{ aiAnalysis.summary }}</p>
-    <div class="sd-ai-tags">
-      <span class="sd-ai-tag">{{ aiInvestment.horizon }}</span>
-      <span class="sd-ai-tag">風險：{{ aiInvestment.riskLevel }}</span>
-      <span class="sd-ai-tag">預期報酬 {{ aiInvestment.expectedReturn }}</span>
-      <span class="sd-ai-tag">風報比 {{ aiInvestment.riskRewardRatio }}</span>
-      <span class="sd-ai-tag-time">更新 {{ aiAnalysis.updatedAt }}</span>
-    </div>
-  </div>
+  <p class="sd-flow-hero-text">{{ moneyFlowSummary().conclusion }}</p>
+  <div class="ai-disclaimer" style="color: rgba(255,255,255,0.45)">僅供參考，非投資建議</div>
 </div>
 
 <!-- ══════ Chart Section ══════ -->
-<div class="card sd-chart-card" style="margin-bottom:16px">
+<div class="card sd-chart-card">
   <div class="card-header">
     <div class="card-title">
       <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--amber)" stroke-width="2"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
-      技術線圖
+      量價走勢
     </div>
   </div>
   <div class="sd-chart-toolbar">
-    <div class="sd-toolbar-group">
-      <span class="sd-toolbar-label">時間</span>
-      <div class="sd-pills-scroll">
-        <div class="sd-range-pills">
-          @for (r of chartRanges; track r) {
-            <button class="sd-range-pill" [class.active]="chartRange() === r" (click)="setChartRange(r)">{{ r }}</button>
-          }
-        </div>
-      </div>
-    </div>
-    <div class="sd-toolbar-divider"></div>
-    <div class="sd-toolbar-group">
-      <span class="sd-toolbar-label">指標</span>
-      <div class="sd-pills-scroll">
-        <div class="sd-tech-indicators">
-          @for (ind of techIndicators(); track ind.key) {
-            <button class="sd-tech-btn" [class.active]="ind.active" (click)="toggleIndicator(ind.key)">{{ ind.label }}</button>
-          }
-        </div>
-      </div>
+    <div class="sd-range-pills">
+      @for (r of chartRanges; track r) {
+        <button class="sd-range-pill" [class.active]="chartRange() === r" (click)="setChartRange(r)">{{ r }}</button>
+      }
     </div>
   </div>
   <div class="sd-chart-area">
-    <apx-chart
-      [series]="candleSeries()"
-      [chart]="candleChart"
-      [xaxis]="xAxis"
-      [yaxis]="candleYAxis"
-      [plotOptions]="candleOptions"
-      [dataLabels]="dataLabels"
-      [stroke]="stroke"
-      [grid]="grid"
-      [tooltip]="candleTooltip"
-    ></apx-chart>
-    <div class="sd-volume-label">成交量</div>
-    <apx-chart
-      [series]="volumeSeries()"
-      [chart]="volumeChart"
-      [xaxis]="xAxis"
-      [yaxis]="volumeYAxis"
-      [dataLabels]="dataLabels"
-      [plotOptions]="{ bar: { columnWidth: '60%' } }"
-      [grid]="grid"
-      [legend]="legend"
-      [tooltip]="volumeTooltip"
-    ></apx-chart>
+    <apx-chart [series]="candleSeries()" [chart]="candleChart" [xaxis]="xAxis" [yaxis]="candleYAxis" [plotOptions]="candleOptions" [dataLabels]="dataLabels" [stroke]="stroke" [grid]="grid" [tooltip]="candleTooltip"></apx-chart>
+    <div class="sd-volume-label">成交量（資金主角）</div>
+    <apx-chart [series]="volumeSeries()" [chart]="volumeChart" [xaxis]="xAxis" [yaxis]="volumeYAxis" [dataLabels]="dataLabels" [plotOptions]="{ bar: { columnWidth: '60%' } }" [grid]="grid" [legend]="legend" [tooltip]="volumeTooltip"></apx-chart>
   </div>
 </div>
 
-<!-- ══════ Dashboard Grid ══════ -->
-<div class="sd-dashboard">
-  <!-- Left Column -->
-  <div class="sd-dash-col">
+<!-- ══════ Tab Navigation ══════ -->
+<div class="sd-tabs">
+  <button class="sd-tab" [class.active]="activeTab() === 'flow'" (click)="setTab('flow')">
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2.69l5.66 5.66a8 8 0 11-11.31 0z"/></svg>
+    資金分析
+  </button>
+  <button class="sd-tab" [class.active]="activeTab() === 'chip'" (click)="setTab('chip')">
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 21h18M3 10h18M5 6l7-3 7 3M4 10v11M20 10v11M8 14v3M12 14v3M16 14v3"/></svg>
+    籌碼動態
+  </button>
+  <button class="sd-tab" [class.active]="activeTab() === 'catalyst'" (click)="setTab('catalyst')">
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>
+    催化事件
+  </button>
+  <div class="sd-tab-indicator" [style.transform]="'translateX(' + (activeTab() === 'flow' ? '0' : activeTab() === 'chip' ? '100' : '200') + '%)'"></div>
+</div>
 
-    <!-- AI Strategy + Catalysts -->
-    <div class="card">
-      <div class="card-header">
-        <div class="card-title">
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--amber)" stroke-width="2"><path d="M12 2L2 7l10 5 10-5-10-5z"/><path d="M2 17l10 5 10-5"/><path d="M2 12l10 5 10-5"/></svg>
-          操作策略
-        </div>
+<!-- ══════ Tab: 資金分析 ══════ -->
+@if (activeTab() === 'flow') {
+  <div class="sd-tab-content">
+
+    <!-- ① 資金流向結論 -->
+    <div class="mf-card">
+      <div class="mf-card-label">① 資金流向結論</div>
+      <div class="mf-conclusion-row">
+        <span class="mf-flow-badge" [class.flow-in]="flowAnalysis.conclusion.direction === 'inflow'">
+          ▲ 資金淨流入
+        </span>
+        <span class="mf-strength">力道：{{ flowAnalysis.conclusion.strength }}</span>
       </div>
-      <div class="sd-strategy-body">
-        <p class="sd-strategy-text">{{ aiInvestment.strategy }}</p>
-        <div class="sd-strategy-note">{{ aiInvestment.positionSuggestion }}</div>
-        <div class="sd-catalyst-label">關鍵催化事件</div>
-        @for (c of aiInvestment.catalysts; track c.event) {
-          <div class="sd-catalyst-row">
-            <span class="sd-catalyst-dot" [style.background]="getImpactColor(c.impact)"></span>
-            <span class="sd-catalyst-event">{{ c.event }}</span>
-            <span class="sd-catalyst-date">{{ c.date }}</span>
+      <div class="mf-conclusion-detail">
+        主導資金：{{ flowAnalysis.conclusion.mainForce }}
+      </div>
+      <div class="mf-conclusion-basis">
+        <span class="mf-basis-tag">判斷依據</span>
+        {{ flowAnalysis.conclusion.basis }}
+      </div>
+    </div>
+
+    <!-- ② 資金為何進來 -->
+    <div class="mf-card">
+      <div class="mf-card-label">② 資金為何進來</div>
+      <div class="mf-ai-badge-row">
+        <span class="ai-badge">
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2L2 7l10 5 10-5-10-5z"/><path d="M2 17l10 5 10-5"/><path d="M2 12l10 5 10-5"/></svg>
+          AI 分析
+        </span>
+      </div>
+      @for (factor of flowAnalysis.whyIn.factors; track factor.title; let i = $index) {
+        <div class="mf-factor">
+          <div class="mf-factor-header">
+            <span class="mf-factor-num">{{ i + 1 }}.</span>
+            <span class="mf-factor-title">{{ factor.title }}</span>
+            <span class="mf-factor-basis">依據：{{ factor.basis }}</span>
+          </div>
+          <p class="mf-factor-detail">{{ factor.detail }}</p>
+        </div>
+      }
+    </div>
+
+    <!-- ③ 資金為何離開 -->
+    <div class="mf-card">
+      <div class="mf-card-label">③ 資金為何離開</div>
+      <div class="mf-ai-badge-row">
+        <span class="ai-badge">
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2L2 7l10 5 10-5-10-5z"/><path d="M2 17l10 5 10-5"/><path d="M2 12l10 5 10-5"/></svg>
+          AI 分析
+        </span>
+      </div>
+      @for (factor of flowAnalysis.whyOut.factors; track factor.title; let i = $index) {
+        <div class="mf-factor">
+          <div class="mf-factor-header">
+            <span class="mf-factor-num">{{ i + 1 }}.</span>
+            <span class="mf-factor-title">{{ factor.title }}</span>
+            <span class="mf-factor-basis">依據：{{ factor.basis }}</span>
+          </div>
+          <p class="mf-factor-detail">{{ factor.detail }}</p>
+        </div>
+      }
+    </div>
+
+    <!-- ④ AI 判斷依據面板 -->
+    <div class="mf-card">
+      <div class="mf-card-label">④ AI 判斷依據面板</div>
+      <div class="mf-dimensions">
+        @for (dim of flowAnalysis.dimensions; track dim.name) {
+          <div class="mf-dim-row">
+            <span class="mf-dim-name">{{ dim.name }}</span>
+            <span class="mf-dim-signal" [class]="getSignalClass(dim.signal)">{{ getSignalLabel(dim.signal) }}</span>
+            <span class="mf-dim-summary">{{ dim.summary }}</span>
           </div>
         }
       </div>
     </div>
 
-    <!-- Factor Scores -->
-    <div class="card">
-      <div class="card-header"><div class="card-title">四維度評分</div></div>
-      <div class="sd-factor-list-wrap">
-        @for (f of aiAnalysis.factors; track f.label) {
-          <div class="sd-factor">
-            <div class="sd-factor-head">
-              <span class="sd-factor-name">{{ f.label }}</span>
-              <span class="sd-factor-score" [style.color]="getScoreColor(f.score)">{{ f.score }}</span>
-            </div>
-            <div class="sd-factor-bar">
-              <div class="sd-factor-fill" [style.width.%]="f.score" [style.background]="getScoreColor(f.score)"></div>
-            </div>
-            <div class="sd-factor-detail">{{ f.detail }}</div>
-          </div>
-        }
+    <!-- ⑤ 持續性評估 + 投資時機 + 風險 -->
+    <div class="mf-card">
+      <div class="mf-card-label">⑤ 持續性評估 + 投資時機</div>
+      <div class="mf-ai-badge-row">
+        <span class="ai-badge">
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2L2 7l10 5 10-5-10-5z"/><path d="M2 17l10 5 10-5"/><path d="M2 12l10 5 10-5"/></svg>
+          AI 分析
+        </span>
       </div>
+      <p class="mf-sustainability-text">{{ flowAnalysis.sustainability }}</p>
+
+      <div class="mf-timing">
+        <span class="mf-timing-label">投資時機</span>
+        <span class="mf-timing-badge">{{ flowAnalysis.timing.label }}</span>
+      </div>
+      <p class="mf-timing-detail">{{ flowAnalysis.timing.detail }}</p>
+      <div class="mf-timing-levels">
+        <span>支撐參考：<strong>{{ flowAnalysis.timing.support }}</strong></span>
+        <span>壓力參考：<strong>{{ flowAnalysis.timing.resistance }}</strong></span>
+      </div>
+
+      <div class="mf-risks-label">風險提示</div>
+      @for (risk of flowAnalysis.risks; track risk.name) {
+        <div class="mf-risk-row">
+          <span class="mf-risk-name">{{ risk.name }}</span>
+          <span class="mf-risk-severity" [attr.data-severity]="risk.severity">嚴重度：{{ risk.severity }}</span>
+          <span class="mf-risk-detail">{{ risk.detail }}</span>
+        </div>
+      }
     </div>
 
-    <!-- Financials -->
-    <div class="card">
-      <div class="card-header">
-        <div class="card-title">
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--amber)" stroke-width="2"><line x1="12" y1="20" x2="12" y2="10"/><line x1="18" y1="20" x2="18" y2="4"/><line x1="6" y1="20" x2="6" y2="16"/></svg>
-          季度財務
+    <div class="ai-disclaimer" style="margin-top:8px">以上所有 AI 分析內容僅供參考，不構成任何投資建議。投資決策應基於個人判斷與風險承受能力。</div>
+  </div>
+}
+
+<!-- ══════ Tab: 籌碼動態 ══════ -->
+@if (activeTab() === 'chip') {
+  <div class="sd-tab-content">
+
+    <!-- AI 法人資金動態解讀 -->
+    <div class="mf-card">
+      <div class="mf-card-icon-label">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--amber)" stroke-width="2"><path d="M3 21h18M3 10h18M5 6l7-3 7 3M4 10v11M20 10v11M8 14v3M12 14v3M16 14v3"/></svg>
+        AI 法人資金動態解讀
+      </div>
+      <div class="mf-ai-insight">
+        <div class="mf-insight-conclusion">{{ chipAnalysis.institutional.conclusion }}</div>
+        <div class="mf-insight-reason">
+          <span class="mf-label-tag">原因</span>{{ chipAnalysis.institutional.reason }}
+        </div>
+        <div class="mf-insight-basis">
+          <span class="mf-label-tag mf-label-tag--muted">判斷依據</span>{{ chipAnalysis.institutional.basis }}
         </div>
       </div>
-      <div class="sd-table-scroll">
+      <div class="ai-disclaimer">僅供參考，非投資建議</div>
+    </div>
+
+    <!-- 三大法人買賣超 -->
+    <div class="mf-card">
+      <div class="mf-card-icon-label">三大法人買賣超</div>
+      <div class="mf-table-scroll">
         <table class="data-table">
           <thead>
             <tr>
-              <th>季度</th><th>營收 (億)</th><th>毛利率</th><th>EPS</th><th>YoY</th>
+              <th></th>
+              <th>今日</th>
+              <th>連續</th>
+              <th>近5日累計</th>
             </tr>
           </thead>
           <tbody>
-            @for (row of financialData; track row.period) {
-              <tr>
-                <td class="row-label">{{ row.period }}</td>
-                <td>{{ row.revenue }}</td>
-                <td>{{ row.grossMargin }}</td>
-                <td>{{ row.eps }}</td>
-                <td style="color:var(--up); font-weight:600">{{ row.yoy }}</td>
-              </tr>
-            }
-          </tbody>
-        </table>
-      </div>
-    </div>
-
-    <!-- Monthly Revenue -->
-    <div class="card">
-      <div class="card-header">
-        <div class="card-title">
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--amber)" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
-          月營收趨勢
-        </div>
-      </div>
-      <div class="sd-table-scroll">
-        <table class="data-table">
-          <thead><tr><th>月份</th><th>營收 (億)</th><th>MoM</th><th>YoY</th></tr></thead>
-          <tbody>
-            @for (row of monthlyRevenue; track row.month) {
-              <tr>
-                <td class="row-label">{{ row.month }}</td>
-                <td>{{ row.revenue }}</td>
-                <td [style.color]="row.mom.startsWith('+') ? 'var(--up)' : 'var(--down)'" style="font-weight:600">{{ row.mom }}</td>
-                <td [style.color]="row.yoy.startsWith('+') ? 'var(--up)' : 'var(--down)'" style="font-weight:600">{{ row.yoy }}</td>
-              </tr>
-            }
-          </tbody>
-        </table>
-      </div>
-    </div>
-
-    <!-- Dividend / Ex-rights -->
-    <div class="card">
-      <div class="card-header">
-        <div class="card-title">
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--amber)" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="16"/><line x1="8" y1="12" x2="16" y2="12"/></svg>
-          除權息資訊
-        </div>
-      </div>
-      <div class="sd-table-scroll">
-        <table class="data-table">
-          <thead><tr><th>年度</th><th>現金股利</th><th>股票股利</th><th>除息日</th><th>殖利率</th></tr></thead>
-          <tbody>
-            @for (row of dividendData; track row.year) {
-              <tr>
-                <td class="row-label">{{ row.year }}</td>
-                <td>{{ row.cashDiv }}</td>
-                <td>{{ row.stockDiv }}</td>
-                <td>{{ row.exDate }}</td>
-                <td style="color:var(--amber); font-weight:600">{{ row.yieldPct }}</td>
-              </tr>
-            }
-          </tbody>
-        </table>
-      </div>
-    </div>
-
-    <!-- Bull / Bear Reasons -->
-    <div class="card">
-      <div class="card-header"><div class="card-title">多空因素分析</div></div>
-      <div class="sd-reasons-grid">
-        <div class="sd-reasons-col">
-          <div class="sd-reasons-head" style="color:var(--up)">
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="23 6 13.5 15.5 8.5 10.5 1 18"/><polyline points="17 6 23 6 23 12"/></svg>
-            看多
-          </div>
-          @for (r of aiInvestment.reasons; track r.text) {
-            @if (r.type === 'bull') {
-              <div class="sd-reason-item sd-reason-bull">{{ r.text }}</div>
-            }
-          }
-        </div>
-        <div class="sd-reasons-col">
-          <div class="sd-reasons-head" style="color:var(--down)">
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="23 18 13.5 8.5 8.5 13.5 1 6"/><polyline points="17 18 23 18 23 12"/></svg>
-            看空
-          </div>
-          @for (r of aiInvestment.reasons; track r.text) {
-            @if (r.type === 'bear') {
-              <div class="sd-reason-item sd-reason-bear">{{ r.text }}</div>
-            }
-          }
-        </div>
-      </div>
-    </div>
-
-  </div>
-
-  <!-- Right Column -->
-  <div class="sd-dash-col">
-
-    <!-- Institutional -->
-    <div class="card">
-      <div class="card-header">
-        <div class="card-title">
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--amber)" stroke-width="2"><path d="M3 21h18M3 10h18M5 6l7-3 7 3M4 10v11M20 10v11M8 14v3M12 14v3M16 14v3"/></svg>
-          三大法人（張）
-        </div>
-      </div>
-      <div class="sd-table-scroll">
-        <table class="data-table">
-          <thead>
-            <tr><th>日期</th><th>外資</th><th>投信</th><th>自營商</th><th>合計</th></tr>
-          </thead>
-          <tbody>
-            @for (row of institutionalData; track row.date) {
-              <tr>
-                <td class="row-label">{{ row.date }}</td>
-                <td [style.color]="row.foreign.startsWith('+') ? 'var(--up)' : 'var(--down)'">{{ row.foreign }}</td>
-                <td [style.color]="row.investment.startsWith('+') ? 'var(--up)' : 'var(--down)'">{{ row.investment }}</td>
-                <td [style.color]="row.dealer.startsWith('+') ? 'var(--up)' : 'var(--down)'">{{ row.dealer }}</td>
-                <td style="font-weight:700" [style.color]="row.total.startsWith('+') ? 'var(--up)' : 'var(--down)'">{{ row.total }}</td>
-              </tr>
-            }
-          </tbody>
-        </table>
-      </div>
-    </div>
-
-    <!-- Margin Trading -->
-    <div class="card">
-      <div class="card-header">
-        <div class="card-title">
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--amber)" stroke-width="2"><path d="M4 15s1-1 4-1 5 2 8 2 4-1 4-1V3s-1 1-4 1-5-2-8-2-4 1-4 1z"/><line x1="4" y1="22" x2="4" y2="15"/></svg>
-          融資融券
-        </div>
-      </div>
-      <div class="sd-table-scroll">
-        <table class="data-table sd-margin-table">
-          <thead><tr><th>日期</th><th>融資買</th><th>融資賣</th><th>融資餘額</th><th>融券賣</th><th>融券買</th><th>融券餘額</th></tr></thead>
-          <tbody>
-            @for (row of marginData; track row.date) {
-              <tr>
-                <td class="row-label">{{ row.date }}</td>
-                <td style="color:var(--up)">{{ row.marginBuy | number }}</td>
-                <td style="color:var(--down)">{{ row.marginSell | number }}</td>
-                <td style="font-weight:600">{{ row.marginBal | number }}</td>
-                <td style="color:var(--down)">{{ row.shortSell | number }}</td>
-                <td style="color:var(--up)">{{ row.shortCover | number }}</td>
-                <td style="font-weight:600">{{ row.shortBal | number }}</td>
-              </tr>
-            }
-          </tbody>
-        </table>
-      </div>
-    </div>
-
-    <!-- Shareholder Distribution -->
-    <div class="card">
-      <div class="card-header">
-        <div class="card-title">
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--amber)" stroke-width="2"><path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 00-3-3.87"/><path d="M16 3.13a4 4 0 010 7.75"/></svg>
-          集保分散表
-        </div>
-      </div>
-      <div class="sd-shareholder-list">
-        @for (row of shareholderDist; track row.range) {
-          <div class="sd-sh-row">
-            <span class="sd-sh-range">{{ row.range }}</span>
-            <span class="sd-sh-holders">{{ row.holders | number }} 人</span>
-            <div class="sd-sh-bar-wrap">
-              <div class="sd-sh-bar" [style.width.%]="row.pct"></div>
-            </div>
-            <span class="sd-sh-pct">{{ row.pct }}%</span>
-          </div>
-        }
-      </div>
-    </div>
-
-    <!-- Sentiment + News -->
-    <div class="card">
-      <div class="card-header">
-        <div class="card-title">
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--amber)" stroke-width="2"><path d="M22 12h-4l-3 9L9 3l-3 9H2"/></svg>
-          輿情 &amp; 新聞
-        </div>
-        <span class="sd-buzz-score" [style.color]="getSentimentColor(mediaSentiment.buzzScore)">
-          熱度 {{ mediaSentiment.buzzScore }}
-          @if (mediaSentiment.buzzTrend === 'up') { ▲ }
-          @if (mediaSentiment.buzzTrend === 'down') { ▼ }
-        </span>
-      </div>
-      <!-- Sentiment Bar -->
-      <div class="sd-sentiment-compact">
-        <div class="sd-sentiment-bar">
-          <div class="sd-sent-pos" [style.width.%]="mediaSentiment.positive"></div>
-          <div class="sd-sent-neu" [style.width.%]="mediaSentiment.neutral"></div>
-          <div class="sd-sent-neg" [style.width.%]="mediaSentiment.negative"></div>
-        </div>
-        <div class="sd-sentiment-legend">
-          <span class="sd-sent-label"><span class="sd-dot" style="background:var(--up)"></span>正面 {{ mediaSentiment.positive }}%</span>
-          <span class="sd-sent-label"><span class="sd-dot" style="background:var(--gray-faint)"></span>中性 {{ mediaSentiment.neutral }}%</span>
-          <span class="sd-sent-label"><span class="sd-dot" style="background:var(--down)"></span>負面 {{ mediaSentiment.negative }}%</span>
-        </div>
-      </div>
-      <!-- News List -->
-      <div class="sd-news-list">
-        @for (item of newsItems; track item.title) {
-          <div class="sd-news-item">
-            <div class="sd-news-tag" [attr.data-tag]="item.tag"></div>
-            <div class="sd-news-body">
-              <div class="sd-news-title">{{ item.title }}</div>
-              @if (newsAiSummaries[item.title]) {
-                <div class="sd-news-ai">
-                  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2L2 7l10 5 10-5-10-5z"/><path d="M2 17l10 5 10-5"/><path d="M2 12l10 5 10-5"/></svg>
-                  {{ newsAiSummaries[item.title] }}
-                </div>
+            @for (row of chipAnalysis.institutionalData; track row.date; let first = $first) {
+              @if (first) {
+                <tr>
+                  <td class="row-label">外資</td>
+                  <td [style.color]="row.foreign.startsWith('+') ? 'var(--up)' : 'var(--down)'" style="font-weight:700">{{ row.foreign }}張</td>
+                  <td>{{ row.foreignStreak }}</td>
+                  <td style="font-weight:700">+28,500張</td>
+                </tr>
+                <tr>
+                  <td class="row-label">投信</td>
+                  <td [style.color]="row.investment.startsWith('+') ? 'var(--up)' : 'var(--down)'" style="font-weight:700">{{ row.investment }}張</td>
+                  <td>{{ row.investmentStreak }}</td>
+                  <td style="font-weight:700">+3,800張</td>
+                </tr>
+                <tr>
+                  <td class="row-label">自營商</td>
+                  <td [style.color]="row.dealer.startsWith('+') ? 'var(--up)' : 'var(--down)'" style="font-weight:700">{{ row.dealer }}張</td>
+                  <td>賣超1天</td>
+                  <td style="font-weight:700">+580張</td>
+                </tr>
               }
-              <div class="sd-news-meta">
-                <span class="sd-news-source">{{ item.source }}</span>
-                <span class="sd-news-time">{{ item.time }}</span>
-              </div>
+            }
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- AI 槓桿資金行為分析 -->
+    <div class="mf-card">
+      <div class="mf-card-icon-label">AI 槓桿資金行為分析</div>
+      <div class="mf-ai-insight">
+        <div class="mf-insight-conclusion">{{ chipAnalysis.margin.conclusion }}</div>
+        <div class="mf-insight-reason">
+          <span class="mf-label-tag">原因</span>{{ chipAnalysis.margin.reason }}
+        </div>
+        <div class="mf-insight-basis">
+          <span class="mf-label-tag mf-label-tag--muted">判斷依據</span>{{ chipAnalysis.margin.basis }}
+        </div>
+      </div>
+    </div>
+
+    <!-- 融資融券 -->
+    <div class="mf-card">
+      <div class="mf-card-icon-label">融資融券</div>
+      <div class="mf-margin-grid">
+        <div class="mf-margin-item">
+          <span class="mf-margin-label">融資餘額</span>
+          <span class="mf-margin-value">{{ chipAnalysis.marginData.marginBalance | number }}張</span>
+          <span class="mf-margin-change is-down">▼{{ chipAnalysis.marginData.marginChange | number }}</span>
+        </div>
+        <div class="mf-margin-item">
+          <span class="mf-margin-label">融券餘額</span>
+          <span class="mf-margin-value">{{ chipAnalysis.marginData.shortBalance | number }}張</span>
+          <span class="mf-margin-change">─ 持平</span>
+        </div>
+        <div class="mf-margin-item">
+          <span class="mf-margin-label">券資比</span>
+          <span class="mf-margin-value">{{ chipAnalysis.marginData.marginShortRatio }}%</span>
+        </div>
+        <div class="mf-margin-item">
+          <span class="mf-margin-label">融資使用率</span>
+          <span class="mf-margin-value">{{ chipAnalysis.marginData.marginUsageRate }}%</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- AI 籌碼集中度趨勢 -->
+    <div class="mf-card">
+      <div class="mf-card-icon-label">AI 籌碼集中度趨勢</div>
+      <div class="mf-ai-insight">
+        <div class="mf-insight-conclusion">{{ chipAnalysis.shareholder.conclusion }}</div>
+        <div class="mf-insight-reason">
+          <span class="mf-label-tag">原因</span>{{ chipAnalysis.shareholder.reason }}
+        </div>
+        <div class="mf-insight-basis">
+          <span class="mf-label-tag mf-label-tag--muted">判斷依據</span>{{ chipAnalysis.shareholder.basis }}
+        </div>
+      </div>
+    </div>
+
+    <!-- 集保戶股權分散 -->
+    <div class="mf-card">
+      <div class="mf-card-icon-label">集保戶股權分散</div>
+      <div class="mf-shareholder-list">
+        @for (row of chipAnalysis.shareholderData; track row.range) {
+          <div class="mf-sh-row">
+            <span class="mf-sh-range">{{ row.range }}</span>
+            <div class="mf-sh-bar-wrap">
+              <div class="mf-sh-bar" [style.width.%]="row.pct"></div>
+            </div>
+            <span class="mf-sh-pct">{{ row.pct }}%</span>
+            <span class="mf-sh-change" [class.is-up]="row.change.startsWith('+')" [class.is-down]="row.change.startsWith('-')">
+              ({{ row.change }})
+            </span>
+          </div>
+        }
+      </div>
+    </div>
+  </div>
+}
+
+<!-- ══════ Tab: 催化事件 ══════ -->
+@if (activeTab() === 'catalyst') {
+  <div class="sd-tab-content">
+    <div class="mf-card">
+      <div class="mf-card-icon-label">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--amber)" stroke-width="2"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>
+        催化事件（AI 資金催化偵測）
+      </div>
+
+      <div class="ct-summary">
+        <span class="ct-count ct-strong">強 {{ catalystSummary.strong }}</span>
+        <span class="ct-count ct-medium">中 {{ catalystSummary.medium }}</span>
+        <span class="ct-count ct-weak">弱 {{ catalystSummary.weak }}</span>
+      </div>
+
+      @for (item of catalysts; track item.title) {
+        <div class="ct-item" [class]="getStrengthClass(item.strength)">
+          <div class="ct-item-header">
+            <span class="ct-strength-badge">{{ getStrengthLabel(item.strength) }}</span>
+            <span class="ct-title">{{ item.title }}</span>
+          </div>
+          <div class="ct-meta">
+            <span class="ct-time">{{ item.time }}</span>
+            <span class="ct-source">{{ item.source }}</span>
+          </div>
+          <div class="ct-ai-analysis">
+            <span class="ai-badge">
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2L2 7l10 5 10-5-10-5z"/><path d="M2 17l10 5 10-5"/><path d="M2 12l10 5 10-5"/></svg>
+              資金影響分析
+            </span>
+            <p class="ct-ai-conclusion">{{ item.aiConclusion }}</p>
+            <div class="ct-ai-reason">
+              <span class="mf-label-tag">原因</span>{{ item.aiReason }}
+            </div>
+            <div class="ct-ai-meta">
+              <span>影響資金類型：{{ item.impactType }}</span>
+              <span>催化持續時間：{{ item.duration }}</span>
             </div>
           </div>
-        }
-      </div>
+          <div class="ai-disclaimer">僅供參考，非投資建議</div>
+        </div>
+      }
     </div>
-
-    <!-- Analyst + Social compact -->
-    <div class="sd-analyst-social">
-      <div class="card">
-        <div class="card-header"><div class="card-title">券商評等</div></div>
-        @for (a of analystRatings; track a.firm) {
-          <div class="sd-analyst-row">
-            <div class="sd-analyst-firm">{{ a.firm }}</div>
-            <div class="sd-analyst-rating" [style.color]="getRatingColor(a.rating)">{{ a.rating }}</div>
-            <div class="sd-analyst-target">目標 <strong>{{ a.target }}</strong></div>
-            <div class="sd-analyst-date">{{ a.date }}</div>
-          </div>
-        }
-      </div>
-    </div>
-
   </div>
-</div>
-
-<!-- ══════ Scenario Analysis ══════ -->
-<div class="card" style="margin-top:16px">
-  <div class="card-header"><div class="card-title">情境分析</div></div>
-  <div class="sd-scenario-list">
-    @for (s of aiInvestment.scenarios; track s.label) {
-      <div class="sd-scenario-row">
-        <div class="sd-scenario-label" [class.optimistic]="s.label === '樂觀'" [class.base]="s.label === '基準'" [class.pessimistic]="s.label === '悲觀'">{{ s.label }}</div>
-        <div class="sd-scenario-prob">{{ s.probability }}</div>
-        <div class="sd-scenario-target">目標 {{ s.target }}</div>
-        <div class="sd-scenario-trigger">{{ s.trigger }}</div>
-      </div>
-    }
-  </div>
-</div>
-
-<div class="ai-disclaimer" style="margin-top:12px">⚠️ 以上分析由 AI 模型生成，僅供參考，不構成任何投資建議。投資有風險，決策請審慎評估。</div>
+}

@@ -1,10 +1,17 @@
 import { Component, signal, computed } from '@angular/core';
 import { RouterLink } from '@angular/router';
 import { FormsModule } from '@angular/forms';
-import { Market, StockQuote } from '../../core/models';
+import { StockQuote } from '../../core/models';
 
+type FlowStatus = 'inflow' | 'outflow' | 'neutral';
 type SortField = 'symbol' | 'price' | 'change' | 'volume';
 type SortDir = 'asc' | 'desc';
+
+interface WatchlistStock extends StockQuote {
+  flowStatus: FlowStatus;
+  flowLabel: string;
+  aiFlowSummary: string;
+}
 
 interface WatchlistCategory {
   id: string;
@@ -66,30 +73,29 @@ export class Watchlist {
     '#6BA368', '#8B7355', '#5B8BD4', '#C5A059',
   ];
 
-  // ── Stock Data ──
-  readonly stocks = signal<StockQuote[]>([
-    { symbol: '2330', name: '台積電 TSMC', market: 'tw', price: 852.00, change: 12.00, changePercent: 1.43, volume: 28543, updatedAt: '2026-02-28T13:30:00' },
-    { symbol: 'NVDA', name: 'NVIDIA Corp.', market: 'us', price: 875.30, change: 15.65, changePercent: 1.82, volume: 41200000, updatedAt: '2026-02-27T16:00:00' },
-    { symbol: '2382', name: '廣達電腦', market: 'tw', price: 312.00, change: 12.35, changePercent: 4.12, volume: 15231, updatedAt: '2026-02-28T13:30:00' },
-    { symbol: 'AAPL', name: 'Apple Inc.', market: 'us', price: 178.52, change: -0.95, changePercent: -0.53, volume: 52100000, updatedAt: '2026-02-27T16:00:00' },
-    { symbol: '3231', name: '緯創資通', market: 'tw', price: 118.50, change: 1.75, changePercent: 1.50, volume: 22874, updatedAt: '2026-02-28T13:30:00' },
-    { symbol: '2317', name: '鴻海精密', market: 'tw', price: 178.00, change: -1.50, changePercent: -0.84, volume: 18562, updatedAt: '2026-02-28T13:30:00' },
-    { symbol: 'MSFT', name: 'Microsoft Corp.', market: 'us', price: 415.80, change: 3.22, changePercent: 0.78, volume: 22300000, updatedAt: '2026-02-27T16:00:00' },
-    { symbol: 'GOOGL', name: 'Alphabet Inc.', market: 'us', price: 172.35, change: -1.18, changePercent: -0.68, volume: 18900000, updatedAt: '2026-02-27T16:00:00' },
-    { symbol: '2454', name: '聯發科技', market: 'tw', price: 1280.00, change: 25.00, changePercent: 1.99, volume: 8421, updatedAt: '2026-02-28T13:30:00' },
-    { symbol: 'TSM', name: 'Taiwan Semi ADR', market: 'us', price: 168.42, change: 2.35, changePercent: 1.42, volume: 15600000, updatedAt: '2026-02-27T16:00:00' },
-    { symbol: '2603', name: '長榮海運', market: 'tw', price: 178.50, change: -3.50, changePercent: -1.92, volume: 32145, updatedAt: '2026-02-28T13:30:00' },
-    { symbol: 'AMD', name: 'AMD Inc.', market: 'us', price: 178.90, change: 5.42, changePercent: 3.13, volume: 35800000, updatedAt: '2026-02-27T16:00:00' },
+  // ── Stock Data (with flow status) ──
+  readonly stocks = signal<WatchlistStock[]>([
+    { symbol: '2330', name: '台積電 TSMC', market: 'tw', price: 852.00, change: 12.00, changePercent: 1.43, volume: 28543, updatedAt: '2026-02-28T13:30:00', flowStatus: 'inflow', flowLabel: '資金流入', aiFlowSummary: '外資連續8日買超，籌碼向大戶集中' },
+    { symbol: 'NVDA', name: 'NVIDIA Corp.', market: 'us', price: 875.30, change: 15.65, changePercent: 1.82, volume: 41200000, updatedAt: '2026-02-27T16:00:00', flowStatus: 'outflow', flowLabel: '資金流出', aiFlowSummary: '財報利多出盡，外資獲利了結中' },
+    { symbol: '2382', name: '廣達電腦', market: 'tw', price: 312.00, change: 12.35, changePercent: 4.12, volume: 15231, updatedAt: '2026-02-28T13:30:00', flowStatus: 'inflow', flowLabel: '資金流入', aiFlowSummary: '投信連續加碼，AI 伺服器訂單催化' },
+    { symbol: 'AAPL', name: 'Apple Inc.', market: 'us', price: 178.52, change: -0.95, changePercent: -0.53, volume: 52100000, updatedAt: '2026-02-27T16:00:00', flowStatus: 'neutral', flowLabel: '資金觀望', aiFlowSummary: '法人買賣分歧，量能萎縮觀望' },
+    { symbol: '3231', name: '緯創資通', market: 'tw', price: 118.50, change: 1.75, changePercent: 1.50, volume: 22874, updatedAt: '2026-02-28T13:30:00', flowStatus: 'neutral', flowLabel: '資金觀望', aiFlowSummary: '法人買賣分歧，等待營收數據確認' },
+    { symbol: '2317', name: '鴻海精密', market: 'tw', price: 178.00, change: -1.50, changePercent: -0.84, volume: 18562, updatedAt: '2026-02-28T13:30:00', flowStatus: 'outflow', flowLabel: '資金流出', aiFlowSummary: '外資連續賣超，電子組裝毛利壓力' },
+    { symbol: 'MSFT', name: 'Microsoft Corp.', market: 'us', price: 415.80, change: 3.22, changePercent: 0.78, volume: 22300000, updatedAt: '2026-02-27T16:00:00', flowStatus: 'inflow', flowLabel: '資金流入', aiFlowSummary: 'Azure 雲端營收成長強勁，機構加碼' },
+    { symbol: 'GOOGL', name: 'Alphabet Inc.', market: 'us', price: 172.35, change: -1.18, changePercent: -0.68, volume: 18900000, updatedAt: '2026-02-27T16:00:00', flowStatus: 'neutral', flowLabel: '資金觀望', aiFlowSummary: '廣告營收穩定但 AI 投資回報待驗證' },
+    { symbol: '2454', name: '聯發科技', market: 'tw', price: 1280.00, change: 25.00, changePercent: 1.99, volume: 8421, updatedAt: '2026-02-28T13:30:00', flowStatus: 'inflow', flowLabel: '資金流入', aiFlowSummary: '天璣晶片需求回溫，外資轉買超' },
+    { symbol: 'TSM', name: 'Taiwan Semi ADR', market: 'us', price: 168.42, change: 2.35, changePercent: 1.42, volume: 15600000, updatedAt: '2026-02-27T16:00:00', flowStatus: 'inflow', flowLabel: '資金流入', aiFlowSummary: '追蹤台積電母股，法人同步買超' },
+    { symbol: '2603', name: '長榮海運', market: 'tw', price: 178.50, change: -3.50, changePercent: -1.92, volume: 32145, updatedAt: '2026-02-28T13:30:00', flowStatus: 'outflow', flowLabel: '資金流出', aiFlowSummary: '運價回落，外資持續減碼航運股' },
+    { symbol: 'AMD', name: 'AMD Inc.', market: 'us', price: 178.90, change: 5.42, changePercent: 3.13, volume: 35800000, updatedAt: '2026-02-27T16:00:00', flowStatus: 'inflow', flowLabel: '資金流入', aiFlowSummary: 'MI300 晶片訂單成長，AI 競爭力提升' },
   ]);
 
   // ── Computed ──
   readonly stats = computed(() => {
     const all = this.stocks();
-    const up = all.filter(s => s.change > 0).length;
-    const down = all.filter(s => s.change < 0).length;
-    const flat = all.filter(s => s.change === 0).length;
-    const avgChange = all.reduce((sum, s) => sum + s.changePercent, 0) / all.length;
-    return { total: all.length, up, down, flat, avgChange };
+    const inflow = all.filter(s => s.flowStatus === 'inflow').length;
+    const outflow = all.filter(s => s.flowStatus === 'outflow').length;
+    const neutral = all.filter(s => s.flowStatus === 'neutral').length;
+    return { total: all.length, inflow, outflow, neutral };
   });
 
   readonly filteredStocks = computed(() => {
@@ -127,16 +133,6 @@ export class Watchlist {
     });
 
     return list;
-  });
-
-  readonly marketBreakdown = computed(() => {
-    const all = this.stocks();
-    const tw = all.filter(s => s.market === 'tw');
-    const us = all.filter(s => s.market === 'us');
-    return {
-      tw: { count: tw.length, avgChange: tw.length ? tw.reduce((s, q) => s + q.changePercent, 0) / tw.length : 0 },
-      us: { count: us.length, avgChange: us.length ? us.reduce((s, q) => s + q.changePercent, 0) / us.length : 0 },
-    };
   });
 
   readonly activeGroupStockCount = computed(() => {
@@ -185,7 +181,7 @@ export class Watchlist {
     if (this.stocks().some(s => s.symbol === sym)) return;
 
     const isTw = /^\d/.test(sym);
-    const newStock: StockQuote = {
+    const newStock: WatchlistStock = {
       symbol: sym,
       name: sym,
       market: isTw ? 'tw' : 'us',
@@ -194,6 +190,9 @@ export class Watchlist {
       changePercent: 0,
       volume: 0,
       updatedAt: new Date().toISOString(),
+      flowStatus: 'neutral',
+      flowLabel: '資金觀望',
+      aiFlowSummary: '尚無資金流向分析',
     };
     this.stocks.update(list => [newStock, ...list]);
 
@@ -344,25 +343,17 @@ export class Watchlist {
     this.deletingCategoryId.set(null);
   }
 
-  formatVolume(vol: number, market: Market): string {
-    if (market === 'us') {
-      if (vol >= 1_000_000) return (vol / 1_000_000).toFixed(1) + 'M';
-      if (vol >= 1_000) return (vol / 1_000).toFixed(0) + 'K';
-    }
-    return vol.toLocaleString();
-  }
-
   formatPrice(price: number): string {
     return price >= 1000 ? price.toLocaleString('en-US', { minimumFractionDigits: 0, maximumFractionDigits: 0 })
       : price.toFixed(2);
   }
 
-  formatChange(stock: StockQuote): string {
+  formatChange(stock: WatchlistStock): string {
     const sign = stock.changePercent > 0 ? '+' : '';
     return `${sign}${stock.changePercent.toFixed(2)}%`;
   }
 
-  getStockLink(stock: StockQuote): string {
+  getStockLink(stock: WatchlistStock): string {
     return `/stock/${stock.symbol}`;
   }
 }

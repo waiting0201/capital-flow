@@ -1,5 +1,5 @@
-<div class="section-label">Alerts & Notifications</div>
-<div class="section-title">警示通知</div>
+<div class="section-label">Capital Flow Alerts</div>
+<div class="section-title">資金預警中心</div>
 
 <!-- ══════ Stats Strip ══════ -->
 <div class="stats-strip">
@@ -12,7 +12,7 @@
     </div>
     <div class="stat-body">
       <div class="stat-value">{{ stats().activeAlerts }}</div>
-      <div class="stat-label">進行中警示</div>
+      <div class="stat-label">進行中預警</div>
     </div>
   </div>
   <div class="stat-card">
@@ -66,7 +66,7 @@
             <path d="M18 8A6 6 0 006 8c0 7-3 9-3 9h18s-3-2-3-9"/>
             <path d="M13.73 21a2 2 0 01-3.46 0"/>
           </svg>
-          通知動態
+          預警通知
         </div>
         @if (stats().unread > 0) {
           <button class="card-action" (click)="markAllRead()">全部已讀</button>
@@ -97,9 +97,10 @@
               <!-- Type Icon -->
               <div class="feed-icon" [attr.data-type]="notif.type">
                 @switch (notif.type) {
-                  @case ('price') {
+                  @case ('flow-reversal') {
                     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                      <circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="16"/><line x1="8" y1="12" x2="16" y2="12"/>
+                      <polyline points="23 4 23 10 17 10"/><polyline points="1 20 1 14 7 14"/>
+                      <path d="M3.51 9a9 9 0 0114.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0020.49 15"/>
                     </svg>
                   }
                   @case ('volume') {
@@ -112,19 +113,14 @@
                       <path d="M3 21h18M3 10h18M5 6l7-3 7 3M4 10v11M20 10v11M8 14v3M12 14v3M16 14v3"/>
                     </svg>
                   }
-                  @case ('news') {
+                  @case ('price') {
                     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                      <path d="M4 22h16a2 2 0 002-2V4a2 2 0 00-2-2H8a2 2 0 00-2 2v16a2 2 0 01-2 2zm0 0a2 2 0 01-2-2v-9c0-1.1.9-2 2-2h2"/>
+                      <circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="16"/><line x1="8" y1="12" x2="16" y2="12"/>
                     </svg>
                   }
-                  @case ('earnings') {
+                  @case ('catalyst') {
                     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                      <rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/>
-                    </svg>
-                  }
-                  @case ('ai') {
-                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                      <path d="M12 2L2 7l10 5 10-5-10-5z"/><path d="M2 17l10 5 10-5"/><path d="M2 12l10 5 10-5"/>
+                      <polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/>
                     </svg>
                   }
                 }
@@ -180,7 +176,7 @@
           <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--amber)" stroke-width="2">
             <circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="16"/><line x1="8" y1="12" x2="16" y2="12"/>
           </svg>
-          警示設定
+          預警設定
         </div>
         <button class="card-action" (click)="toggleCreateForm()">
           {{ showCreateForm() ? '取消' : '+ 新增' }}
@@ -192,8 +188,8 @@
         @for (tab of alertTabs; track tab.key) {
           <button class="alert-type-tab" [class.active]="alertTab() === tab.key" (click)="setAlertTab(tab.key)">
             @switch (tab.key) {
-              @case ('price') {
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="16"/><line x1="8" y1="12" x2="16" y2="12"/></svg>
+              @case ('flow-reversal') {
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="23 4 23 10 17 10"/><polyline points="1 20 1 14 7 14"/><path d="M3.51 9a9 9 0 0114.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0020.49 15"/></svg>
               }
               @case ('volume') {
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="20" x2="12" y2="10"/><line x1="18" y1="20" x2="18" y2="4"/><line x1="6" y1="20" x2="6" y2="16"/></svg>
@@ -201,8 +197,11 @@
               @case ('institutional') {
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 21h18M3 10h18M5 6l7-3 7 3M4 10v11M20 10v11M8 14v3M12 14v3M16 14v3"/></svg>
               }
-              @case ('news') {
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 22h16a2 2 0 002-2V4a2 2 0 00-2-2H8a2 2 0 00-2 2v16a2 2 0 01-2 2zm0 0a2 2 0 01-2-2v-9c0-1.1.9-2 2-2h2"/></svg>
+              @case ('price') {
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="16"/><line x1="8" y1="12" x2="16" y2="12"/></svg>
+              }
+              @case ('catalyst') {
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>
               }
             }
             {{ tab.label }}
@@ -212,24 +211,93 @@
 
       <!-- Quick Add Forms -->
       @if (showCreateForm()) {
-        <!-- Price Alert Form -->
+        <!-- Flow Reversal -->
+        @if (alertTab() === 'flow-reversal') {
+          <div class="quick-add">
+            <div class="quick-add-hint">AI 偵測多維度反轉訊號（外資轉向 + 融資變化 + 量能異常）</div>
+            <div class="quick-add-row">
+              <input class="form-input quick-input" type="text" placeholder="股票代碼"
+                [ngModel]="newFlowReversalAlert().symbol" (ngModelChange)="updateForm('flowReversal', 'symbol', $event)">
+              <button class="btn-sm btn-sm-primary" (click)="submitFlowReversalAlert()">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>
+                建立
+              </button>
+            </div>
+          </div>
+        }
+
+        <!-- Volume -->
+        @if (alertTab() === 'volume') {
+          <div class="quick-add">
+            <div class="quick-add-hint">成交量超過均量 N 倍，代表資金大規模進出</div>
+            <div class="quick-add-row">
+              <input class="form-input quick-input" type="text" placeholder="股票代碼"
+                [ngModel]="newVolumeAlert().symbol" (ngModelChange)="updateForm('volume', 'symbol', $event)">
+              <span class="quick-label">超過</span>
+              <select class="select-input quick-select" [ngModel]="newVolumeAlert().avgDays" (ngModelChange)="updateForm('volume', 'avgDays', $event)">
+                <option value="5">5 日均量</option>
+                <option value="10">10 日均量</option>
+                <option value="20">20 日均量</option>
+              </select>
+              <select class="select-input quick-select" [ngModel]="newVolumeAlert().multiplier" (ngModelChange)="updateForm('volume', 'multiplier', $event)">
+                <option value="1.5">1.5 倍</option>
+                <option value="2">2 倍</option>
+                <option value="3">3 倍</option>
+              </select>
+            </div>
+            <div class="quick-add-row">
+              <button class="btn-sm btn-sm-primary" style="margin-left:auto" (click)="submitVolumeAlert()">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>
+                建立
+              </button>
+            </div>
+          </div>
+        }
+
+        <!-- Institutional -->
+        @if (alertTab() === 'institutional') {
+          <div class="quick-add">
+            <div class="quick-add-hint">法人連續買超/賣超達天數門檻時通知</div>
+            <div class="quick-add-row">
+              <input class="form-input quick-input" type="text" placeholder="股票代碼"
+                [ngModel]="newInstitutionalAlert().symbol" (ngModelChange)="updateForm('institutional', 'symbol', $event)">
+              <select class="select-input quick-select" [ngModel]="newInstitutionalAlert().institution" (ngModelChange)="updateForm('institutional', 'institution', $event)">
+                <option value="foreign">外資</option>
+                <option value="investment">投信</option>
+                <option value="dealer">自營商</option>
+              </select>
+              <span class="quick-label">連續</span>
+              <select class="select-input quick-select" [ngModel]="newInstitutionalAlert().days" (ngModelChange)="updateForm('institutional', 'days', $event)">
+                <option value="3">3 日</option>
+                <option value="5">5 日</option>
+                <option value="10">10 日</option>
+              </select>
+            </div>
+            <div class="quick-add-row">
+              <button class="btn-sm btn-sm-primary" style="margin-left:auto" (click)="submitInstitutionalAlert()">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>
+                建立
+              </button>
+            </div>
+          </div>
+        }
+
+        <!-- Price -->
         @if (alertTab() === 'price') {
           <div class="quick-add">
             <div class="quick-add-hint">設定價格到達指定點位時通知</div>
             <div class="quick-add-row">
               <input class="form-input quick-input" type="text" placeholder="股票代碼"
-                [ngModel]="newAlert().symbol" (ngModelChange)="updateNewAlert('symbol', $event)">
-              <select class="select-input quick-select" [ngModel]="newAlert().condition" (ngModelChange)="updateNewAlert('condition', $event)">
+                [ngModel]="newPriceAlert().symbol" (ngModelChange)="updateForm('price', 'symbol', $event)">
+              <select class="select-input quick-select" [ngModel]="newPriceAlert().condition" (ngModelChange)="updateForm('price', 'condition', $event)">
                 <option value="above">漲破 ▲</option>
                 <option value="below">跌破 ▼</option>
               </select>
               <input class="form-input quick-input" type="number" placeholder="目標價"
-                [ngModel]="newAlert().targetPrice" (ngModelChange)="updateNewAlert('targetPrice', $event)">
+                [ngModel]="newPriceAlert().targetPrice" (ngModelChange)="updateForm('price', 'targetPrice', $event)">
             </div>
             <div class="quick-add-row">
-              <input class="form-input" type="text" placeholder="備註（選填）" style="flex:1"
-                [ngModel]="newAlert().note" (ngModelChange)="updateNewAlert('note', $event)">
-              <button class="btn-sm btn-sm-primary" (click)="submitNewAlert()">
+              <button class="btn-sm btn-sm-primary" style="margin-left:auto" (click)="submitPriceAlert()">
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>
                 建立
               </button>
@@ -237,86 +305,14 @@
           </div>
         }
 
-        <!-- Volume Alert Form -->
-        @if (alertTab() === 'volume') {
+        <!-- Catalyst -->
+        @if (alertTab() === 'catalyst') {
           <div class="quick-add">
-            <div class="quick-add-hint">設定成交量突破均量倍數時通知</div>
+            <div class="quick-add-hint">AI 判斷高催化強度新聞即時推播</div>
             <div class="quick-add-row">
               <input class="form-input quick-input" type="text" placeholder="股票代碼"
-                [ngModel]="newVolumeAlert().symbol" (ngModelChange)="updateNewVolumeAlert('symbol', $event)">
-              <span class="quick-label">超過</span>
-              <select class="select-input quick-select" [ngModel]="newVolumeAlert().avgDays" (ngModelChange)="updateNewVolumeAlert('avgDays', $event)">
-                <option value="5">5 日均量</option>
-                <option value="10">10 日均量</option>
-                <option value="20">20 日均量</option>
-              </select>
-              <select class="select-input quick-select" [ngModel]="newVolumeAlert().multiplier" (ngModelChange)="updateNewVolumeAlert('multiplier', $event)">
-                <option value="1.5">1.5 倍</option>
-                <option value="2">2 倍</option>
-                <option value="3">3 倍</option>
-                <option value="5">5 倍</option>
-              </select>
-            </div>
-            <div class="quick-add-row">
-              <input class="form-input" type="text" placeholder="備註（選填）" style="flex:1"
-                [ngModel]="newVolumeAlert().note" (ngModelChange)="updateNewVolumeAlert('note', $event)">
-              <button class="btn-sm btn-sm-primary" (click)="submitVolumeAlert()">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>
-                建立
-              </button>
-            </div>
-          </div>
-        }
-
-        <!-- Institutional Alert Form -->
-        @if (alertTab() === 'institutional') {
-          <div class="quick-add">
-            <div class="quick-add-hint">設定法人買賣超達門檻時通知</div>
-            <div class="quick-add-row">
-              <input class="form-input quick-input" type="text" placeholder="股票代碼"
-                [ngModel]="newInstitutionalAlert().symbol" (ngModelChange)="updateNewInstitutionalAlert('symbol', $event)">
-              <select class="select-input quick-select" [ngModel]="newInstitutionalAlert().institution" (ngModelChange)="updateNewInstitutionalAlert('institution', $event)">
-                <option value="foreign">外資</option>
-                <option value="investment">投信</option>
-                <option value="dealer">自營商</option>
-              </select>
-              <select class="select-input quick-select" [ngModel]="newInstitutionalAlert().direction" (ngModelChange)="updateNewInstitutionalAlert('direction', $event)">
-                <option value="buy">買超</option>
-                <option value="sell">賣超</option>
-              </select>
-            </div>
-            <div class="quick-add-row">
-              <span class="quick-label">超過</span>
-              <input class="form-input quick-input" type="number" placeholder="張數"
-                [ngModel]="newInstitutionalAlert().threshold" (ngModelChange)="updateNewInstitutionalAlert('threshold', $event)">
-              <span class="quick-label">張</span>
-              <button class="btn-sm btn-sm-primary" (click)="submitInstitutionalAlert()">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>
-                建立
-              </button>
-            </div>
-          </div>
-        }
-
-        <!-- News Alert Form -->
-        @if (alertTab() === 'news') {
-          <div class="quick-add">
-            <div class="quick-add-hint">設定出現關鍵字新聞時通知</div>
-            <div class="quick-add-row">
-              <input class="form-input quick-input" type="text" placeholder="股票代碼（選填）"
-                [ngModel]="newNewsAlert().symbol" (ngModelChange)="updateNewNewsAlert('symbol', $event)">
-              <input class="form-input" type="text" placeholder="關鍵字（以逗號分隔）" style="flex:1"
-                [ngModel]="newNewsAlert().keywords" (ngModelChange)="updateNewNewsAlert('keywords', $event)">
-            </div>
-            <div class="quick-add-row">
-              <select class="select-input quick-select" [ngModel]="newNewsAlert().sources" (ngModelChange)="updateNewNewsAlert('sources', $event)">
-                <option value="all">所有來源</option>
-                <option value="domestic">國內媒體</option>
-                <option value="international">國際媒體</option>
-              </select>
-              <input class="form-input" type="text" placeholder="備註（選填）" style="flex:1"
-                [ngModel]="newNewsAlert().note" (ngModelChange)="updateNewNewsAlert('note', $event)">
-              <button class="btn-sm btn-sm-primary" (click)="submitNewsAlert()">
+                [ngModel]="newCatalystAlert().symbol" (ngModelChange)="updateForm('catalyst', 'symbol', $event)">
+              <button class="btn-sm btn-sm-primary" (click)="submitCatalystAlert()">
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>
                 建立
               </button>
@@ -327,36 +323,18 @@
 
       <!-- Active Alerts List -->
       <div class="alert-list">
-        @for (alert of priceAlerts(); track alert.id) {
-          <div class="alert-row">
-            <div class="alert-stock">
-              <span class="alert-symbol">{{ alert.symbol }}</span>
-              <span class="alert-name">{{ alert.name }}</span>
-            </div>
-            <div class="alert-target">
-              <div class="alert-condition">
-                @if (alert.condition === 'above') {
-                  <span class="condition-badge condition-up">▲ 漲破</span>
-                } @else {
-                  <span class="condition-badge condition-down">▼ 跌破</span>
-                }
-                <span class="target-price">{{ alert.targetPrice }}</span>
+        @for (alert of flowAlerts(); track alert.id) {
+          <div class="alert-row" [attr.data-type]="alert.type">
+            <div class="alert-type-indicator" [attr.data-type]="alert.type"></div>
+            <div class="alert-body">
+              <div class="alert-top">
+                <span class="alert-type-label" [attr.data-type]="alert.type">{{ getTypeLabel(alert.type) }}</span>
+                <span class="alert-symbol">{{ alert.symbol }}</span>
+                <span class="alert-name">{{ alert.name }}</span>
               </div>
-              <div class="alert-current">
-                現價 <span class="current-val">{{ alert.currentPrice }}</span>
-                <span class="alert-distance" [class.near]="getAlertProgress(alert) > 95">
-                  {{ getAlertDistance(alert) }}
-                </span>
-              </div>
+              <div class="alert-title">{{ alert.title }}</div>
+              <div class="alert-desc">{{ alert.description }}</div>
             </div>
-            <div class="alert-progress-wrap">
-              <div class="alert-progress-track">
-                <div class="alert-progress-fill" [style.width.%]="getAlertProgress(alert)"></div>
-              </div>
-            </div>
-            @if (alert.note) {
-              <div class="alert-note">{{ alert.note }}</div>
-            }
             <button class="alert-remove" (click)="removeAlert(alert.id)">
               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                 <line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>
@@ -367,18 +345,18 @@
       </div>
     </div>
 
-    <!-- AI Insight Mini -->
+    <!-- AI Insight -->
     <div class="ai-insight-mini">
       <div class="ai-badge">
         <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
           <path d="M12 2L2 7l10 5 10-5-10-5z"/><path d="M2 17l10 5 10-5"/><path d="M2 12l10 5 10-5"/>
         </svg>
-        AI 警示建議
+        AI 預警建議
       </div>
       <p class="ai-insight-text">
-        根據您的自選股分析，建議為台積電設定 920 停利點與 810 停損點。NVIDIA 近期波動加大，建議將警示條件調整至 ±5% 區間以避免頻繁觸發。
+        根據自選股資金流向分析，建議為 NVDA 設定資金反轉預警（近期外資獲利了結跡象明顯）。台積電目前資金流入穩定，建議設定量能異常偵測以捕捉短線爆量訊號。
       </p>
-      <div class="ai-disclaimer">⚠️ 僅供參考，非投資建議</div>
+      <div class="ai-disclaimer">僅供參考，非投資建議</div>
     </div>
   </div>
 </div>

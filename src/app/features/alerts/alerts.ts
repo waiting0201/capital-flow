@@ -1,9 +1,34 @@
 import { Component, signal, computed } from '@angular/core';
 import { FormsModule } from '@angular/forms';
-import { AlertType, PriceAlert, NotificationItem } from '../../core/models';
 
-type FeedFilter = 'all' | 'price' | 'volume' | 'institutional' | 'news' | 'earnings' | 'ai';
-type AlertTab = 'price' | 'volume' | 'institutional' | 'news';
+type AlertCategory = 'all' | 'flow-reversal' | 'volume' | 'institutional' | 'price' | 'catalyst';
+type AlertTab = 'flow-reversal' | 'volume' | 'institutional' | 'price' | 'catalyst';
+
+interface FlowAlert {
+  id: string;
+  type: AlertTab;
+  symbol: string;
+  name: string;
+  market: 'tw' | 'us';
+  status: 'active' | 'triggered';
+  priority: 'high' | 'medium' | 'low';
+  title: string;
+  description: string;
+  createdAt: string;
+  triggeredAt?: string;
+}
+
+interface AlertNotification {
+  id: string;
+  type: AlertTab;
+  title: string;
+  message: string;
+  symbol?: string;
+  market?: 'tw' | 'us';
+  timestamp: string;
+  isRead: boolean;
+  priority: 'high' | 'medium' | 'low';
+}
 
 @Component({
   selector: 'app-alerts',
@@ -13,84 +38,59 @@ type AlertTab = 'price' | 'volume' | 'institutional' | 'news';
   styleUrl: './alerts.scss',
 })
 export class Alerts {
-  // ── Filter State ──
-  readonly feedFilter = signal<FeedFilter>('all');
+  // ── State ──
+  readonly feedFilter = signal<AlertCategory>('all');
   readonly showCreateForm = signal(false);
-  readonly alertTab = signal<AlertTab>('price');
+  readonly alertTab = signal<AlertTab>('flow-reversal');
 
-  readonly alertTabs: { key: AlertTab; label: string; icon: string }[] = [
-    { key: 'price', label: '到價', icon: 'target' },
-    { key: 'volume', label: '量能', icon: 'bar' },
-    { key: 'institutional', label: '法人', icon: 'building' },
-    { key: 'news', label: '新聞', icon: 'newspaper' },
+  readonly alertTabs: { key: AlertTab; label: string }[] = [
+    { key: 'flow-reversal', label: '資金反轉' },
+    { key: 'volume', label: '量能異常' },
+    { key: 'institutional', label: '法人動向' },
+    { key: 'price', label: '到價警示' },
+    { key: 'catalyst', label: '重大催化' },
   ];
 
-  readonly filterTabs: { key: FeedFilter; label: string }[] = [
+  readonly filterTabs: { key: AlertCategory; label: string }[] = [
     { key: 'all', label: '全部' },
+    { key: 'flow-reversal', label: '資金反轉' },
+    { key: 'volume', label: '量能異常' },
+    { key: 'institutional', label: '法人動向' },
     { key: 'price', label: '到價' },
-    { key: 'volume', label: '量能' },
-    { key: 'institutional', label: '法人' },
-    { key: 'news', label: '新聞' },
-    { key: 'earnings', label: '財報' },
-    { key: 'ai', label: 'AI' },
+    { key: 'catalyst', label: '催化' },
   ];
 
-  // ── Active Price Alerts ──
-  readonly priceAlerts = signal<PriceAlert[]>([
-    { id: '1', symbol: '2330', name: '台積電', market: 'tw', type: 'price', condition: 'above', targetPrice: 880, currentPrice: 852, status: 'active', priority: 'high', createdAt: '2026-02-25', note: '突破前高壓力區' },
-    { id: '2', symbol: 'NVDA', name: 'NVIDIA', market: 'us', type: 'price', condition: 'below', targetPrice: 850, currentPrice: 875.3, status: 'active', priority: 'medium', createdAt: '2026-02-26' },
-    { id: '3', symbol: '2382', name: '廣達', market: 'tw', type: 'price', condition: 'above', targetPrice: 320, currentPrice: 312, status: 'active', priority: 'medium', createdAt: '2026-02-27' },
-    { id: '4', symbol: 'AAPL', name: 'Apple', market: 'us', type: 'price', condition: 'below', targetPrice: 175, currentPrice: 178.52, status: 'active', priority: 'low', createdAt: '2026-02-20' },
-    { id: '5', symbol: '2317', name: '鴻海', market: 'tw', type: 'price', condition: 'above', targetPrice: 185, currentPrice: 178, status: 'active', priority: 'medium', createdAt: '2026-02-28' },
+  // ── Active Alerts ──
+  readonly flowAlerts = signal<FlowAlert[]>([
+    { id: '1', type: 'flow-reversal', symbol: 'NVDA', name: 'NVIDIA', market: 'us', status: 'active', priority: 'high', title: 'AI 偵測資金反轉', description: '外資由買轉賣 + 融資增加 + 量能萎縮，多維度反轉訊號', createdAt: '2026-02-26' },
+    { id: '2', type: 'volume', symbol: '2330', name: '台積電', market: 'tw', status: 'active', priority: 'high', title: '量能異常偵測', description: '成交量突破 20 日均量 2.3 倍時通知', createdAt: '2026-02-25' },
+    { id: '3', type: 'institutional', symbol: '2382', name: '廣達', market: 'tw', status: 'active', priority: 'medium', title: '法人連續買超追蹤', description: '外資連續買超 ≥ 5 日時通知', createdAt: '2026-02-27' },
+    { id: '4', type: 'price', symbol: '2330', name: '台積電', market: 'tw', status: 'active', priority: 'medium', title: '突破壓力區', description: '股價漲破 880 時通知（前高壓力區）', createdAt: '2026-02-25' },
+    { id: '5', type: 'catalyst', symbol: 'AAPL', name: 'Apple', market: 'us', status: 'active', priority: 'low', title: '重大催化追蹤', description: 'AI 判斷高催化強度新聞即時推播', createdAt: '2026-02-28' },
   ]);
 
   // ── Notification Feed ──
-  readonly notifications = signal<NotificationItem[]>([
-    { id: 'n1', type: 'price', title: '到價警示觸發', message: '台積電 (2330) 盤中觸及 850.00，接近您設定的目標價 880。', symbol: '2330', market: 'tw', timestamp: '2026-02-28T09:32:00', isRead: false, priority: 'high' },
-    { id: 'n2', type: 'volume', title: '異常量能偵測', message: '廣達 (2382) 成交量突破 5 日均量 2.3 倍，目前量能持續放大中。', symbol: '2382', market: 'tw', timestamp: '2026-02-28T09:15:00', isRead: false, priority: 'high' },
-    { id: 'n3', type: 'ai', title: 'AI 盤前分析', message: '台股加權指數預估今日開高走高，半導體族群受 NVIDIA 財報利多帶動，建議關注 AI 伺服器供應鏈。', timestamp: '2026-02-28T08:30:00', isRead: false, priority: 'medium' },
-    { id: 'n4', type: 'institutional', title: '法人動向異動', message: '外資連續 5 日買超台積電 (2330)，累計買超 18,562 張，佔成交比重 32%。', symbol: '2330', market: 'tw', timestamp: '2026-02-28T08:00:00', isRead: true, priority: 'medium' },
-    { id: 'n5', type: 'news', title: '重大新聞', message: 'NVIDIA 發布 2026 Q1 財報，營收 YoY 成長 78%，超越市場預期。盤後股價上漲 4.2%。', symbol: 'NVDA', market: 'us', timestamp: '2026-02-27T21:30:00', isRead: true, priority: 'high' },
-    { id: 'n6', type: 'earnings', title: '財報提醒', message: '鴻海 (2317) 將於 3 月 14 日公布 2025 年度財務報告，建議提前檢視持股部位。', symbol: '2317', market: 'tw', timestamp: '2026-02-27T18:00:00', isRead: true, priority: 'low' },
-    { id: 'n7', type: 'price', title: '到價警示觸發', message: 'Apple (AAPL) 收盤價 178.52，距離您的目標價 175 僅差 2.0%。', symbol: 'AAPL', market: 'us', timestamp: '2026-02-27T16:00:00', isRead: true, priority: 'medium' },
-    { id: 'n8', type: 'volume', title: '異常量能偵測', message: '緯創 (3231) 今日成交量為過去 20 日均量的 3.1 倍，短線量價齊揚。', symbol: '3231', market: 'tw', timestamp: '2026-02-27T13:30:00', isRead: true, priority: 'medium' },
-    { id: 'n9', type: 'institutional', title: '法人動向異動', message: '投信連續 3 日買超廣達 (2382)，累計買超 5,230 張。', symbol: '2382', market: 'tw', timestamp: '2026-02-27T08:00:00', isRead: true, priority: 'low' },
-    { id: 'n10', type: 'ai', title: 'AI 週報摘要', message: '本週台股加權指數上漲 1.8%，您的自選股組合平均漲幅 2.4%，跑贏大盤。表現最佳：廣達 +4.1%。', timestamp: '2026-02-23T20:00:00', isRead: true, priority: 'low' },
+  readonly notifications = signal<AlertNotification[]>([
+    { id: 'n1', type: 'flow-reversal', title: '資金反轉預警', message: 'NVDA 外資由買轉賣，同時融資增加 12%，AI 判斷資金方向可能反轉。建議關注後續法人動向。', symbol: 'NVDA', market: 'us', timestamp: '2026-02-28T09:32:00', isRead: false, priority: 'high' },
+    { id: 'n2', type: 'volume', title: '量能異常偵測', message: '廣達 (2382) 成交量突破 20 日均量 2.3 倍，資金大規模進出信號。', symbol: '2382', market: 'tw', timestamp: '2026-02-28T09:15:00', isRead: false, priority: 'high' },
+    { id: 'n3', type: 'institutional', title: '法人動向異動', message: '外資連續 8 日買超台積電 (2330)，累計買超 18,562 張，佔成交比重 32%。籌碼持續向大戶集中。', symbol: '2330', market: 'tw', timestamp: '2026-02-28T08:00:00', isRead: false, priority: 'medium' },
+    { id: 'n4', type: 'catalyst', title: '重大催化事件', message: 'NVIDIA 發布 2026 Q1 財報，營收 YoY 成長 78%，超越市場預期。AI 判斷催化強度：高。盤後股價上漲 4.2%。', symbol: 'NVDA', market: 'us', timestamp: '2026-02-27T21:30:00', isRead: true, priority: 'high' },
+    { id: 'n5', type: 'flow-reversal', title: '資金反轉確認', message: '鴻海 (2317) 外資連續 3 日由買轉賣，融資餘額同步增加，資金流向已確認反轉。', symbol: '2317', market: 'tw', timestamp: '2026-02-27T13:30:00', isRead: true, priority: 'medium' },
+    { id: 'n6', type: 'volume', title: '量能異常偵測', message: '緯創 (3231) 今日成交量為 20 日均量 3.1 倍，短線量價齊揚，資金大規模湧入。', symbol: '3231', market: 'tw', timestamp: '2026-02-27T13:30:00', isRead: true, priority: 'medium' },
+    { id: 'n7', type: 'price', title: '到價警示觸發', message: 'Apple (AAPL) 收盤價 178.52，距離目標價 175 僅差 2.0%。', symbol: 'AAPL', market: 'us', timestamp: '2026-02-27T16:00:00', isRead: true, priority: 'medium' },
+    { id: 'n8', type: 'institutional', title: '法人動向異動', message: '投信連續 3 日買超廣達 (2382)，累計買超 5,230 張。資金從被動轉為主動加碼。', symbol: '2382', market: 'tw', timestamp: '2026-02-27T08:00:00', isRead: true, priority: 'low' },
   ]);
 
   // ── New Alert Forms ──
-  readonly newAlert = signal({
-    symbol: '',
-    condition: 'above' as 'above' | 'below',
-    targetPrice: '',
-    note: '',
-  });
-
-  readonly newVolumeAlert = signal({
-    symbol: '',
-    multiplier: '2',
-    avgDays: '5',
-    note: '',
-  });
-
-  readonly newInstitutionalAlert = signal({
-    symbol: '',
-    institution: 'foreign' as 'foreign' | 'investment' | 'dealer',
-    direction: 'buy' as 'buy' | 'sell',
-    threshold: '1000',
-    note: '',
-  });
-
-  readonly newNewsAlert = signal({
-    symbol: '',
-    keywords: '',
-    sources: 'all' as 'all' | 'domestic' | 'international',
-    note: '',
-  });
+  readonly newFlowReversalAlert = signal({ symbol: '', note: '' });
+  readonly newVolumeAlert = signal({ symbol: '', multiplier: '2', avgDays: '20', note: '' });
+  readonly newInstitutionalAlert = signal({ symbol: '', institution: 'foreign' as 'foreign' | 'investment' | 'dealer', days: '5', note: '' });
+  readonly newPriceAlert = signal({ symbol: '', condition: 'above' as 'above' | 'below', targetPrice: '', note: '' });
+  readonly newCatalystAlert = signal({ symbol: '', note: '' });
 
   // ── Computed ──
   readonly stats = computed(() => {
-    const alerts = this.priceAlerts();
+    const alerts = this.flowAlerts();
     const notifs = this.notifications();
     return {
       activeAlerts: alerts.filter(a => a.status === 'active').length,
@@ -109,7 +109,7 @@ export class Alerts {
 
   readonly groupedNotifications = computed(() => {
     const notifs = this.filteredNotifications();
-    const groups: { label: string; items: NotificationItem[] }[] = [];
+    const groups: { label: string; items: AlertNotification[] }[] = [];
     const today = '2026-02-28';
     const yesterday = '2026-02-27';
 
@@ -125,7 +125,7 @@ export class Alerts {
   });
 
   // ── Methods ──
-  setFilter(filter: FeedFilter): void {
+  setFilter(filter: AlertCategory): void {
     this.feedFilter.set(filter);
   }
 
@@ -146,7 +146,7 @@ export class Alerts {
   }
 
   removeAlert(id: string): void {
-    this.priceAlerts.update(list => list.filter(a => a.id !== id));
+    this.flowAlerts.update(list => list.filter(a => a.id !== id));
   }
 
   toggleCreateForm(): void {
@@ -157,113 +157,10 @@ export class Alerts {
     this.alertTab.set(tab);
   }
 
-  updateNewAlert(field: string, value: string): void {
-    this.newAlert.update(a => ({ ...a, [field]: value }));
-  }
-
-  updateNewVolumeAlert(field: string, value: string): void {
-    this.newVolumeAlert.update(a => ({ ...a, [field]: value }));
-  }
-
-  updateNewInstitutionalAlert(field: string, value: string): void {
-    this.newInstitutionalAlert.update(a => ({ ...a, [field]: value }));
-  }
-
-  updateNewNewsAlert(field: string, value: string): void {
-    this.newNewsAlert.update(a => ({ ...a, [field]: value }));
-  }
-
-  submitNewAlert(): void {
-    const form = this.newAlert();
-    if (!form.symbol || !form.targetPrice) return;
-
-    const newEntry: PriceAlert = {
-      id: `new-${Date.now()}`,
-      symbol: form.symbol.toUpperCase(),
-      name: form.symbol.toUpperCase(),
-      market: /^\d/.test(form.symbol) ? 'tw' : 'us',
-      type: 'price',
-      condition: form.condition,
-      targetPrice: parseFloat(form.targetPrice),
-      currentPrice: 0,
-      status: 'active',
-      priority: 'medium',
-      createdAt: '2026-02-28',
-      note: form.note || undefined,
-    };
-
-    this.priceAlerts.update(list => [newEntry, ...list]);
-    this.newAlert.set({ symbol: '', condition: 'above', targetPrice: '', note: '' });
-    this.showCreateForm.set(false);
-  }
-
-  submitVolumeAlert(): void {
-    const form = this.newVolumeAlert();
-    if (!form.symbol) return;
-    this.notifications.update(list => [{
-      id: `vn-${Date.now()}`, type: 'volume' as const, title: '量能警示已建立',
-      message: `${form.symbol.toUpperCase()} 成交量突破 ${form.avgDays} 日均量 ${form.multiplier} 倍時通知`,
-      symbol: form.symbol.toUpperCase(), market: (/^\d/.test(form.symbol) ? 'tw' : 'us') as 'tw' | 'us',
-      timestamp: new Date().toISOString(), isRead: false, priority: 'medium' as const,
-    }, ...list]);
-    this.newVolumeAlert.set({ symbol: '', multiplier: '2', avgDays: '5', note: '' });
-    this.showCreateForm.set(false);
-  }
-
-  submitInstitutionalAlert(): void {
-    const form = this.newInstitutionalAlert();
-    if (!form.symbol) return;
-    const instLabel = form.institution === 'foreign' ? '外資' : form.institution === 'investment' ? '投信' : '自營商';
-    const dirLabel = form.direction === 'buy' ? '買超' : '賣超';
-    this.notifications.update(list => [{
-      id: `in-${Date.now()}`, type: 'institutional' as const, title: '法人動向警示已建立',
-      message: `${form.symbol.toUpperCase()} ${instLabel}${dirLabel}超過 ${form.threshold} 張時通知`,
-      symbol: form.symbol.toUpperCase(), market: (/^\d/.test(form.symbol) ? 'tw' : 'us') as 'tw' | 'us',
-      timestamp: new Date().toISOString(), isRead: false, priority: 'medium' as const,
-    }, ...list]);
-    this.newInstitutionalAlert.set({ symbol: '', institution: 'foreign', direction: 'buy', threshold: '1000', note: '' });
-    this.showCreateForm.set(false);
-  }
-
-  submitNewsAlert(): void {
-    const form = this.newNewsAlert();
-    if (!form.keywords && !form.symbol) return;
-    const target = form.symbol ? form.symbol.toUpperCase() : '全市場';
-    this.notifications.update(list => [{
-      id: `nn-${Date.now()}`, type: 'news' as const, title: '新聞關鍵字警示已建立',
-      message: `${target} 出現關鍵字「${form.keywords}」時通知`,
-      symbol: form.symbol ? form.symbol.toUpperCase() : undefined,
-      market: form.symbol ? ((/^\d/.test(form.symbol) ? 'tw' : 'us') as 'tw' | 'us') : undefined,
-      timestamp: new Date().toISOString(), isRead: false, priority: 'low' as const,
-    }, ...list]);
-    this.newNewsAlert.set({ symbol: '', keywords: '', sources: 'all', note: '' });
-    this.showCreateForm.set(false);
-  }
-
-  getAlertProgress(alert: PriceAlert): number {
-    if (alert.condition === 'above') {
-      return Math.min(100, (alert.currentPrice / alert.targetPrice) * 100);
-    }
-    return Math.min(100, (alert.targetPrice / alert.currentPrice) * 100);
-  }
-
-  getAlertDistance(alert: PriceAlert): string {
-    const diff = ((alert.targetPrice - alert.currentPrice) / alert.currentPrice) * 100;
-    return diff > 0 ? `+${diff.toFixed(1)}%` : `${diff.toFixed(1)}%`;
-  }
-
-  getTypeIcon(type: AlertType): string {
-    const icons: Record<AlertType, string> = {
-      price: 'target', volume: 'bar', institutional: 'building',
-      news: 'newspaper', earnings: 'calendar', ai: 'brain',
-    };
-    return icons[type];
-  }
-
-  getTypeLabel(type: AlertType): string {
-    const labels: Record<AlertType, string> = {
-      price: '到價', volume: '量能', institutional: '法人',
-      news: '新聞', earnings: '財報', ai: 'AI',
+  getTypeLabel(type: AlertTab): string {
+    const labels: Record<AlertTab, string> = {
+      'flow-reversal': '資金反轉', volume: '量能異常', institutional: '法人動向',
+      price: '到價', catalyst: '催化',
     };
     return labels[type];
   }
@@ -273,5 +170,88 @@ export class Alerts {
     const h = date.getHours().toString().padStart(2, '0');
     const m = date.getMinutes().toString().padStart(2, '0');
     return `${h}:${m}`;
+  }
+
+  // ── Submit Handlers ──
+  submitFlowReversalAlert(): void {
+    const form = this.newFlowReversalAlert();
+    if (!form.symbol) return;
+    this.flowAlerts.update(list => [{
+      id: `fr-${Date.now()}`, type: 'flow-reversal' as const, symbol: form.symbol.toUpperCase(),
+      name: form.symbol.toUpperCase(), market: (/^\d/.test(form.symbol) ? 'tw' : 'us') as 'tw' | 'us',
+      status: 'active' as const, priority: 'high' as const,
+      title: 'AI 偵測資金反轉', description: 'AI 偵測多維度反轉訊號（外資、融資、量能）',
+      createdAt: '2026-02-28',
+    }, ...list]);
+    this.newFlowReversalAlert.set({ symbol: '', note: '' });
+    this.showCreateForm.set(false);
+  }
+
+  submitVolumeAlert(): void {
+    const form = this.newVolumeAlert();
+    if (!form.symbol) return;
+    this.flowAlerts.update(list => [{
+      id: `va-${Date.now()}`, type: 'volume' as const, symbol: form.symbol.toUpperCase(),
+      name: form.symbol.toUpperCase(), market: (/^\d/.test(form.symbol) ? 'tw' : 'us') as 'tw' | 'us',
+      status: 'active' as const, priority: 'medium' as const,
+      title: '量能異常偵測', description: `成交量突破 ${form.avgDays} 日均量 ${form.multiplier} 倍時通知`,
+      createdAt: '2026-02-28',
+    }, ...list]);
+    this.newVolumeAlert.set({ symbol: '', multiplier: '2', avgDays: '20', note: '' });
+    this.showCreateForm.set(false);
+  }
+
+  submitInstitutionalAlert(): void {
+    const form = this.newInstitutionalAlert();
+    if (!form.symbol) return;
+    const instLabel = form.institution === 'foreign' ? '外資' : form.institution === 'investment' ? '投信' : '自營商';
+    this.flowAlerts.update(list => [{
+      id: `ia-${Date.now()}`, type: 'institutional' as const, symbol: form.symbol.toUpperCase(),
+      name: form.symbol.toUpperCase(), market: (/^\d/.test(form.symbol) ? 'tw' : 'us') as 'tw' | 'us',
+      status: 'active' as const, priority: 'medium' as const,
+      title: '法人動向追蹤', description: `${instLabel}連續買超/賣超 ≥ ${form.days} 日時通知`,
+      createdAt: '2026-02-28',
+    }, ...list]);
+    this.newInstitutionalAlert.set({ symbol: '', institution: 'foreign', days: '5', note: '' });
+    this.showCreateForm.set(false);
+  }
+
+  submitPriceAlert(): void {
+    const form = this.newPriceAlert();
+    if (!form.symbol || !form.targetPrice) return;
+    const condLabel = form.condition === 'above' ? '漲破' : '跌破';
+    this.flowAlerts.update(list => [{
+      id: `pa-${Date.now()}`, type: 'price' as const, symbol: form.symbol.toUpperCase(),
+      name: form.symbol.toUpperCase(), market: (/^\d/.test(form.symbol) ? 'tw' : 'us') as 'tw' | 'us',
+      status: 'active' as const, priority: 'medium' as const,
+      title: `${condLabel}目標價`, description: `股價${condLabel} ${form.targetPrice} 時通知`,
+      createdAt: '2026-02-28',
+    }, ...list]);
+    this.newPriceAlert.set({ symbol: '', condition: 'above', targetPrice: '', note: '' });
+    this.showCreateForm.set(false);
+  }
+
+  submitCatalystAlert(): void {
+    const form = this.newCatalystAlert();
+    if (!form.symbol) return;
+    this.flowAlerts.update(list => [{
+      id: `ca-${Date.now()}`, type: 'catalyst' as const, symbol: form.symbol.toUpperCase(),
+      name: form.symbol.toUpperCase(), market: (/^\d/.test(form.symbol) ? 'tw' : 'us') as 'tw' | 'us',
+      status: 'active' as const, priority: 'low' as const,
+      title: '重大催化追蹤', description: 'AI 判斷高催化強度新聞即時推播',
+      createdAt: '2026-02-28',
+    }, ...list]);
+    this.newCatalystAlert.set({ symbol: '', note: '' });
+    this.showCreateForm.set(false);
+  }
+
+  updateForm(form: 'flowReversal' | 'volume' | 'institutional' | 'price' | 'catalyst', field: string, value: string): void {
+    switch (form) {
+      case 'flowReversal': this.newFlowReversalAlert.update(a => ({ ...a, [field]: value })); break;
+      case 'volume': this.newVolumeAlert.update(a => ({ ...a, [field]: value })); break;
+      case 'institutional': this.newInstitutionalAlert.update(a => ({ ...a, [field]: value })); break;
+      case 'price': this.newPriceAlert.update(a => ({ ...a, [field]: value })); break;
+      case 'catalyst': this.newCatalystAlert.update(a => ({ ...a, [field]: value })); break;
+    }
   }
 }

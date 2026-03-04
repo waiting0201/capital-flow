@@ -1,7 +1,7 @@
 <!-- ══════ Hero Search ══════ -->
 <div class="sr-hero">
   <div class="sr-hero-label">Search</div>
-  <div class="sr-hero-title">探索股票與投資主題</div>
+  <div class="sr-hero-title">搜尋股票與資金流向</div>
   <div class="sr-search-box">
     <svg class="sr-search-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
       <circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/>
@@ -21,8 +21,8 @@
   </div>
   <div class="sr-filters">
     <button class="sr-filter-chip" [class.active]="marketFilter() === 'all'" (click)="setMarketFilter('all')">全部</button>
-    <button class="sr-filter-chip" [class.active]="marketFilter() === 'tw'" (click)="setMarketFilter('tw')">🇹🇼 台股</button>
-    <button class="sr-filter-chip" [class.active]="marketFilter() === 'us'" (click)="setMarketFilter('us')">🇺🇸 美股</button>
+    <button class="sr-filter-chip" [class.active]="marketFilter() === 'tw'" (click)="setMarketFilter('tw')">台股</button>
+    <button class="sr-filter-chip" [class.active]="marketFilter() === 'us'" (click)="setMarketFilter('us')">美股</button>
   </div>
 </div>
 
@@ -42,11 +42,16 @@
       <div class="sr-theme-grid">
         @for (t of filteredThemes(); track t.name) {
           <button class="sr-theme-card" (click)="applyKeyword(t.name)">
-            <span class="sr-theme-icon">{{ t.icon }}</span>
             <div class="sr-theme-info">
               <span class="sr-theme-name">{{ t.name }}</span>
-              <span class="sr-theme-meta">{{ t.count }} 檔 · <span [style.color]="t.change >= 0 ? 'var(--up)' : 'var(--down)'">{{ t.change >= 0 ? '+' : '' }}{{ t.change }}%</span></span>
+              <span class="sr-theme-meta">{{ t.count }} 檔</span>
             </div>
+            <span class="sr-theme-flow"
+              [class.flow-in]="t.flowTrend.startsWith('▲')"
+              [class.flow-out]="t.flowTrend.startsWith('▼')"
+              [class.flow-neutral]="t.flowTrend.startsWith('─')">
+              {{ t.flowTrend }}
+            </span>
             <svg class="sr-theme-arrow" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="9 18 15 12 9 6"/></svg>
           </button>
         }
@@ -66,16 +71,36 @@
           <a class="sr-stock-row" [routerLink]="getStockLink(s)" (click)="addToRecent(s.symbol)">
             <div class="sr-stock-dot" [attr.data-market]="s.market"></div>
             <div class="sr-stock-info">
-              <span class="sr-stock-symbol">{{ s.symbol }}</span>
-              <span class="sr-stock-name">{{ s.name }}</span>
+              <div class="sr-stock-top">
+                <span class="sr-stock-symbol">{{ s.symbol }}</span>
+                <span class="sr-stock-name">{{ s.name }}</span>
+              </div>
+              <div class="sr-stock-flow-row">
+                <span class="sr-flow-badge"
+                  [class.flow-in]="s.flowStatus === 'inflow'"
+                  [class.flow-out]="s.flowStatus === 'outflow'"
+                  [class.flow-neutral]="s.flowStatus === 'neutral'">
+                  @if (s.flowStatus === 'inflow') { ▲ }
+                  @else if (s.flowStatus === 'outflow') { ▼ }
+                  @else { ─ }
+                  {{ s.flowLabel }}
+                </span>
+                @if (s.tags) {
+                  @for (tag of s.tags; track tag) {
+                    <span class="sr-stock-tag">{{ tag }}</span>
+                  }
+                }
+              </div>
+              <div class="sr-stock-ai">{{ s.aiFlowSummary }}</div>
             </div>
-            <div class="sr-stock-price" [class.is-up]="s.change > 0" [class.is-down]="s.change < 0">
-              {{ formatPrice(s.price) }}
+            <div class="sr-stock-right">
+              <div class="sr-stock-price" [class.is-up]="s.change > 0" [class.is-down]="s.change < 0">
+                {{ formatPrice(s.price) }}
+              </div>
+              <div class="sr-stock-change" [class.up]="s.change > 0" [class.down]="s.change < 0">
+                {{ formatChange(s) }}
+              </div>
             </div>
-            <div class="sr-stock-change" [class.up]="s.change > 0" [class.down]="s.change < 0">
-              {{ formatChange(s) }}
-            </div>
-            <div class="sr-stock-vol">{{ formatVolume(s) }}</div>
             <svg class="sr-stock-arrow" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="9 18 15 12 9 6"/></svg>
           </a>
         }
@@ -139,16 +164,21 @@
   <!-- Concept Themes -->
   <div class="sr-section">
     <div class="sr-section-head">
-      <span class="sr-section-label">概念主題</span>
+      <span class="sr-section-label">概念主題 · 資金流向</span>
     </div>
     <div class="sr-theme-grid">
       @for (t of themes; track t.name) {
         <button class="sr-theme-card" (click)="applyKeyword(t.name)">
-          <span class="sr-theme-icon">{{ t.icon }}</span>
           <div class="sr-theme-info">
             <span class="sr-theme-name">{{ t.name }}</span>
-            <span class="sr-theme-meta">{{ t.count }} 檔 · <span [style.color]="t.change >= 0 ? 'var(--up)' : 'var(--down)'">{{ t.change >= 0 ? '+' : '' }}{{ t.change }}%</span></span>
+            <span class="sr-theme-meta">{{ t.count }} 檔</span>
           </div>
+          <span class="sr-theme-flow"
+            [class.flow-in]="t.flowTrend.startsWith('▲')"
+            [class.flow-out]="t.flowTrend.startsWith('▼')"
+            [class.flow-neutral]="t.flowTrend.startsWith('─')">
+            {{ t.flowTrend }}
+          </span>
           <svg class="sr-theme-arrow" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="9 18 15 12 9 6"/></svg>
         </button>
       }
