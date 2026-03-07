@@ -21,14 +21,14 @@ export class DisplaySettingsService {
   private loadTextSize(): TextSize {
     try {
       const stored = localStorage.getItem('text_size');
-      return (stored === 'md' || stored === 'lg') ? stored : 'sm';
+      return (stored === 'sm' || stored === 'lg') ? stored : 'md';
     } catch {
-      return 'sm';
+      return 'md';
     }
   }
 
   private applyTextSize(size: TextSize): void {
-    if (size === 'sm') {
+    if (size === 'md') {
       document.documentElement.removeAttribute('data-text-size');
     } else {
       document.documentElement.setAttribute('data-text-size', size);
