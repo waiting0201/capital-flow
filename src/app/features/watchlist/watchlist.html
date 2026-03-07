@@ -1,6 +1,10 @@
 <div class="section-label">Watchlist</div>
 <div class="section-title">自選股清單</div>
 
+@if (isLoading()) {
+  <div class="wl-loading">載入自選股資料中...</div>
+}
+
 <!-- ══════ Flow Stats Strip ══════ -->
 <div class="wl-stats">
   <div class="wl-stat">
@@ -10,15 +14,15 @@
   <div class="wl-stat-divider"></div>
   <div class="wl-stat">
     <span class="wl-stat-val" style="color:var(--up)">{{ stats().inflow }}</span>
-    <span class="wl-stat-lbl">資金流入</span>
+    <span class="wl-stat-lbl">上漲</span>
   </div>
   <div class="wl-stat">
     <span class="wl-stat-val" style="color:var(--down)">{{ stats().outflow }}</span>
-    <span class="wl-stat-lbl">資金流出</span>
+    <span class="wl-stat-lbl">下跌</span>
   </div>
   <div class="wl-stat">
     <span class="wl-stat-val" style="color:var(--gray-light)">{{ stats().neutral }}</span>
-    <span class="wl-stat-lbl">觀望</span>
+    <span class="wl-stat-lbl">持平</span>
   </div>
 </div>
 
@@ -52,8 +56,8 @@
     @for (cat of categories(); track cat.id) {
       <button
         class="wl-group-chip wl-group-chip--cat"
-        [class.active]="activeGroup() === cat.id"
-        (click)="setGroup(cat.id)"
+        [class.active]="activeGroup() === '' + cat.id"
+        (click)="setGroup('' + cat.id)"
         (contextmenu)="openContextMenu(cat.id, $event)">
         <span class="wl-cat-dot" [style.background]="cat.color"></span>
         {{ cat.name }}
@@ -223,7 +227,7 @@
         <span class="sort-arrow">{{ sortDir() === 'asc' ? '▲' : '▼' }}</span>
       }
     </button>
-    <div class="wl-th wl-th-flow">資金動向</div>
+    <div class="wl-th wl-th-flow">狀態</div>
     <button class="wl-th wl-th-price" (click)="toggleSort('price')">
       現價
       @if (sortField() === 'price') {
@@ -252,7 +256,7 @@
           </div>
         </div>
 
-        <!-- Flow Status + AI Summary -->
+        <!-- Flow Status -->
         <div class="wl-cell-flow">
           <span class="wl-flow-badge"
             [class.flow-in]="stock.flowStatus === 'inflow'"
@@ -263,7 +267,6 @@
             @else { ─ }
             {{ stock.flowLabel }}
           </span>
-          <span class="wl-flow-summary">{{ stock.aiFlowSummary }}</span>
 
           <!-- Category Tags (inline) -->
           <div class="wl-flow-cats">
@@ -276,26 +279,7 @@
               </svg>
             </button>
 
-            <!-- Assign Dropdown -->
-            @if (assigningStockSymbol() === stock.symbol) {
-              <div class="wl-assign-dropdown" (click)="$event.stopPropagation(); $event.preventDefault()">
-                <div class="wl-assign-title">加入分類</div>
-                @for (cat of categories(); track cat.id) {
-                  <label class="wl-assign-option" (click)="toggleStockCategory(stock.symbol, cat.id, $event)">
-                    <span class="wl-assign-check" [class.checked]="isStockInCategory(stock.symbol, cat.id)">
-                      @if (isStockInCategory(stock.symbol, cat.id)) {
-                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><polyline points="20 6 9 17 4 12"/></svg>
-                      }
-                    </span>
-                    <span class="wl-cat-dot" [style.background]="cat.color"></span>
-                    <span>{{ cat.name }}</span>
-                  </label>
-                }
-                @if (categories().length === 0) {
-                  <div class="wl-assign-empty">尚無分類，請先建立</div>
-                }
-              </div>
-            }
+            <!-- Assign Dropdown (rendered outside <a> via portal-like approach) -->
           </div>
         </div>
 
@@ -322,7 +306,7 @@
       </a>
     }
 
-    @if (filteredStocks().length === 0) {
+    @if (filteredStocks().length === 0 && !isLoading()) {
       <div class="wl-empty">
         <svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="var(--gray-faint)" stroke-width="1.5">
           <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/>
@@ -332,6 +316,29 @@
     }
   </div>
 </div>
+
+<!-- ══════ Assign Category Dropdown (outside <a>) ══════ -->
+@if (assigningStockSymbol()) {
+  <div class="wl-assign-dropdown wl-assign-dropdown--fixed"
+    [style.left.px]="assignPanelPos().x"
+    [style.top.px]="assignPanelPos().y">
+    <div class="wl-assign-title">加入分類</div>
+    @for (cat of categories(); track cat.id) {
+      <div class="wl-assign-option" (click)="toggleStockCategory(assigningStockSymbol()!, cat.id, $event)">
+        <span class="wl-assign-check" [class.checked]="isStockInCategory(assigningStockSymbol()!, cat.id)">
+          @if (isStockInCategory(assigningStockSymbol()!, cat.id)) {
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><polyline points="20 6 9 17 4 12"/></svg>
+          }
+        </span>
+        <span class="wl-cat-dot" [style.background]="cat.color"></span>
+        <span>{{ cat.name }}</span>
+      </div>
+    }
+    @if (categories().length === 0) {
+      <div class="wl-assign-empty">尚無分類，請先建立</div>
+    }
+  </div>
+}
 
 <!-- ══════ Context Menu (Category Right-Click) ══════ -->
 @if (contextMenuCategoryId()) {

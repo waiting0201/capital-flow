@@ -1,8 +1,12 @@
-import { Component, input, signal, computed, effect } from '@angular/core';
+import { Component, input, signal, computed, effect, inject, DestroyRef } from '@angular/core';
 import { DecimalPipe } from '@angular/common';
 import { RouterLink } from '@angular/router';
 import { NgApexchartsModule } from 'ng-apexcharts';
-import { Market, StockQuote, StockProfile, KLineData } from '../../../core/models';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
+import { forkJoin, catchError, of } from 'rxjs';
+import { Market, StockQuote, StockProfile, KLineData, ApiStockQuote, ApiOhlc } from '../../../core/models';
+import { StockApiService } from '../../../core/services/stock-api.service';
+import { WatchlistApiService } from '../../../core/services/watchlist-api.service';
 import {
   ApexAxisChartSeries, ApexChart, ApexXAxis, ApexYAxis,
   ApexPlotOptions, ApexDataLabels, ApexStroke, ApexTooltip,
@@ -23,11 +27,16 @@ type DimensionSignal = 'positive' | 'neutral' | 'negative';
   styleUrl: './stock-detail.scss',
 })
 export class StockDetail {
+  private readonly stockApi = inject(StockApiService);
+  private readonly watchlistApi = inject(WatchlistApiService);
+  private readonly destroyRef = inject(DestroyRef);
+
   readonly symbol = input.required<string>();
 
   readonly activeTab = signal<StockTab>('flow');
   readonly chartRange = signal<ChartRange>('1M');
   readonly chartRanges: ChartRange[] = ['1D', '5D', '1M', '3M', '6M', '1Y', 'YTD'];
+  readonly isLoading = signal(true);
 
   // ── ApexCharts Options ──
   candleSeries = signal<ApexAxisChartSeries>([]);
@@ -46,18 +55,59 @@ export class StockDetail {
   readonly candleTooltip: ApexTooltip = { theme: 'light', style: { fontFamily: 'Noto Sans TC, sans-serif', fontSize: '11px' } };
   readonly volumeTooltip: ApexTooltip = { enabled: true, theme: 'light', style: { fontFamily: 'Noto Sans TC, sans-serif', fontSize: '11px' }, y: { formatter: (v: number) => v >= 1_000_000 ? (v / 1_000_000).toFixed(1) + 'M' : v.toLocaleString() } };
 
+  // ── Live data signals ──
+  private readonly liveQuote = signal<ApiStockQuote | null>(null);
+  private readonly historyData = signal<ApiOhlc[]>([]);
+
   constructor() {
     effect(() => {
       const sym = this.symbol();
-      const range = this.chartRange();
-      this.buildChartData(sym, range);
+      this.loadStockData(sym);
+    });
+
+    effect(() => {
+      this.chartRange();
+      this.buildChartFromHistory();
     });
   }
 
-  // ── Mock Stock Data ──
+  private loadStockData(sym: string): void {
+    this.isLoading.set(true);
+    const market = /^\d/.test(sym) ? 'TW' : 'US';
+    const limitMap: Record<ChartRange, number> = { '1D': 1, '5D': 5, '1M': 22, '3M': 66, '6M': 132, '1Y': 252, 'YTD': 60 };
+
+    forkJoin({
+      quote: this.stockApi.getQuote(sym, market).pipe(catchError(() => of(null))),
+      history: this.stockApi.getHistory(sym, market, 252).pipe(catchError(() => of([] as ApiOhlc[]))),
+      watchlist: this.watchlistApi.getWatchlist().pipe(catchError(() => of({ symbols: [] as string[], categories: [] }))),
+    }).pipe(
+      takeUntilDestroyed(this.destroyRef),
+    ).subscribe(({ quote, history, watchlist }) => {
+      this.liveQuote.set(quote);
+      this.historyData.set(history);
+      this.isInWatchlist.set(watchlist.symbols.includes(sym));
+      this.isLoading.set(false);
+      this.buildChartFromHistory();
+    });
+  }
+
+  // ── Quote (real data with fallback) ──
   readonly quote = computed<StockQuote>(() => {
     const sym = this.symbol();
-    return this.stockData[sym] ?? {
+    const live = this.liveQuote();
+    if (live) {
+      return {
+        symbol: live.symbol,
+        name: live.nameZh ?? live.nameEn,
+        market: (live.market === 'TW' ? 'tw' : 'us') as Market,
+        price: live.price,
+        change: live.change,
+        changePercent: live.changePercent,
+        volume: live.volume,
+        updatedAt: live.timestamp,
+      };
+    }
+    return {
       symbol: sym, name: sym, market: (/^\d/.test(sym) ? 'tw' : 'us') as Market,
       price: 0, change: 0, changePercent: 0, volume: 0, updatedAt: '',
     };
@@ -65,24 +115,15 @@ export class StockDetail {
 
   readonly profile = computed<StockProfile>(() => {
     const sym = this.symbol();
-    return this.profileData[sym] ?? {
-      symbol: sym, name: sym, market: (/^\d/.test(sym) ? 'tw' : 'us') as Market,
-      industry: '—', description: '暫無資料',
+    const live = this.liveQuote();
+    return {
+      symbol: sym,
+      name: live?.nameZh ?? live?.nameEn ?? sym,
+      market: (/^\d/.test(sym) ? 'tw' : 'us') as Market,
+      industry: '—',
+      description: '',
     };
   });
-
-  private readonly stockData: Record<string, StockQuote> = {
-    '2330': { symbol: '2330', name: '台積電 TSMC', market: 'tw', price: 852.00, change: 12.00, changePercent: 1.43, volume: 28543, updatedAt: '2026-02-28T13:30:00' },
-    'NVDA': { symbol: 'NVDA', name: 'NVIDIA Corp.', market: 'us', price: 875.30, change: 15.65, changePercent: 1.82, volume: 41200000, updatedAt: '2026-02-27T16:00:00' },
-    '2382': { symbol: '2382', name: '廣達電腦', market: 'tw', price: 312.00, change: 12.35, changePercent: 4.12, volume: 15231, updatedAt: '2026-02-28T13:30:00' },
-    'AAPL': { symbol: 'AAPL', name: 'Apple Inc.', market: 'us', price: 178.52, change: -0.95, changePercent: -0.53, volume: 52100000, updatedAt: '2026-02-27T16:00:00' },
-  };
-
-  private readonly profileData: Record<string, StockProfile> = {
-    '2330': { symbol: '2330', name: '台積電 TSMC', market: 'tw', industry: '半導體', description: '全球最大專業積體電路製造服務公司', aiIntroduction: '全球最大晶圓代工廠，位於 AI 供應鏈核心，NVIDIA/Apple 的晶片都靠它製造。當 AI 題材資金湧入時，台積電是第一個受益的。', chairman: '魏哲家', mainBusiness: '積體電路製造、先進封裝（CoWoS）', capital: 259303, establishedDate: '1987-02-21' },
-    'NVDA': { symbol: 'NVDA', name: 'NVIDIA Corp.', market: 'us', industry: 'Semiconductors', description: 'AI 運算晶片龍頭', aiIntroduction: 'AI 運算晶片的絕對龍頭，H200/B200 GPU 主導全球 AI 加速市場。當 AI 資本支出增加時，NVIDIA 是資金流入的首選標的。', ceo: 'Jensen Huang', mainBusiness: 'GPU、AI 加速器、資料中心', capital: 2100000, establishedDate: '1993-01-01' },
-    '2382': { symbol: '2382', name: '廣達電腦', market: 'tw', industry: '電腦週邊', description: 'AI 伺服器代工龍頭', aiIntroduction: '全球最大筆電代工廠，已轉型為 AI 伺服器主力供應商，為 Meta、Google 代工。當雲端巨頭擴大 AI 基建投資時，廣達直接受惠。' },
-  };
 
   // ── 資金流向摘要 ──
   readonly moneyFlowSummary = computed(() => {
@@ -209,25 +250,35 @@ export class StockDetail {
   // ── Computed ──
   readonly keyMetrics = computed(() => {
     const q = this.quote();
+    const live = this.liveQuote();
     const isTw = q.market === 'tw';
     return [
       { label: '成交量', value: isTw ? q.volume.toLocaleString() + ' 張' : this.fmtVol(q.volume) },
-      { label: '開盤', value: this.fmt(q.price - q.change * 0.3) },
-      { label: '最高', value: this.fmt(q.price + Math.abs(q.change) * 0.5) },
-      { label: '最低', value: this.fmt(q.price - Math.abs(q.change) * 0.8) },
+      { label: '開盤', value: live?.open != null ? this.fmt(live.open) : '—' },
+      { label: '最高', value: live?.high != null ? this.fmt(live.high) : '—' },
+      { label: '最低', value: live?.low != null ? this.fmt(live.low) : '—' },
     ];
   });
 
   // ── Methods ──
   setTab(tab: StockTab): void { this.activeTab.set(tab); }
   setChartRange(range: ChartRange): void { this.chartRange.set(range); }
-  toggleWatchlist(): void { this.isInWatchlist.update(v => !v); }
+  toggleWatchlist(): void {
+    const sym = this.symbol();
+    const inList = this.isInWatchlist();
+    const op = inList ? this.watchlistApi.removeItem(sym) : this.watchlistApi.addItem(sym);
+    op.pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
+      next: () => this.isInWatchlist.set(!inList),
+    });
+  }
 
   formatPrice(price: number): string {
+    if (price === 0) return '—';
     return price >= 1000 ? price.toLocaleString('en-US', { minimumFractionDigits: 0, maximumFractionDigits: 0 }) : price.toFixed(2);
   }
 
   formatChange(q: StockQuote): string {
+    if (q.price === 0) return '';
     const sign = q.change > 0 ? '+' : '';
     return `${sign}${q.change.toFixed(2)} (${sign}${q.changePercent.toFixed(2)}%)`;
   }
@@ -266,40 +317,35 @@ export class StockDetail {
     return v.toString();
   }
 
-  // ── Chart ──
-  private buildChartData(sym: string, range: ChartRange): void {
-    const kline = this.generateKLineData(sym, range);
-    this.candleSeries.set([{ name: 'K線', data: kline.map(d => ({ x: new Date(d.date).getTime(), y: [d.open, d.high, d.low, d.close] })) }]);
-    this.volumeSeries.set([{ name: '成交量', data: kline.map(d => ({ x: new Date(d.date).getTime(), y: d.volume, fillColor: d.close >= d.open ? '#E14F4F' : '#22C1A1' })) }]);
-  }
+  // ── Chart from real history ──
+  private buildChartFromHistory(): void {
+    const allData = this.historyData();
+    if (allData.length === 0) return;
 
-  private generateKLineData(sym: string, range: ChartRange): KLineData[] {
-    const basePrice = this.stockData[sym]?.price ?? 100;
-    const days = this.getRangeDays(range);
-    const data: KLineData[] = [];
-    let price = basePrice * 0.92;
-    for (let i = days; i >= 0; i--) {
-      const date = new Date(2026, 1, 28);
-      date.setDate(date.getDate() - i);
-      if (date.getDay() === 0 || date.getDay() === 6) continue;
-      const volatility = basePrice * 0.018;
-      const drift = (basePrice - price) * 0.03;
-      const open = price + drift + (Math.random() - 0.48) * volatility;
-      const close = open + (Math.random() - 0.45) * volatility;
-      const high = Math.max(open, close) + Math.random() * volatility * 0.5;
-      const low = Math.min(open, close) - Math.random() * volatility * 0.5;
-      const baseVol = this.stockData[sym]?.market === 'tw' ? 25000 : 35000000;
-      const volume = Math.round(baseVol * (0.6 + Math.random() * 0.8));
-      data.push({ date: date.toISOString().slice(0, 10), open: +open.toFixed(2), high: +high.toFixed(2), low: +low.toFixed(2), close: +close.toFixed(2), volume });
-      price = close;
-    }
-    return data;
+    const days = this.getRangeDays(this.chartRange());
+    const data = allData.slice(-days);
+
+    this.candleSeries.set([{
+      name: 'K線',
+      data: data.map(d => ({
+        x: new Date(d.tradingDate).getTime(),
+        y: [d.open, d.high, d.low, d.close],
+      })),
+    }]);
+    this.volumeSeries.set([{
+      name: '成交量',
+      data: data.map(d => ({
+        x: new Date(d.tradingDate).getTime(),
+        y: d.volume,
+        fillColor: d.close >= d.open ? '#E14F4F' : '#22C1A1',
+      })),
+    }]);
   }
 
   private getRangeDays(range: ChartRange): number {
     switch (range) {
-      case '1D': return 1; case '5D': return 7; case '1M': return 30;
-      case '3M': return 90; case '6M': return 180; case '1Y': return 365; case 'YTD': return 59;
+      case '1D': return 1; case '5D': return 5; case '1M': return 22;
+      case '3M': return 66; case '6M': return 132; case '1Y': return 252; case 'YTD': return 60;
     }
   }
 }

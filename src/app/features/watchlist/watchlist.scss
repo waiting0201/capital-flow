@@ -1,5 +1,12 @@
 :host { display: block; }
 
+.wl-loading {
+  text-align: center;
+  padding: 16px;
+  color: var(--gray-light);
+  font-size: var(--text-sm);
+}
+
 // ── Stats Strip ──
 .wl-stats {
   display: flex; align-items: center; gap: 16px; margin-bottom: 20px; padding: 14px 20px;
@@ -250,6 +257,8 @@
   min-width: 180px; padding: 6px;
   background: var(--surface-card); border: 1px solid var(--border); border-radius: 10px;
   box-shadow: var(--shadow-lg); animation: dropdownIn 0.2s ease;
+
+  &--fixed { position: fixed; top: auto; left: auto; }
 }
 
 .wl-assign-title {

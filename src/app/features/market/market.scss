@@ -1,5 +1,12 @@
 :host { display: block; }
 
+.mk-loading {
+  text-align: center;
+  padding: 16px;
+  color: var(--gray-light);
+  font-size: var(--text-sm);
+}
+
 // ═══════════ 今日資金水位 ═══════════
 .mk-capital-card {
   background: var(--surface-card); border: 1px solid var(--border);
@@ -13,7 +20,7 @@
   font-size: var(--text-lg); font-weight: 700; color: var(--olivine);
 }
 .mk-capital-metrics {
-  display: grid; grid-template-columns: repeat(3, 1fr); gap: 14px; margin-bottom: 16px;
+  display: grid; grid-template-columns: repeat(5, 1fr); gap: 14px; margin-bottom: 16px;
 }
 .mk-cap-metric {
   padding: 14px 16px; background: var(--surface-elevated); border-radius: 10px;
@@ -186,7 +193,7 @@
 
 // ═══════════ RESPONSIVE ═══════════
 @media (max-width: 768px) {
-  .mk-capital-metrics { grid-template-columns: 1fr; gap: 10px; }
+  .mk-capital-metrics { grid-template-columns: repeat(2, 1fr); gap: 10px; }
   .mk-flow-grid { grid-template-columns: 1fr; }
   .mk-macro-indicators { grid-template-columns: 1fr; }
   .mk-breadth-row { flex-wrap: wrap; gap: 10px; }

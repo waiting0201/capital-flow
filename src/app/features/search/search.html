@@ -29,7 +29,11 @@
 <!-- ══════ Results Mode ══════ -->
 @if (hasQuery()) {
   <div class="sr-results-info">
-    搜尋「<strong>{{ query() }}</strong>」找到 <strong>{{ totalResults() }}</strong> 筆結果
+    @if (isLoading()) {
+      搜尋「<strong>{{ query() }}</strong>」中...
+    } @else {
+      搜尋「<strong>{{ query() }}</strong>」找到 <strong>{{ totalResults() }}</strong> 筆結果
+    }
   </div>
 
   <!-- Theme Results -->
@@ -76,22 +80,12 @@
                 <span class="sr-stock-name">{{ s.name }}</span>
               </div>
               <div class="sr-stock-flow-row">
-                <span class="sr-flow-badge"
-                  [class.flow-in]="s.flowStatus === 'inflow'"
-                  [class.flow-out]="s.flowStatus === 'outflow'"
-                  [class.flow-neutral]="s.flowStatus === 'neutral'">
-                  @if (s.flowStatus === 'inflow') { ▲ }
-                  @else if (s.flowStatus === 'outflow') { ▼ }
-                  @else { ─ }
-                  {{ s.flowLabel }}
-                </span>
                 @if (s.tags) {
                   @for (tag of s.tags; track tag) {
                     <span class="sr-stock-tag">{{ tag }}</span>
                   }
                 }
               </div>
-              <div class="sr-stock-ai">{{ s.aiFlowSummary }}</div>
             </div>
             <div class="sr-stock-right">
               <div class="sr-stock-price" [class.is-up]="s.change > 0" [class.is-down]="s.change < 0">

@@ -1,20 +1,29 @@
-import { Component, signal, computed } from '@angular/core';
+import { Component, signal, computed, inject, OnInit } from '@angular/core';
 import { RouterLink } from '@angular/router';
 import { FormsModule } from '@angular/forms';
-import { StockQuote } from '../../core/models';
+import { forkJoin } from 'rxjs';
+import { WatchlistApiService } from '../../core/services/watchlist-api.service';
+import { StockApiService } from '../../core/services/stock-api.service';
+import { ApiWatchlistQuote } from '../../core/models';
 
 type FlowStatus = 'inflow' | 'outflow' | 'neutral';
 type SortField = 'symbol' | 'price' | 'change' | 'volume';
 type SortDir = 'asc' | 'desc';
 
-interface WatchlistStock extends StockQuote {
+interface WatchlistStock {
+  symbol: string;
+  name: string;
+  market: 'tw' | 'us';
+  price: number;
+  change: number;
+  changePercent: number;
+  volume: number;
   flowStatus: FlowStatus;
   flowLabel: string;
-  aiFlowSummary: string;
 }
 
 interface WatchlistCategory {
-  id: string;
+  id: number;
   name: string;
   color: string;
   stockSymbols: string[];
@@ -27,7 +36,12 @@ interface WatchlistCategory {
   templateUrl: './watchlist.html',
   styleUrl: './watchlist.scss',
 })
-export class Watchlist {
+export class Watchlist implements OnInit {
+  private readonly watchlistApi = inject(WatchlistApiService);
+  private readonly stockApi = inject(StockApiService);
+
+  readonly isLoading = signal(true);
+
   // ── System Groups (non-deletable) ──
   readonly systemGroups = [
     { id: 'all', name: '全部' },
@@ -36,11 +50,7 @@ export class Watchlist {
   ];
 
   // ── User Categories ──
-  readonly categories = signal<WatchlistCategory[]>([
-    { id: 'cat-ai', name: 'AI 族群', color: '#7C6BF0', stockSymbols: ['2330', 'NVDA', '2382', '3231', '2454', 'AMD', 'TSM'] },
-    { id: 'cat-div', name: '高股息', color: '#E0924F', stockSymbols: ['2330', '2317', '2603'] },
-    { id: 'cat-core', name: '核心持股', color: '#3A9EA5', stockSymbols: ['2330', 'AAPL', 'MSFT', '2454'] },
-  ]);
+  readonly categories = signal<WatchlistCategory[]>([]);
 
   readonly activeGroup = signal('all');
   readonly sortField = signal<SortField>('change');
@@ -51,7 +61,7 @@ export class Watchlist {
 
   // ── Category Management State ──
   readonly showCategoryPanel = signal(false);
-  readonly editingCategoryId = signal<string | null>(null);
+  readonly editingCategoryId = signal<number | null>(null);
   readonly editingCategoryName = signal('');
   readonly editingCategoryColor = signal('#7C6BF0');
   readonly newCategoryName = signal('');
@@ -62,32 +72,19 @@ export class Watchlist {
   readonly assigningStockSymbol = signal<string | null>(null);
 
   // ── Context Menu State ──
-  readonly contextMenuCategoryId = signal<string | null>(null);
+  readonly contextMenuCategoryId = signal<number | null>(null);
   readonly contextMenuPos = signal({ x: 0, y: 0 });
 
   // ── Delete Confirmation ──
-  readonly deletingCategoryId = signal<string | null>(null);
+  readonly deletingCategoryId = signal<number | null>(null);
 
   readonly categoryColors = [
     '#7C6BF0', '#E0924F', '#3A9EA5', '#D4596A',
     '#6BA368', '#8B7355', '#5B8BD4', '#C5A059',
   ];
 
-  // ── Stock Data (with flow status) ──
-  readonly stocks = signal<WatchlistStock[]>([
-    { symbol: '2330', name: '台積電 TSMC', market: 'tw', price: 852.00, change: 12.00, changePercent: 1.43, volume: 28543, updatedAt: '2026-02-28T13:30:00', flowStatus: 'inflow', flowLabel: '資金流入', aiFlowSummary: '外資連續8日買超，籌碼向大戶集中' },
-    { symbol: 'NVDA', name: 'NVIDIA Corp.', market: 'us', price: 875.30, change: 15.65, changePercent: 1.82, volume: 41200000, updatedAt: '2026-02-27T16:00:00', flowStatus: 'outflow', flowLabel: '資金流出', aiFlowSummary: '財報利多出盡，外資獲利了結中' },
-    { symbol: '2382', name: '廣達電腦', market: 'tw', price: 312.00, change: 12.35, changePercent: 4.12, volume: 15231, updatedAt: '2026-02-28T13:30:00', flowStatus: 'inflow', flowLabel: '資金流入', aiFlowSummary: '投信連續加碼，AI 伺服器訂單催化' },
-    { symbol: 'AAPL', name: 'Apple Inc.', market: 'us', price: 178.52, change: -0.95, changePercent: -0.53, volume: 52100000, updatedAt: '2026-02-27T16:00:00', flowStatus: 'neutral', flowLabel: '資金觀望', aiFlowSummary: '法人買賣分歧，量能萎縮觀望' },
-    { symbol: '3231', name: '緯創資通', market: 'tw', price: 118.50, change: 1.75, changePercent: 1.50, volume: 22874, updatedAt: '2026-02-28T13:30:00', flowStatus: 'neutral', flowLabel: '資金觀望', aiFlowSummary: '法人買賣分歧，等待營收數據確認' },
-    { symbol: '2317', name: '鴻海精密', market: 'tw', price: 178.00, change: -1.50, changePercent: -0.84, volume: 18562, updatedAt: '2026-02-28T13:30:00', flowStatus: 'outflow', flowLabel: '資金流出', aiFlowSummary: '外資連續賣超，電子組裝毛利壓力' },
-    { symbol: 'MSFT', name: 'Microsoft Corp.', market: 'us', price: 415.80, change: 3.22, changePercent: 0.78, volume: 22300000, updatedAt: '2026-02-27T16:00:00', flowStatus: 'inflow', flowLabel: '資金流入', aiFlowSummary: 'Azure 雲端營收成長強勁，機構加碼' },
-    { symbol: 'GOOGL', name: 'Alphabet Inc.', market: 'us', price: 172.35, change: -1.18, changePercent: -0.68, volume: 18900000, updatedAt: '2026-02-27T16:00:00', flowStatus: 'neutral', flowLabel: '資金觀望', aiFlowSummary: '廣告營收穩定但 AI 投資回報待驗證' },
-    { symbol: '2454', name: '聯發科技', market: 'tw', price: 1280.00, change: 25.00, changePercent: 1.99, volume: 8421, updatedAt: '2026-02-28T13:30:00', flowStatus: 'inflow', flowLabel: '資金流入', aiFlowSummary: '天璣晶片需求回溫，外資轉買超' },
-    { symbol: 'TSM', name: 'Taiwan Semi ADR', market: 'us', price: 168.42, change: 2.35, changePercent: 1.42, volume: 15600000, updatedAt: '2026-02-27T16:00:00', flowStatus: 'inflow', flowLabel: '資金流入', aiFlowSummary: '追蹤台積電母股，法人同步買超' },
-    { symbol: '2603', name: '長榮海運', market: 'tw', price: 178.50, change: -3.50, changePercent: -1.92, volume: 32145, updatedAt: '2026-02-28T13:30:00', flowStatus: 'outflow', flowLabel: '資金流出', aiFlowSummary: '運價回落，外資持續減碼航運股' },
-    { symbol: 'AMD', name: 'AMD Inc.', market: 'us', price: 178.90, change: 5.42, changePercent: 3.13, volume: 35800000, updatedAt: '2026-02-27T16:00:00', flowStatus: 'inflow', flowLabel: '資金流入', aiFlowSummary: 'MI300 晶片訂單成長，AI 競爭力提升' },
-  ]);
+  // ── Stock Data ──
+  readonly stocks = signal<WatchlistStock[]>([]);
 
   // ── Computed ──
   readonly stats = computed(() => {
@@ -103,16 +100,14 @@ export class Watchlist {
     const group = this.activeGroup();
     const search = this.searchQuery().toLowerCase();
 
-    // System group filter
     if (group === 'tw') list = list.filter(s => s.market === 'tw');
     else if (group === 'us') list = list.filter(s => s.market === 'us');
-    // User category filter
-    else if (group.startsWith('cat-')) {
-      const cat = this.categories().find(c => c.id === group);
+    else if (typeof group === 'number' || (typeof group === 'string' && /^\d+$/.test(group))) {
+      const catId = typeof group === 'number' ? group : parseInt(group, 10);
+      const cat = this.categories().find(c => c.id === catId);
       if (cat) list = list.filter(s => cat.stockSymbols.includes(s.symbol));
     }
 
-    // Search filter
     if (search) {
       list = list.filter(s =>
         s.symbol.toLowerCase().includes(search) ||
@@ -120,7 +115,6 @@ export class Watchlist {
       );
     }
 
-    // Sort
     const field = this.sortField();
     const dir = this.sortDir();
     list = [...list].sort((a, b) => {
@@ -140,9 +134,74 @@ export class Watchlist {
     if (group === 'all') return this.stocks().length;
     if (group === 'tw') return this.stocks().filter(s => s.market === 'tw').length;
     if (group === 'us') return this.stocks().filter(s => s.market === 'us').length;
-    const cat = this.categories().find(c => c.id === group);
+    const catId = typeof group === 'string' && /^\d+$/.test(group) ? parseInt(group, 10) : group;
+    const cat = this.categories().find(c => c.id === catId);
     return cat ? cat.stockSymbols.length : 0;
   });
+
+  ngOnInit(): void {
+    this.loadWatchlist();
+  }
+
+  private loadWatchlist(): void {
+    this.isLoading.set(true);
+
+    this.watchlistApi.getWatchlist().subscribe({
+      next: (data) => {
+        // Set categories
+        this.categories.set(data.categories);
+
+        // Fetch quotes for all symbols
+        if (data.symbols.length > 0) {
+          this.stockApi.getWatchlistQuotes(data.symbols).subscribe({
+            next: (quotes) => {
+              this.stocks.set(this.mapQuotesToStocks(quotes));
+              this.isLoading.set(false);
+            },
+            error: () => {
+              // Still show stocks without quotes
+              this.stocks.set(data.symbols.map(s => this.emptyStock(s)));
+              this.isLoading.set(false);
+            },
+          });
+        } else {
+          this.isLoading.set(false);
+        }
+      },
+      error: () => {
+        this.isLoading.set(false);
+      },
+    });
+  }
+
+  private mapQuotesToStocks(quotes: ApiWatchlistQuote[]): WatchlistStock[] {
+    return quotes.map(q => {
+      const isTw = /^\d/.test(q.symbol);
+      const flowStatus: FlowStatus = q.changePercent > 1 ? 'inflow' : q.changePercent < -1 ? 'outflow' : 'neutral';
+      return {
+        symbol: q.symbol,
+        name: q.name ?? q.symbol,
+        market: isTw ? 'tw' as const : 'us' as const,
+        price: q.price,
+        change: q.change,
+        changePercent: q.changePercent,
+        volume: q.volume,
+        flowStatus,
+        flowLabel: flowStatus === 'inflow' ? '上漲' : flowStatus === 'outflow' ? '下跌' : '持平',
+      };
+    });
+  }
+
+  private emptyStock(symbol: string): WatchlistStock {
+    const isTw = /^\d/.test(symbol);
+    return {
+      symbol,
+      name: symbol,
+      market: isTw ? 'tw' : 'us',
+      price: 0, change: 0, changePercent: 0, volume: 0,
+      flowStatus: 'neutral', flowLabel: '持平',
+    };
+  }
 
   // ── Methods ──
   setGroup(id: string): void {
@@ -162,12 +221,17 @@ export class Watchlist {
   removeStock(symbol: string, event: Event): void {
     event.stopPropagation();
     event.preventDefault();
-    this.stocks.update(list => list.filter(s => s.symbol !== symbol));
-    // Also remove from all categories
-    this.categories.update(cats => cats.map(c => ({
-      ...c,
-      stockSymbols: c.stockSymbols.filter(s => s !== symbol),
-    })));
+
+    this.watchlistApi.removeItem(symbol).subscribe({
+      next: () => {
+        this.stocks.update(list => list.filter(s => s.symbol !== symbol));
+        this.categories.update(cats => cats.map(c => ({
+          ...c,
+          stockSymbols: c.stockSymbols.filter(s => s !== symbol),
+        })));
+      },
+      error: () => alert('移除股票失敗，請確認已登入後再試'),
+    });
   }
 
   toggleAddForm(): void {
@@ -180,34 +244,41 @@ export class Watchlist {
     if (!sym) return;
     if (this.stocks().some(s => s.symbol === sym)) return;
 
-    const isTw = /^\d/.test(sym);
-    const newStock: WatchlistStock = {
-      symbol: sym,
-      name: sym,
-      market: isTw ? 'tw' : 'us',
-      price: 0,
-      change: 0,
-      changePercent: 0,
-      volume: 0,
-      updatedAt: new Date().toISOString(),
-      flowStatus: 'neutral',
-      flowLabel: '資金觀望',
-      aiFlowSummary: '尚無資金流向分析',
-    };
-    this.stocks.update(list => [newStock, ...list]);
+    this.watchlistApi.addItem(sym).subscribe({
+      next: () => {
+        // Fetch quote for the new stock
+        this.stockApi.getWatchlistQuotes([sym]).subscribe({
+          next: (quotes) => {
+            if (quotes.length > 0) {
+              this.stocks.update(list => [...this.mapQuotesToStocks(quotes), ...list]);
+            } else {
+              this.stocks.update(list => [this.emptyStock(sym), ...list]);
+            }
+          },
+          error: () => {
+            this.stocks.update(list => [this.emptyStock(sym), ...list]);
+          },
+        });
 
-    // If current view is a category, auto-add to that category
-    const group = this.activeGroup();
-    if (group.startsWith('cat-')) {
-      this.categories.update(cats => cats.map(c =>
-        c.id === group && !c.stockSymbols.includes(sym)
-          ? { ...c, stockSymbols: [...c.stockSymbols, sym] }
-          : c
-      ));
-    }
+        // Auto-add to active category if viewing one
+        const group = this.activeGroup();
+        if (/^\d+$/.test(group)) {
+          const catId = parseInt(group, 10);
+          const cat = this.categories().find(c => c.id === catId);
+          if (cat && !cat.stockSymbols.includes(sym)) {
+            const newSymbols = [...cat.stockSymbols, sym];
+            this.watchlistApi.setCategoryStocks(catId, newSymbols).subscribe();
+            this.categories.update(cats => cats.map(c =>
+              c.id === catId ? { ...c, stockSymbols: newSymbols } : c
+            ));
+          }
+        }
 
-    this.newSymbol.set('');
-    this.showAddForm.set(false);
+        this.newSymbol.set('');
+        this.showAddForm.set(false);
+      },
+      error: () => alert('新增股票失敗，請確認已登入後再試'),
+    });
   }
 
   // ── Category CRUD ──
@@ -225,11 +296,24 @@ export class Watchlist {
   createCategory(): void {
     const name = this.newCategoryName().trim();
     if (!name) return;
-    const id = 'cat-' + Date.now().toString(36);
     const color = this.newCategoryColor();
-    this.categories.update(cats => [...cats, { id, name, color, stockSymbols: [] }]);
-    this.showNewCategoryForm.set(false);
-    this.newCategoryName.set('');
+
+    this.watchlistApi.createCategory(name, color).subscribe({
+      next: (cat) => {
+        this.categories.update(cats => [...cats, {
+          id: cat.id,
+          name: cat.name,
+          color: cat.color,
+          stockSymbols: [],
+        }]);
+        this.showNewCategoryForm.set(false);
+        this.newCategoryName.set('');
+      },
+      error: (err) => {
+        console.error('建立分類失敗:', err);
+        alert('建立分類失敗，請確認已登入後再試');
+      },
+    });
   }
 
   startEditCategory(cat: WatchlistCategory, event: Event): void {
@@ -246,26 +330,40 @@ export class Watchlist {
     const name = this.editingCategoryName().trim();
     if (!name) return;
     const color = this.editingCategoryColor();
-    this.categories.update(cats => cats.map(c =>
-      c.id === id ? { ...c, name, color } : c
-    ));
-    this.editingCategoryId.set(null);
+
+    this.watchlistApi.updateCategory(id, name, color).subscribe({
+      next: () => {
+        this.categories.update(cats => cats.map(c =>
+          c.id === id ? { ...c, name, color } : c
+        ));
+        this.editingCategoryId.set(null);
+      },
+      error: () => alert('更新分類失敗，請確認已登入後再試'),
+    });
   }
 
   cancelEditCategory(): void {
     this.editingCategoryId.set(null);
   }
 
-  confirmDeleteCategory(id: string, event: Event): void {
+  confirmDeleteCategory(id: number, event: Event): void {
     event.stopPropagation();
     this.deletingCategoryId.set(id);
     this.contextMenuCategoryId.set(null);
   }
 
-  deleteCategory(id: string): void {
-    this.categories.update(cats => cats.filter(c => c.id !== id));
-    if (this.activeGroup() === id) this.activeGroup.set('all');
-    this.deletingCategoryId.set(null);
+  deleteCategory(id: number): void {
+    this.watchlistApi.deleteCategory(id).subscribe({
+      next: () => {
+        this.categories.update(cats => cats.filter(c => c.id !== id));
+        if (this.activeGroup() === String(id)) this.activeGroup.set('all');
+        this.deletingCategoryId.set(null);
+      },
+      error: () => {
+        this.deletingCategoryId.set(null);
+        alert('刪除分類失敗，請確認已登入後再試');
+      },
+    });
   }
 
   cancelDelete(): void {
@@ -273,43 +371,58 @@ export class Watchlist {
   }
 
   // ── Stock ↔ Category Assignment ──
+  readonly assignPanelPos = signal({ x: 0, y: 0 });
+
   toggleAssignPanel(symbol: string, event: Event): void {
     event.stopPropagation();
     event.preventDefault();
-    this.assigningStockSymbol.update(v => v === symbol ? null : symbol);
+    if (this.assigningStockSymbol() === symbol) {
+      this.assigningStockSymbol.set(null);
+    } else {
+      const el = event.target as HTMLElement;
+      const rect = el.closest('button')?.getBoundingClientRect() ?? el.getBoundingClientRect();
+      this.assignPanelPos.set({ x: rect.left, y: rect.bottom + 6 });
+      this.assigningStockSymbol.set(symbol);
+    }
   }
 
-  isStockInCategory(symbol: string, categoryId: string): boolean {
+  isStockInCategory(symbol: string, categoryId: number): boolean {
     const cat = this.categories().find(c => c.id === categoryId);
     return cat ? cat.stockSymbols.includes(symbol) : false;
   }
 
-  toggleStockCategory(symbol: string, categoryId: string, event: Event): void {
+  toggleStockCategory(symbol: string, categoryId: number, event: Event): void {
     event.stopPropagation();
     event.preventDefault();
-    this.categories.update(cats => cats.map(c => {
-      if (c.id !== categoryId) return c;
-      const has = c.stockSymbols.includes(symbol);
-      return {
-        ...c,
-        stockSymbols: has
-          ? c.stockSymbols.filter(s => s !== symbol)
-          : [...c.stockSymbols, symbol],
-      };
-    }));
+
+    const cat = this.categories().find(c => c.id === categoryId);
+    if (!cat) return;
+
+    const has = cat.stockSymbols.includes(symbol);
+    const newSymbols = has
+      ? cat.stockSymbols.filter(s => s !== symbol)
+      : [...cat.stockSymbols, symbol];
+
+    this.watchlistApi.setCategoryStocks(categoryId, newSymbols).subscribe({
+      next: () => {
+        this.categories.update(cats => cats.map(c =>
+          c.id === categoryId ? { ...c, stockSymbols: newSymbols } : c
+        ));
+      },
+    });
   }
 
   getStockCategories(symbol: string): WatchlistCategory[] {
     return this.categories().filter(c => c.stockSymbols.includes(symbol));
   }
 
-  getCategoryStockCount(categoryId: string): number {
+  getCategoryStockCount(categoryId: number): number {
     const cat = this.categories().find(c => c.id === categoryId);
     return cat ? cat.stockSymbols.length : 0;
   }
 
   // ── Context Menu ──
-  openContextMenu(catId: string, event: MouseEvent): void {
+  openContextMenu(catId: number, event: MouseEvent): void {
     event.preventDefault();
     event.stopPropagation();
     this.contextMenuCategoryId.set(catId);

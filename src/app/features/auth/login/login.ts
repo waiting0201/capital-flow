@@ -21,7 +21,7 @@ export class Login {
 
   protected readonly form = this.fb.nonNullable.group({
     email: ['admin@test.com', [Validators.required, Validators.email]],
-    password: ['123456', [Validators.required, Validators.minLength(6)]],
+    password: ['12345678', [Validators.required, Validators.minLength(6)]],
     rememberMe: [false],
   });
 
@@ -39,14 +39,21 @@ export class Login {
     this.errorMessage.set('');
 
     const { email, password } = this.form.getRawValue();
-    this.auth.login(email, password);
-
-    // TODO: replace with real API call + subscribe
-    // Simulate login for now
-    setTimeout(() => {
-      this.isLoading.set(false);
-      this.router.navigate(['/home']);
-    }, 1200);
+    this.auth.login(email, password).subscribe({
+      next: (res) => {
+        this.isLoading.set(false);
+        if (res.success) {
+          this.router.navigate(['/home']);
+        } else {
+          this.errorMessage.set(res.message ?? '登入失敗');
+        }
+      },
+      error: (err) => {
+        this.isLoading.set(false);
+        const msg = err.error?.message ?? '登入失敗，請稍後再試';
+        this.errorMessage.set(msg);
+      },
+    });
   }
 
   protected get emailInvalid(): boolean {

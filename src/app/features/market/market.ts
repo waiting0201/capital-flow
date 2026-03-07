@@ -1,4 +1,5 @@
-import { Component } from '@angular/core';
+import { Component, inject, signal, computed, OnInit } from '@angular/core';
+import { StockApiService } from '../../core/services/stock-api.service';
 
 interface SectorFlow {
   name: string;
@@ -12,62 +13,110 @@ interface SectorFlow {
   templateUrl: './market.html',
   styleUrl: './market.scss',
 })
-export class Market {
+export class Market implements OnInit {
+  private readonly stockApi = inject(StockApiService);
+
+  readonly isLoading = signal(true);
 
   // ── 今日資金水位 ──
-  readonly capitalLevel = {
-    foreign: { value: 182, streak: 3, direction: 'buy' as const },
-    marketVolume: { value: 2850, avg20Ratio: 1.2 },
-    marginChange: { value: 12, label: '散戶持續加碼' },
-    breadth: { up: 523, down: 312, flat: 89, limitUp: 8, limitDown: 2 },
-  };
+  readonly capitalLevel = signal({
+    foreign: { value: 0, streak: 0, direction: 'buy' as 'buy' | 'sell' },
+    sitc: { value: 0, direction: 'buy' as 'buy' | 'sell' },
+    dealer: { value: 0, direction: 'buy' as 'buy' | 'sell' },
+    marketVolume: { value: 0 },
+    marginChange: { value: 0, label: '' },
+    breadth: { up: 0, down: 0, flat: 0, limitUp: 0, limitDown: 0 },
+  });
 
-  get breadthTotal(): number {
-    const b = this.capitalLevel.breadth;
-    return b.up + b.down + b.flat;
-  }
+  readonly breadthTotal = computed(() => {
+    const b = this.capitalLevel().breadth;
+    return b.up + b.down + b.flat || 1;
+  });
 
-  // ── AI 板塊資金輪動分析 ──
-  readonly rotation = {
-    conclusion: '資金正從 防禦型(食品/電信) 流向 成長型(半導體/AI)',
-    reason: 'Fed 暗示降息路徑明確 → 市場風險偏好上升 → 資金從防禦型板塊撤出，轉向高成長板塊。目前輪動處於「成長復甦初期」階段。',
-    basis: '各板塊法人淨買賣變化 + 量能分佈 + Fed 最新利率聲明',
-  };
+  // ── AI 板塊資金輪動分析（placeholder） ──
+  readonly rotation = signal({
+    conclusion: '資金輪動分析載入中...',
+    reason: '待 AI 分析模組上線後，將根據即時法人籌碼自動生成。',
+    basis: '各板塊法人淨買賣變化 + 量能分佈 + 產業動態',
+  });
 
-  readonly sectorInflows: SectorFlow[] = [
-    { name: '半導體', amount: 85 },
-    { name: '電腦週邊', amount: 42 },
-    { name: '光電', amount: 28 },
-    { name: '生技醫療', amount: 15 },
-  ];
+  readonly sectorInflows = signal<SectorFlow[]>([]);
+  readonly sectorOutflows = signal<SectorFlow[]>([]);
 
-  readonly sectorOutflows: SectorFlow[] = [
-    { name: '航運', amount: 32 },
-    { name: '鋼鐵', amount: 28 },
-    { name: '紡織', amount: 15 },
-    { name: '食品', amount: 12 },
-  ];
+  readonly maxSectorFlow = computed(() => {
+    const max = Math.max(
+      ...this.sectorInflows().map(s => s.amount),
+      ...this.sectorOutflows().map(s => s.amount),
+      0,
+    );
+    return max || 1;
+  });
 
-  readonly maxSectorFlow = Math.max(
-    ...this.sectorInflows.map(s => s.amount),
-    ...this.sectorOutflows.map(s => s.amount),
-  );
-
-  // ── AI 總經資金環境解讀 ──
-  readonly macroIndicators = [
-    { label: 'Fed 利率', value: '4.25%' },
-    { label: '美元指數', value: '104.2' },
-    { label: 'VIX 恐慌', value: '15.8' },
-  ];
+  // ── AI 總經資金環境解讀（placeholder） ──
+  readonly macroIndicators = signal([
+    { label: 'Fed 利率', value: '--' },
+    { label: '美元指數', value: '--' },
+    { label: 'VIX 恐慌', value: '--' },
+  ]);
 
   readonly macroAnalysis = {
-    conclusion: '目前總經環境對股市資金流入「中性偏有利」。',
-    causalChain: 'Fed 維持利率但暗示明年降息 → 美債殖利率下滑 → 資金從債市部分流向股市 → 但美元仍強勢 → 外資匯入新興市場的意願受限',
-    judgment: '外資不會大幅撤出，但加碼力道有限。對個股的影響：取決於個別基本面，而非大盤資金。',
+    conclusion: '待總經數據 API 串接後自動更新。',
+    causalChain: '目前尚未串接總經數據來源，後續將整合 Fed 利率、美債殖利率、美元指數等指標。',
+    judgment: '請參考其他總經資訊平台取得即時數據。',
     basis: 'Fed 利率聲明 + 美債殖利率走勢 + 美元指數 + VIX 波動率',
   };
 
+  ngOnInit(): void {
+    this.loadMarketData();
+  }
+
+  private loadMarketData(): void {
+    this.isLoading.set(true);
+
+    this.stockApi.getMarketOverview().subscribe({
+      next: (overview) => {
+        if (overview) {
+          const fNet = overview.institutional.foreignNet;
+          const sNet = overview.institutional.sitcNet;
+          const dNet = overview.institutional.dealerNet;
+
+          this.capitalLevel.set({
+            foreign: {
+              value: Math.abs(fNet),
+              streak: 0,
+              direction: fNet >= 0 ? 'buy' : 'sell',
+            },
+            sitc: {
+              value: Math.abs(sNet),
+              direction: sNet >= 0 ? 'buy' : 'sell',
+            },
+            dealer: {
+              value: Math.abs(dNet),
+              direction: dNet >= 0 ? 'buy' : 'sell',
+            },
+            marketVolume: { value: overview.volume.totalBillion },
+            marginChange: {
+              value: Math.round(overview.margin.marginNetChange / 1000),
+              label: overview.margin.label,
+            },
+            breadth: {
+              up: overview.breadth.up,
+              down: overview.breadth.down,
+              flat: overview.breadth.flat,
+              limitUp: overview.breadth.limitUp,
+              limitDown: overview.breadth.limitDown,
+            },
+          });
+        }
+        this.isLoading.set(false);
+      },
+      error: () => {
+        this.isLoading.set(false);
+      },
+    });
+  }
+
   getFlowBarWidth(amount: number): number {
-    return (amount / this.maxSectorFlow) * 100;
+    return (amount / this.maxSectorFlow()) * 100;
   }
 }

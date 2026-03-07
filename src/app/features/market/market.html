@@ -1,6 +1,10 @@
 <div class="section-label">Market Capital Flow</div>
 <div class="section-title">大盤資金</div>
 
+@if (isLoading()) {
+  <div class="mk-loading">載入市場資料中...</div>
+}
+
 <!-- ══════ 今日資金水位 ══════ -->
 <div class="mk-capital-card">
   <div class="mk-capital-header">
@@ -13,36 +17,50 @@
   <div class="mk-capital-metrics">
     <div class="mk-cap-metric mk-cap-metric--hero">
       <span class="mk-cap-label">外資今日</span>
-      <span class="mk-cap-value is-up">▲ 買超 {{ capitalLevel.foreign.value }} 億</span>
-      <span class="mk-cap-sub">連續 {{ capitalLevel.foreign.streak }} 日買超</span>
+      <span class="mk-cap-value" [class.is-up]="capitalLevel().foreign.direction === 'buy'" [class.is-down]="capitalLevel().foreign.direction === 'sell'">
+        {{ capitalLevel().foreign.direction === 'buy' ? '▲ 買超' : '▼ 賣超' }} {{ capitalLevel().foreign.value }} 億
+      </span>
+    </div>
+    <div class="mk-cap-metric">
+      <span class="mk-cap-label">投信今日</span>
+      <span class="mk-cap-value" [class.is-up]="capitalLevel().sitc.direction === 'buy'" [class.is-down]="capitalLevel().sitc.direction === 'sell'">
+        {{ capitalLevel().sitc.direction === 'buy' ? '買超' : '賣超' }} {{ capitalLevel().sitc.value }} 億
+      </span>
+    </div>
+    <div class="mk-cap-metric">
+      <span class="mk-cap-label">自營商今日</span>
+      <span class="mk-cap-value" [class.is-up]="capitalLevel().dealer.direction === 'buy'" [class.is-down]="capitalLevel().dealer.direction === 'sell'">
+        {{ capitalLevel().dealer.direction === 'buy' ? '買超' : '賣超' }} {{ capitalLevel().dealer.value }} 億
+      </span>
     </div>
     <div class="mk-cap-metric">
       <span class="mk-cap-label">大盤量能</span>
-      <span class="mk-cap-value">{{ capitalLevel.marketVolume.value }} 億</span>
-      <span class="mk-cap-sub">為 20 日均量 {{ capitalLevel.marketVolume.avg20Ratio }} 倍</span>
+      <span class="mk-cap-value">{{ capitalLevel().marketVolume.value }} 億</span>
     </div>
     <div class="mk-cap-metric">
       <span class="mk-cap-label">融資增減</span>
-      <span class="mk-cap-value is-up">+{{ capitalLevel.marginChange.value }} 億</span>
-      <span class="mk-cap-sub">{{ capitalLevel.marginChange.label }}</span>
+      <span class="mk-cap-value" [class.is-up]="capitalLevel().marginChange.value > 0" [class.is-down]="capitalLevel().marginChange.value < 0">
+        {{ capitalLevel().marginChange.value > 0 ? '+' : '' }}{{ capitalLevel().marginChange.value }} 千張
+      </span>
+      <span class="mk-cap-sub">{{ capitalLevel().marginChange.label }}</span>
     </div>
   </div>
 
   <div class="mk-breadth-row">
     <span class="mk-b-stat">
       <span class="mk-b-dot" style="background:var(--up)"></span>
-      上漲 {{ capitalLevel.breadth.up }}
+      上漲 {{ capitalLevel().breadth.up }}
     </span>
     <div class="mk-b-bar">
-      <div class="mk-b-up" [style.width.%]="capitalLevel.breadth.up / breadthTotal * 100"></div>
-      <div class="mk-b-flat" [style.width.%]="capitalLevel.breadth.flat / breadthTotal * 100"></div>
-      <div class="mk-b-down" [style.width.%]="capitalLevel.breadth.down / breadthTotal * 100"></div>
+      <div class="mk-b-up" [style.width.%]="capitalLevel().breadth.up / breadthTotal() * 100"></div>
+      <div class="mk-b-flat" [style.width.%]="capitalLevel().breadth.flat / breadthTotal() * 100"></div>
+      <div class="mk-b-down" [style.width.%]="capitalLevel().breadth.down / breadthTotal() * 100"></div>
     </div>
     <span class="mk-b-stat">
-      下跌 {{ capitalLevel.breadth.down }}
+      下跌 {{ capitalLevel().breadth.down }}
       <span class="mk-b-dot" style="background:var(--down)"></span>
     </span>
-    <span class="mk-b-extra">漲停 {{ capitalLevel.breadth.limitUp }} ｜ 跌停 {{ capitalLevel.breadth.limitDown }}</span>
+    <span class="mk-b-extra">漲停 {{ capitalLevel().breadth.limitUp }} ｜ 跌停 {{ capitalLevel().breadth.limitDown }}</span>
   </div>
 </div>
 
@@ -63,66 +81,68 @@
     </span>
   </div>
 
-  <div class="mk-rotation-conclusion">{{ rotation.conclusion }}</div>
+  <div class="mk-rotation-conclusion">{{ rotation().conclusion }}</div>
 
   <div class="mk-rotation-reason">
     <span class="mk-tag">原因</span>
-    {{ rotation.reason }}
+    {{ rotation().reason }}
   </div>
   <div class="mk-rotation-basis">
     <span class="mk-tag mk-tag--muted">判斷依據</span>
-    {{ rotation.basis }}
+    {{ rotation().basis }}
   </div>
 
   <div class="ai-disclaimer" style="margin-top: 12px">僅供參考，非投資建議</div>
 </div>
 
 <!-- ══════ 板塊資金流向排行 ══════ -->
-<div class="mk-flow-grid">
-  <!-- 資金流入 -->
-  <div class="card">
-    <div class="card-header">
-      <div class="card-title mk-flow-in-title">
-        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="23 6 13.5 15.5 8.5 10.5 1 18"/><polyline points="17 6 23 6 23 12"/></svg>
-        資金流入
+@if (sectorInflows().length > 0 || sectorOutflows().length > 0) {
+  <div class="mk-flow-grid">
+    <!-- 資金流入 -->
+    <div class="card">
+      <div class="card-header">
+        <div class="card-title mk-flow-in-title">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="23 6 13.5 15.5 8.5 10.5 1 18"/><polyline points="17 6 23 6 23 12"/></svg>
+          資金流入
+        </div>
+      </div>
+      <div class="mk-flow-list">
+        @for (sector of sectorInflows(); track sector.name; let i = $index) {
+          <div class="mk-flow-row">
+            <span class="mk-flow-rank">{{ i + 1 }}.</span>
+            <span class="mk-flow-name">{{ sector.name }}</span>
+            <div class="mk-flow-bar-track">
+              <div class="mk-flow-bar mk-flow-bar--in" [style.width.%]="getFlowBarWidth(sector.amount)"></div>
+            </div>
+            <span class="mk-flow-amount is-up">+{{ sector.amount }}億</span>
+          </div>
+        }
       </div>
     </div>
-    <div class="mk-flow-list">
-      @for (sector of sectorInflows; track sector.name; let i = $index) {
-        <div class="mk-flow-row">
-          <span class="mk-flow-rank">{{ i + 1 }}.</span>
-          <span class="mk-flow-name">{{ sector.name }}</span>
-          <div class="mk-flow-bar-track">
-            <div class="mk-flow-bar mk-flow-bar--in" [style.width.%]="getFlowBarWidth(sector.amount)"></div>
-          </div>
-          <span class="mk-flow-amount is-up">+{{ sector.amount }}億</span>
-        </div>
-      }
-    </div>
-  </div>
 
-  <!-- 資金流出 -->
-  <div class="card">
-    <div class="card-header">
-      <div class="card-title mk-flow-out-title">
-        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="23 18 13.5 8.5 8.5 13.5 1 6"/><polyline points="17 18 23 18 23 12"/></svg>
-        資金流出
+    <!-- 資金流出 -->
+    <div class="card">
+      <div class="card-header">
+        <div class="card-title mk-flow-out-title">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="23 18 13.5 8.5 8.5 13.5 1 6"/><polyline points="17 18 23 18 23 12"/></svg>
+          資金流出
+        </div>
+      </div>
+      <div class="mk-flow-list">
+        @for (sector of sectorOutflows(); track sector.name; let i = $index) {
+          <div class="mk-flow-row">
+            <span class="mk-flow-rank">{{ i + 1 }}.</span>
+            <span class="mk-flow-name">{{ sector.name }}</span>
+            <div class="mk-flow-bar-track">
+              <div class="mk-flow-bar mk-flow-bar--out" [style.width.%]="getFlowBarWidth(sector.amount)"></div>
+            </div>
+            <span class="mk-flow-amount is-down">-{{ sector.amount }}億</span>
+          </div>
+        }
       </div>
     </div>
-    <div class="mk-flow-list">
-      @for (sector of sectorOutflows; track sector.name; let i = $index) {
-        <div class="mk-flow-row">
-          <span class="mk-flow-rank">{{ i + 1 }}.</span>
-          <span class="mk-flow-name">{{ sector.name }}</span>
-          <div class="mk-flow-bar-track">
-            <div class="mk-flow-bar mk-flow-bar--out" [style.width.%]="getFlowBarWidth(sector.amount)"></div>
-          </div>
-          <span class="mk-flow-amount is-down">-{{ sector.amount }}億</span>
-        </div>
-      }
-    </div>
   </div>
-</div>
+}
 
 <!-- ══════ AI 總經資金環境解讀 ══════ -->
 <div class="mk-macro-card">
@@ -132,7 +152,7 @@
   </div>
 
   <div class="mk-macro-indicators">
-    @for (ind of macroIndicators; track ind.label) {
+    @for (ind of macroIndicators(); track ind.label) {
       <div class="mk-macro-ind">
         <span class="mk-macro-ind-label">{{ ind.label }}</span>
         <span class="mk-macro-ind-value">{{ ind.value }}</span>

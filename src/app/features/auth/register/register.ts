@@ -63,11 +63,22 @@ export class Register {
     this.isLoading.set(true);
     this.errorMessage.set('');
 
-    // TODO: replace with real API call
-    setTimeout(() => {
-      this.isLoading.set(false);
-      this.router.navigate(['/auth/login']);
-    }, 1500);
+    const { email, password, displayName } = this.form.getRawValue();
+    this.auth.register(email, password, displayName).subscribe({
+      next: (res) => {
+        this.isLoading.set(false);
+        if (res.success) {
+          this.router.navigate(['/home']);
+        } else {
+          this.errorMessage.set(res.message ?? '註冊失敗');
+        }
+      },
+      error: (err) => {
+        this.isLoading.set(false);
+        const msg = err.error?.message ?? '註冊失敗，請稍後再試';
+        this.errorMessage.set(msg);
+      },
+    });
   }
 
   protected get nameInvalid(): boolean {

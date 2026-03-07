@@ -3,13 +3,15 @@ export interface User {
   email: string;
   displayName: string;
   avatarUrl?: string;
-  createdAt: string;
+  preferredMarket?: string;
+  preferredLang?: string;
+  defaultKPeriod?: string;
 }
 
 export interface AuthTokens {
   accessToken: string;
   refreshToken: string;
-  expiresIn: number;
+  accessTokenExpiresAt: string;
 }
 
 export interface LoginRequest {
@@ -21,4 +23,17 @@ export interface RegisterRequest {
   email: string;
   password: string;
   displayName: string;
+}
+
+export interface AuthResponse {
+  accessToken: string;
+  refreshToken: string;
+  accessTokenExpiresAt: string;
+  user: User;
+}
+
+export interface RefreshTokenResponse {
+  accessToken: string;
+  refreshToken: string;
+  accessTokenExpiresAt: string;
 }
