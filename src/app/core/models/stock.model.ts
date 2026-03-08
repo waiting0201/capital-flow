@@ -286,6 +286,32 @@ export interface ApiNewsFetchResult {
   message: string;
 }
 
+// ── Institutional Ranking (買賣超排行) ──
+
+export interface ApiInstitutionalRankingItem {
+  symbol: string;
+  nameZh: string | null;
+  industry: string | null;
+  totalNetAmount: number;
+  totalNetVolume: number;
+  foreignNetAmount: number | null;
+  trustNetAmount: number | null;
+  dealerNetAmount: number | null;
+  foreignNetVolume: number | null;
+  trustNetVolume: number | null;
+  dealerNetVolume: number | null;
+  foreignConsecutiveDays: number | null;
+  trustConsecutiveDays: number | null;
+  price: number | null;
+  changePercent: number | null;
+}
+
+export interface ApiInstitutionalRanking {
+  tradingDate: string;
+  buyRanking: ApiInstitutionalRankingItem[];
+  sellRanking: ApiInstitutionalRankingItem[];
+}
+
 // ── Watchlist Flow Status ──
 
 export interface ApiWatchlistFlowStatus {

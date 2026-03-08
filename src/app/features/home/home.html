@@ -61,6 +61,91 @@
   </div>
 </div>
 
+<!-- ══════ 三大法人買賣超排行 ══════ -->
+@if (buyRanking().length > 0 || sellRanking().length > 0) {
+  <div class="ranking-card">
+    <div class="rk-header">
+      <div class="rk-title-row">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="var(--amber)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/>
+        </svg>
+        <span class="rk-title">三大法人買賣超排行</span>
+      </div>
+      <span class="rk-date">{{ rankingDate() }}</span>
+    </div>
+
+    <div class="rk-grid">
+      <!-- 買超 -->
+      <div class="rk-col">
+        <div class="rk-col-header rk-col-header--buy">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="23 6 13.5 15.5 8.5 10.5 1 18"/><polyline points="17 6 23 6 23 12"/></svg>
+          買超前 20 名
+        </div>
+        <div class="rk-table">
+          <div class="rk-table-head">
+            <span class="rk-th rk-th-rank">#</span>
+            <span class="rk-th rk-th-stock">股票</span>
+            <span class="rk-th rk-th-amount">合計(張)</span>
+            <span class="rk-th rk-th-volume">外資(張)</span>
+            <span class="rk-th rk-th-change">漲跌%</span>
+          </div>
+          @for (item of buyRanking(); track item.symbol; let i = $index) {
+            <a class="rk-row" [routerLink]="'/stock/' + item.symbol">
+              <span class="rk-rank" [class.rk-rank--top3]="i < 3">{{ i + 1 }}</span>
+              <span class="rk-stock">
+                <span class="rk-symbol">{{ item.symbol }}</span>
+                <span class="rk-name">{{ item.nameZh }}</span>
+              </span>
+              <span class="rk-amount is-up">{{ item.totalNetVolume | number }}</span>
+              <span class="rk-volume">{{ (item.foreignNetVolume ?? 0) | number }}</span>
+              <span class="rk-chg" [class.is-up]="(item.changePercent ?? 0) >= 0" [class.is-down]="(item.changePercent ?? 0) < 0">
+                {{ (item.changePercent ?? 0) >= 0 ? '+' : '' }}{{ (item.changePercent ?? 0).toFixed(2) }}%
+              </span>
+              @if (getConsecutiveBadge(item); as badge) {
+                <span class="rk-badge rk-badge--buy">{{ badge }}</span>
+              }
+            </a>
+          }
+        </div>
+      </div>
+
+      <!-- 賣超 -->
+      <div class="rk-col">
+        <div class="rk-col-header rk-col-header--sell">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="23 18 13.5 8.5 8.5 13.5 1 6"/><polyline points="17 18 23 18 23 12"/></svg>
+          賣超前 20 名
+        </div>
+        <div class="rk-table">
+          <div class="rk-table-head">
+            <span class="rk-th rk-th-rank">#</span>
+            <span class="rk-th rk-th-stock">股票</span>
+            <span class="rk-th rk-th-amount">合計(張)</span>
+            <span class="rk-th rk-th-volume">外資(張)</span>
+            <span class="rk-th rk-th-change">漲跌%</span>
+          </div>
+          @for (item of sellRanking(); track item.symbol; let i = $index) {
+            <a class="rk-row" [routerLink]="'/stock/' + item.symbol">
+              <span class="rk-rank" [class.rk-rank--top3]="i < 3">{{ i + 1 }}</span>
+              <span class="rk-stock">
+                <span class="rk-symbol">{{ item.symbol }}</span>
+                <span class="rk-name">{{ item.nameZh }}</span>
+              </span>
+              <span class="rk-amount is-down">{{ item.totalNetVolume | number }}</span>
+              <span class="rk-volume">{{ (item.foreignNetVolume ?? 0) | number }}</span>
+              <span class="rk-chg" [class.is-up]="(item.changePercent ?? 0) >= 0" [class.is-down]="(item.changePercent ?? 0) < 0">
+                {{ (item.changePercent ?? 0) >= 0 ? '+' : '' }}{{ (item.changePercent ?? 0).toFixed(2) }}%
+              </span>
+              @if (getConsecutiveBadge(item); as badge) {
+                <span class="rk-badge rk-badge--sell">{{ badge }}</span>
+              }
+            </a>
+          }
+        </div>
+      </div>
+    </div>
+  </div>
+}
+
 <!-- ══════ AI 板塊資金輪動 ══════ -->
 <div class="sector-rotation-card">
   <div class="sr-header">

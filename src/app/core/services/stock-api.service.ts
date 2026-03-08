@@ -8,6 +8,7 @@ import {
   ApiMoneyFlowSummary, ApiMoneyFlowReport, ApiChipAiAnalysis, ApiMarginAiAnalysis,
   ApiFundamentalAttraction, ApiInstitutionalTrading, ApiMarginTrading, ApiChipSummary,
   ApiWatchlistFlowStatus, ApiNewsListResponse, ApiNewsArticle,
+  ApiInstitutionalRanking,
 } from '../models';
 
 interface ApiResponse<T> {
@@ -143,5 +144,13 @@ export class StockApiService {
     const params = new HttpParams().set('symbols', symbols.join(','));
     return this.http.get<ApiResponse<ApiWatchlistFlowStatus[]>>('/api/watchlist/moneyflow-status', { params })
       .pipe(map(r => r.data ?? []));
+  }
+
+  // ── Institutional Ranking (買賣超排行) ──
+
+  getInstitutionalRanking(top = 20): Observable<ApiInstitutionalRanking | null> {
+    const params = new HttpParams().set('top', top);
+    return this.http.get<ApiResponse<ApiInstitutionalRanking>>('/api/market/institutional-ranking', { params })
+      .pipe(map(r => r.data ?? null));
   }
 }

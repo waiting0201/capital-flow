@@ -1,11 +1,11 @@
 import { Component, computed, inject, signal, OnInit } from '@angular/core';
 import { DecimalPipe } from '@angular/common';
 import { RouterLink } from '@angular/router';
-import { forkJoin } from 'rxjs';
-import { switchMap } from 'rxjs/operators';
+import { forkJoin, of } from 'rxjs';
+import { catchError, switchMap } from 'rxjs/operators';
 import { StockApiService } from '../../core/services/stock-api.service';
 import { WatchlistApiService } from '../../core/services/watchlist-api.service';
-import { ApiMarketOverview, ApiWatchlistQuote } from '../../core/models';
+import { ApiMarketOverview, ApiWatchlistQuote, ApiInstitutionalRankingItem } from '../../core/models';
 
 type FlowStatus = 'inflow' | 'outflow' | 'neutral';
 type AlertLevel = 'critical' | 'warning';
@@ -91,6 +91,11 @@ export class Home implements OnInit {
     return max || 1;
   });
 
+  // ── 三大法人買賣超排行 ──
+  readonly buyRanking = signal<ApiInstitutionalRankingItem[]>([]);
+  readonly sellRanking = signal<ApiInstitutionalRankingItem[]>([]);
+  readonly rankingDate = signal('');
+
   // ── 我的自選股 ──
   readonly watchlist = signal<WatchlistItem[]>([]);
 
@@ -104,15 +109,23 @@ export class Home implements OnInit {
   private loadMarketData(): void {
     this.isLoading.set(true);
 
-    // Fetch market overview + watchlist symbols in parallel
+    // Fetch market overview + watchlist + ranking in parallel
     forkJoin({
       overview: this.stockApi.getMarketOverview(),
       watchlistData: this.watchlistApi.getWatchlist(),
+      ranking: this.stockApi.getInstitutionalRanking().pipe(catchError(() => of(null))),
     }).pipe(
-      switchMap(({ overview, watchlistData }) => {
+      switchMap(({ overview, watchlistData, ranking }) => {
         // Apply market overview
         if (overview) {
           this.applyOverview(overview);
+        }
+
+        // Apply ranking data
+        if (ranking) {
+          this.buyRanking.set(ranking.buyRanking);
+          this.sellRanking.set(ranking.sellRanking);
+          this.rankingDate.set(ranking.tradingDate);
         }
 
         // Fetch quotes for watchlist symbols
@@ -172,5 +185,21 @@ export class Home implements OnInit {
 
   getFlowBarWidth(amount: number): number {
     return (amount / this.maxSectorFlow()) * 100;
+  }
+
+  formatNetAmount(amount: number): string {
+    const abs = Math.abs(amount);
+    if (abs >= 100) return (amount / 100).toFixed(1) + ' 億';
+    return amount.toFixed(0) + ' 百萬';
+  }
+
+  getConsecutiveBadge(item: ApiInstitutionalRankingItem): string | null {
+    const fd = item.foreignConsecutiveDays;
+    const td = item.trustConsecutiveDays;
+    if (fd && fd >= 3) return `外資連${fd}買`;
+    if (fd && fd <= -3) return `外資連${Math.abs(fd)}賣`;
+    if (td && td >= 3) return `投信連${td}買`;
+    if (td && td <= -3) return `投信連${Math.abs(td)}賣`;
+    return null;
   }
 }
