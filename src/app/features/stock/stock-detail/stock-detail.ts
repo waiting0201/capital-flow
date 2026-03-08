@@ -53,6 +53,7 @@ export class StockDetail {
   readonly candleChart: ApexChart = { type: 'candlestick', height: 340, toolbar: { show: true, autoSelected: 'pan', tools: { download: false, selection: true, zoom: true, zoomin: true, zoomout: true, pan: true, reset: true } }, background: 'transparent' };
   readonly volumeChart: ApexChart = { type: 'bar', height: 120, toolbar: { show: false }, background: 'transparent' };
   readonly candleOptions: ApexPlotOptions = { candlestick: { colors: { upward: '#E14F4F', downward: '#22C1A1' }, wick: { useFillColor: true } } };
+  readonly volumeOptions: ApexPlotOptions = { bar: { columnWidth: '60%' } };
   readonly xAxis: ApexXAxis = { type: 'datetime', labels: { style: { colors: '#999EA2', fontFamily: 'JetBrains Mono, monospace', fontSize: '10px' }, datetimeUTC: false }, axisBorder: { color: 'rgba(58,99,81,0.12)' }, axisTicks: { color: 'rgba(58,99,81,0.12)' } };
   readonly candleYAxis: ApexYAxis = { tooltip: { enabled: true }, labels: { style: { colors: '#999EA2', fontFamily: 'JetBrains Mono, monospace', fontSize: '10px' }, formatter: (v: number) => v >= 1000 ? v.toLocaleString() : v.toFixed(2) } };
   readonly volumeYAxis: ApexYAxis = { labels: { style: { colors: '#999EA2', fontFamily: 'JetBrains Mono, monospace', fontSize: '10px' }, formatter: (v: number) => v >= 1_000_000 ? (v / 1_000_000).toFixed(0) + 'M' : v >= 1000 ? (v / 1000).toFixed(0) + 'K' : v.toString() } };

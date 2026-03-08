@@ -111,7 +111,7 @@
   <div class="sd-chart-area">
     <apx-chart [series]="candleSeries()" [chart]="candleChart" [xaxis]="xAxis" [yaxis]="candleYAxis" [plotOptions]="candleOptions" [dataLabels]="dataLabels" [stroke]="stroke" [grid]="grid" [tooltip]="candleTooltip"></apx-chart>
     <div class="sd-volume-label">成交量（資金主角）</div>
-    <apx-chart [series]="volumeSeries()" [chart]="volumeChart" [xaxis]="xAxis" [yaxis]="volumeYAxis" [dataLabels]="dataLabels" [plotOptions]="{ bar: { columnWidth: '60%' } }" [grid]="grid" [legend]="legend" [tooltip]="volumeTooltip"></apx-chart>
+    <apx-chart [series]="volumeSeries()" [chart]="volumeChart" [xaxis]="xAxis" [yaxis]="volumeYAxis" [dataLabels]="dataLabels" [plotOptions]="volumeOptions" [grid]="grid" [legend]="legend" [tooltip]="volumeTooltip"></apx-chart>
   </div>
 </div>
 
