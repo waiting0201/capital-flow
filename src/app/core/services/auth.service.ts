@@ -29,14 +29,22 @@ export class AuthService {
     );
   }
 
-  register(email: string, password: string, displayName: string): Observable<ApiResponse<AuthResponse>> {
-    return this.http.post<ApiResponse<AuthResponse>>('/api/auth/register', { email, password, displayName }).pipe(
+  register(email: string, password: string, displayName: string): Observable<ApiResponse<{ email: string; message: string }>> {
+    return this.http.post<ApiResponse<{ email: string; message: string }>>('/api/auth/register', { email, password, displayName });
+  }
+
+  verifyEmail(email: string, code: string): Observable<ApiResponse<AuthResponse>> {
+    return this.http.post<ApiResponse<AuthResponse>>('/api/auth/verify-email', { email, code }).pipe(
       tap(res => {
         if (res.success && res.data) {
           this.handleAuthResponse(res.data);
         }
       }),
     );
+  }
+
+  resendVerification(email: string): Observable<ApiResponse<string>> {
+    return this.http.post<ApiResponse<string>>('/api/auth/resend-verification', { email });
   }
 
   refreshToken(): Observable<ApiResponse<RefreshTokenResponse> | null> {

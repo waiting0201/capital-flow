@@ -50,6 +50,11 @@ export class Login {
       },
       error: (err) => {
         this.isLoading.set(false);
+        if (err.error?.errorCode === 'ERR_EMAIL_NOT_VERIFIED') {
+          const { email } = this.form.getRawValue();
+          this.router.navigate(['/auth/verify-email'], { queryParams: { email } });
+          return;
+        }
         const msg = err.error?.message ?? '登入失敗，請稍後再試';
         this.errorMessage.set(msg);
       },

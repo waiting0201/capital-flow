@@ -68,7 +68,7 @@ export class Register {
       next: (res) => {
         this.isLoading.set(false);
         if (res.success) {
-          this.router.navigate(['/home']);
+          this.router.navigate(['/auth/verify-email'], { queryParams: { email } });
         } else {
           this.errorMessage.set(res.message ?? '註冊失敗');
         }

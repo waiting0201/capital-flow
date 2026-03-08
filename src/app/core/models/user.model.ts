@@ -3,6 +3,7 @@ export interface User {
   email: string;
   displayName: string;
   avatarUrl?: string;
+  isEmailVerified?: boolean;
   preferredMarket?: string;
   preferredLang?: string;
   defaultKPeriod?: string;

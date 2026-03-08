@@ -1,0 +1,101 @@
+<div class="verify-card" [class.shake]="errorMessage()">
+  <!-- Header -->
+  <div class="verify-header">
+    <div class="verify-icon">
+      <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+        <rect x="2" y="4" width="20" height="16" rx="3" />
+        <path d="M2 7l10 6 10-6" />
+      </svg>
+    </div>
+    <h2 class="verify-title">Email 驗證</h2>
+    <p class="verify-desc">
+      我們已發送 6 位數驗證碼至<br>
+      <strong class="verify-email">{{ maskedEmail }}</strong>
+    </p>
+  </div>
+
+  <!-- Success Message -->
+  @if (successMessage()) {
+    <div class="verify-success">
+      <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+        <circle cx="8" cy="8" r="7" stroke="currentColor" stroke-width="1.5" />
+        <path d="M5 8l2 2 4-4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" />
+      </svg>
+      <span>{{ successMessage() }}</span>
+    </div>
+  }
+
+  <!-- Error Message -->
+  @if (errorMessage()) {
+    <div class="verify-error">
+      <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+        <circle cx="8" cy="8" r="7" stroke="currentColor" stroke-width="1.5" />
+        <path d="M8 4.5v4M8 10.5v.5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" />
+      </svg>
+      <span>{{ errorMessage() }}</span>
+    </div>
+  }
+
+  <!-- Code Input -->
+  <div class="code-input-group" (paste)="onPaste($event)">
+    @for (digit of digits(); track $index) {
+      <input
+        #codeInput
+        type="text"
+        inputmode="numeric"
+        maxlength="1"
+        class="code-digit"
+        [class.filled]="digit"
+        [value]="digit"
+        [disabled]="isLoading()"
+        (input)="onDigitInput($index, $event)"
+        (keydown)="onDigitKeydown($index, $event)"
+        autocomplete="one-time-code">
+    }
+  </div>
+
+  <!-- Submit Button -->
+  <button
+    type="button"
+    class="btn-verify"
+    [disabled]="isLoading()"
+    (click)="onSubmit()">
+    @if (isLoading()) {
+      <span class="spinner"></span>
+      <span>驗證中…</span>
+    } @else {
+      <span>驗證 Email</span>
+    }
+  </button>
+
+  <!-- Resend -->
+  <div class="resend-section">
+    <p class="resend-text">沒有收到驗證碼？</p>
+    @if (countdown() > 0) {
+      <span class="resend-countdown">{{ countdown() }} 秒後可重新發送</span>
+    } @else {
+      <button
+        type="button"
+        class="btn-resend"
+        [disabled]="isResending()"
+        (click)="resendCode()">
+        @if (isResending()) {
+          <span class="spinner-sm"></span>
+          發送中…
+        } @else {
+          重新發送驗證碼
+        }
+      </button>
+    }
+  </div>
+
+  <!-- Back to register -->
+  <p class="verify-back">
+    <a routerLink="/auth/register">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <path d="M19 12H5M12 19l-7-7 7-7" stroke-linecap="round" stroke-linejoin="round" />
+      </svg>
+      返回註冊
+    </a>
+  </p>
+</div>
