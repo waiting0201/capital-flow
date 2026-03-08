@@ -160,110 +160,59 @@
 @if (activeTab() === 'flow') {
   <div class="sd-tab-content">
 
-    <!-- ① 資金流向結論 -->
-    <div class="mf-card">
-      <div class="mf-card-label">① 資金流向結論</div>
-      <div class="mf-conclusion-row">
-        <span class="mf-flow-badge" [class.flow-in]="flowAnalysis.conclusion.direction === 'inflow'">
-          ▲ 資金淨流入
-        </span>
-        <span class="mf-strength">力道：{{ flowAnalysis.conclusion.strength }}</span>
+    @if (mfieLoading()) {
+      <div class="mf-card mf-card--loading">
+        <div class="sd-ai-skeleton"><div class="skeleton-line"></div><div class="skeleton-line skeleton-line--short"></div></div>
       </div>
-      <div class="mf-conclusion-detail">
-        主導資金：{{ flowAnalysis.conclusion.mainForce }}
-      </div>
-      <div class="mf-conclusion-basis">
-        <span class="mf-basis-tag">判斷依據</span>
-        {{ flowAnalysis.conclusion.basis }}
-      </div>
-    </div>
+    }
 
-    <!-- ② 資金為何進來 -->
-    <div class="mf-card">
-      <div class="mf-card-label">② 資金為何進來</div>
-      <div class="mf-ai-badge-row">
-        <span class="ai-badge">
-          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2L2 7l10 5 10-5-10-5z"/><path d="M2 17l10 5 10-5"/><path d="M2 12l10 5 10-5"/></svg>
-          AI 分析
-        </span>
-      </div>
-      @for (factor of flowAnalysis.whyIn.factors; track factor.title; let i = $index) {
-        <div class="mf-factor">
-          <div class="mf-factor-header">
-            <span class="mf-factor-num">{{ i + 1 }}.</span>
-            <span class="mf-factor-title">{{ factor.title }}</span>
-            <span class="mf-factor-basis">依據：{{ factor.basis }}</span>
-          </div>
-          <p class="mf-factor-detail">{{ factor.detail }}</p>
+    @if (flowReport(); as report) {
+      <!-- MFIE 完整分析報告 -->
+      <div class="mf-card">
+        <div class="mf-card-label">
+          <span class="ai-badge">
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2L2 7l10 5 10-5-10-5z"/><path d="M2 17l10 5 10-5"/><path d="M2 12l10 5 10-5"/></svg>
+            AI 資金流向分析
+          </span>
+          <button class="sd-regenerate-btn" (click)="regenerateMfie()" [disabled]="mfieLoading()">
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="23 4 23 10 17 10"/><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"/></svg>
+            {{ mfieLoading() ? '生成中...' : '重新生成' }}
+          </button>
         </div>
-      }
-    </div>
-
-    <!-- ③ 資金為何離開 -->
-    <div class="mf-card">
-      <div class="mf-card-label">③ 資金為何離開</div>
-      <div class="mf-ai-badge-row">
-        <span class="ai-badge">
-          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2L2 7l10 5 10-5-10-5z"/><path d="M2 17l10 5 10-5"/><path d="M2 12l10 5 10-5"/></svg>
-          AI 分析
-        </span>
-      </div>
-      @for (factor of flowAnalysis.whyOut.factors; track factor.title; let i = $index) {
-        <div class="mf-factor">
-          <div class="mf-factor-header">
-            <span class="mf-factor-num">{{ i + 1 }}.</span>
-            <span class="mf-factor-title">{{ factor.title }}</span>
-            <span class="mf-factor-basis">依據：{{ factor.basis }}</span>
-          </div>
-          <p class="mf-factor-detail">{{ factor.detail }}</p>
-        </div>
-      }
-    </div>
-
-    <!-- ④ AI 判斷依據面板 -->
-    <div class="mf-card">
-      <div class="mf-card-label">④ AI 判斷依據面板</div>
-      <div class="mf-dimensions">
-        @for (dim of flowAnalysis.dimensions; track dim.name) {
-          <div class="mf-dim-row">
-            <span class="mf-dim-name">{{ dim.name }}</span>
-            <span class="mf-dim-signal" [class]="getSignalClass(dim.signal)">{{ getSignalLabel(dim.signal) }}</span>
-            <span class="mf-dim-summary">{{ dim.summary }}</span>
-          </div>
+        <div class="mf-report-content">{{ report.fullReport }}</div>
+        @if (report.aiProvider) {
+          <span class="sd-ai-meta">{{ report.aiProvider }}{{ report.cached ? '（快取）' : '' }}</span>
         }
       </div>
-    </div>
 
-    <!-- ⑤ 持續性評估 + 投資時機 + 風險 -->
-    <div class="mf-card">
-      <div class="mf-card-label">⑤ 持續性評估 + 投資時機</div>
-      <div class="mf-ai-badge-row">
-        <span class="ai-badge">
-          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2L2 7l10 5 10-5-10-5z"/><path d="M2 17l10 5 10-5"/><path d="M2 12l10 5 10-5"/></svg>
-          AI 分析
-        </span>
-      </div>
-      <p class="mf-sustainability-text">{{ flowAnalysis.sustainability }}</p>
-
-      <div class="mf-timing">
-        <span class="mf-timing-label">投資時機</span>
-        <span class="mf-timing-badge">{{ flowAnalysis.timing.label }}</span>
-      </div>
-      <p class="mf-timing-detail">{{ flowAnalysis.timing.detail }}</p>
-      <div class="mf-timing-levels">
-        <span>支撐參考：<strong>{{ flowAnalysis.timing.support }}</strong></span>
-        <span>壓力參考：<strong>{{ flowAnalysis.timing.resistance }}</strong></span>
-      </div>
-
-      <div class="mf-risks-label">風險提示</div>
-      @for (risk of flowAnalysis.risks; track risk.name) {
-        <div class="mf-risk-row">
-          <span class="mf-risk-name">{{ risk.name }}</span>
-          <span class="mf-risk-severity" [attr.data-severity]="risk.severity">嚴重度：{{ risk.severity }}</span>
-          <span class="mf-risk-detail">{{ risk.detail }}</span>
+      <!-- AI 判斷依據面板 -->
+      @if (flowSignals().length > 0) {
+        <div class="mf-card">
+          <div class="mf-card-label">AI 判斷依據面板</div>
+          <div class="mf-dimensions">
+            @for (dim of flowSignals(); track dim.name) {
+              <div class="mf-dim-row">
+                <span class="mf-dim-name">{{ dim.name }}</span>
+                <span class="mf-dim-signal" [class]="getSignalClass(dim.signal)">{{ getSignalLabel(dim.signal) }}</span>
+                <span class="mf-dim-summary">{{ dim.summary }}</span>
+              </div>
+            }
+          </div>
         </div>
       }
-    </div>
+    }
+
+    <!-- 基本面資金吸引力 -->
+    @if (flowFundamental(); as fund) {
+      <div class="mf-card">
+        <div class="mf-card-icon-label">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--amber)" stroke-width="2"><path d="M12 2.69l5.66 5.66a8 8 0 11-11.31 0z"/></svg>
+          AI 基本面資金吸引力
+        </div>
+        <div class="mf-report-content">{{ fund.analysis }}</div>
+        <span class="sd-ai-meta">{{ fund.aiProvider }}{{ fund.cached ? '（快取）' : '' }}</span>
+      </div>
+    }
 
     <app-ai-disclaimer variant="block" />
   </div>
@@ -274,135 +223,128 @@
   <div class="sd-tab-content">
 
     <!-- AI 法人資金動態解讀 -->
-    <div class="mf-card">
-      <div class="mf-card-icon-label">
-        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--amber)" stroke-width="2"><path d="M3 21h18M3 10h18M5 6l7-3 7 3M4 10v11M20 10v11M8 14v3M12 14v3M16 14v3"/></svg>
-        AI 法人資金動態解讀
-      </div>
-      <div class="mf-ai-insight">
-        <div class="mf-insight-conclusion">{{ chipAnalysis.institutional.conclusion }}</div>
-        <div class="mf-insight-reason">
-          <span class="mf-label-tag">原因</span>{{ chipAnalysis.institutional.reason }}
+    @if (chipAiAnalysis(); as ai) {
+      <div class="mf-card">
+        <div class="mf-card-icon-label">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--amber)" stroke-width="2"><path d="M3 21h18M3 10h18M5 6l7-3 7 3M4 10v11M20 10v11M8 14v3M12 14v3M16 14v3"/></svg>
+          AI 法人資金動態解讀
         </div>
-        <div class="mf-insight-basis">
-          <span class="mf-label-tag mf-label-tag--muted">判斷依據</span>{{ chipAnalysis.institutional.basis }}
-        </div>
+        <div class="mf-report-content">{{ ai.analysis }}</div>
+        <span class="sd-ai-meta">{{ ai.aiProvider }}{{ ai.cached ? '（快取）' : '' }}</span>
+        <app-ai-disclaimer />
       </div>
-      <app-ai-disclaimer />
-    </div>
+    }
 
     <!-- 三大法人買賣超 -->
-    <div class="mf-card">
-      <div class="mf-card-icon-label">三大法人買賣超</div>
-      <div class="mf-table-scroll">
-        <table class="data-table">
-          <thead>
-            <tr>
-              <th></th>
-              <th>今日</th>
-              <th>連續</th>
-              <th>近5日累計</th>
-            </tr>
-          </thead>
-          <tbody>
-            @for (row of chipAnalysis.institutionalData; track row.date; let first = $first) {
-              @if (first) {
+    @if (latestInstitutional(); as inst) {
+      <div class="mf-card">
+        <div class="mf-card-icon-label">三大法人買賣超</div>
+        <div class="mf-table-scroll">
+          <table class="data-table">
+            <thead>
+              <tr>
+                <th></th>
+                <th>買進</th>
+                <th>賣出</th>
+                <th>買賣超</th>
+                <th>連續</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td class="row-label">外資</td>
+                <td>{{ (inst.foreignBuyVolume ?? 0) | number }}張</td>
+                <td>{{ (inst.foreignSellVolume ?? 0) | number }}張</td>
+                <td [style.color]="(inst.foreignNetVolume ?? 0) > 0 ? 'var(--up)' : 'var(--down)'" style="font-weight:700">{{ fmtNet(inst.foreignNetVolume) }}張</td>
+                <td>{{ fmtStreak(inst.foreignConsecutiveDays) }}</td>
+              </tr>
+              <tr>
+                <td class="row-label">投信</td>
+                <td>{{ (inst.trustBuyVolume ?? 0) | number }}張</td>
+                <td>{{ (inst.trustSellVolume ?? 0) | number }}張</td>
+                <td [style.color]="(inst.trustNetVolume ?? 0) > 0 ? 'var(--up)' : 'var(--down)'" style="font-weight:700">{{ fmtNet(inst.trustNetVolume) }}張</td>
+                <td>{{ fmtStreak(inst.trustConsecutiveDays) }}</td>
+              </tr>
+              <tr>
+                <td class="row-label">自營商</td>
+                <td>{{ (inst.dealerBuyVolume ?? 0) | number }}張</td>
+                <td>{{ (inst.dealerSellVolume ?? 0) | number }}張</td>
+                <td [style.color]="(inst.dealerNetVolume ?? 0) > 0 ? 'var(--up)' : 'var(--down)'" style="font-weight:700">{{ fmtNet(inst.dealerNetVolume) }}張</td>
+                <td>{{ fmtStreak(inst.dealerConsecutiveDays) }}</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    }
+
+    <!-- 近期法人走勢 (歷史資料) -->
+    @if (institutionalData().length > 1) {
+      <div class="mf-card">
+        <div class="mf-card-icon-label">近期法人走勢</div>
+        <div class="mf-table-scroll">
+          <table class="data-table">
+            <thead>
+              <tr>
+                <th>日期</th>
+                <th>外資</th>
+                <th>投信</th>
+                <th>自營商</th>
+                <th>合計</th>
+              </tr>
+            </thead>
+            <tbody>
+              @for (row of institutionalData(); track row.tradingDate) {
                 <tr>
-                  <td class="row-label">外資</td>
-                  <td [style.color]="row.foreign.startsWith('+') ? 'var(--up)' : 'var(--down)'" style="font-weight:700">{{ row.foreign }}張</td>
-                  <td>{{ row.foreignStreak }}</td>
-                  <td style="font-weight:700">+28,500張</td>
-                </tr>
-                <tr>
-                  <td class="row-label">投信</td>
-                  <td [style.color]="row.investment.startsWith('+') ? 'var(--up)' : 'var(--down)'" style="font-weight:700">{{ row.investment }}張</td>
-                  <td>{{ row.investmentStreak }}</td>
-                  <td style="font-weight:700">+3,800張</td>
-                </tr>
-                <tr>
-                  <td class="row-label">自營商</td>
-                  <td [style.color]="row.dealer.startsWith('+') ? 'var(--up)' : 'var(--down)'" style="font-weight:700">{{ row.dealer }}張</td>
-                  <td>賣超1天</td>
-                  <td style="font-weight:700">+580張</td>
+                  <td class="row-label">{{ row.tradingDate | slice:5 }}</td>
+                  <td [style.color]="(row.foreignNetVolume ?? 0) >= 0 ? 'var(--up)' : 'var(--down)'">{{ fmtNet(row.foreignNetVolume) }}</td>
+                  <td [style.color]="(row.trustNetVolume ?? 0) >= 0 ? 'var(--up)' : 'var(--down)'">{{ fmtNet(row.trustNetVolume) }}</td>
+                  <td [style.color]="(row.dealerNetVolume ?? 0) >= 0 ? 'var(--up)' : 'var(--down)'">{{ fmtNet(row.dealerNetVolume) }}</td>
+                  <td style="font-weight:700" [style.color]="(row.totalNetVolume ?? 0) >= 0 ? 'var(--up)' : 'var(--down)'">{{ fmtNet(row.totalNetVolume) }}</td>
                 </tr>
               }
-            }
-          </tbody>
-        </table>
+            </tbody>
+          </table>
+        </div>
       </div>
-    </div>
+    }
 
     <!-- AI 槓桿資金行為分析 -->
-    <div class="mf-card">
-      <div class="mf-card-icon-label">AI 槓桿資金行為分析</div>
-      <div class="mf-ai-insight">
-        <div class="mf-insight-conclusion">{{ chipAnalysis.margin.conclusion }}</div>
-        <div class="mf-insight-reason">
-          <span class="mf-label-tag">原因</span>{{ chipAnalysis.margin.reason }}
-        </div>
-        <div class="mf-insight-basis">
-          <span class="mf-label-tag mf-label-tag--muted">判斷依據</span>{{ chipAnalysis.margin.basis }}
-        </div>
+    @if (marginAiAnalysis(); as mai) {
+      <div class="mf-card">
+        <div class="mf-card-icon-label">AI 槓桿資金行為分析</div>
+        <div class="mf-report-content">{{ mai.analysis }}</div>
+        <span class="sd-ai-meta">{{ mai.aiProvider }}{{ mai.cached ? '（快取）' : '' }}</span>
+        <app-ai-disclaimer />
       </div>
-    </div>
+    }
 
     <!-- 融資融券 -->
-    <div class="mf-card">
-      <div class="mf-card-icon-label">融資融券</div>
-      <div class="mf-margin-grid">
-        <div class="mf-margin-item">
-          <span class="mf-margin-label">融資餘額</span>
-          <span class="mf-margin-value">{{ chipAnalysis.marginData.marginBalance | number }}張</span>
-          <span class="mf-margin-change is-down">▼{{ chipAnalysis.marginData.marginChange | number }}</span>
-        </div>
-        <div class="mf-margin-item">
-          <span class="mf-margin-label">融券餘額</span>
-          <span class="mf-margin-value">{{ chipAnalysis.marginData.shortBalance | number }}張</span>
-          <span class="mf-margin-change">─ 持平</span>
-        </div>
-        <div class="mf-margin-item">
-          <span class="mf-margin-label">券資比</span>
-          <span class="mf-margin-value">{{ chipAnalysis.marginData.marginShortRatio }}%</span>
-        </div>
-        <div class="mf-margin-item">
-          <span class="mf-margin-label">融資使用率</span>
-          <span class="mf-margin-value">{{ chipAnalysis.marginData.marginUsageRate }}%</span>
-        </div>
-      </div>
-    </div>
-
-    <!-- AI 籌碼集中度趨勢 -->
-    <div class="mf-card">
-      <div class="mf-card-icon-label">AI 籌碼集中度趨勢</div>
-      <div class="mf-ai-insight">
-        <div class="mf-insight-conclusion">{{ chipAnalysis.shareholder.conclusion }}</div>
-        <div class="mf-insight-reason">
-          <span class="mf-label-tag">原因</span>{{ chipAnalysis.shareholder.reason }}
-        </div>
-        <div class="mf-insight-basis">
-          <span class="mf-label-tag mf-label-tag--muted">判斷依據</span>{{ chipAnalysis.shareholder.basis }}
-        </div>
-      </div>
-    </div>
-
-    <!-- 集保戶股權分散 -->
-    <div class="mf-card">
-      <div class="mf-card-icon-label">集保戶股權分散</div>
-      <div class="mf-shareholder-list">
-        @for (row of chipAnalysis.shareholderData; track row.range) {
-          <div class="mf-sh-row">
-            <span class="mf-sh-range">{{ row.range }}</span>
-            <div class="mf-sh-bar-wrap">
-              <div class="mf-sh-bar" [style.width.%]="row.pct"></div>
-            </div>
-            <span class="mf-sh-pct">{{ row.pct }}%</span>
-            <span class="mf-sh-change" [class.is-up]="row.change.startsWith('+')" [class.is-down]="row.change.startsWith('-')">
-              ({{ row.change }})
-            </span>
+    @if (latestMargin(); as mg) {
+      <div class="mf-card">
+        <div class="mf-card-icon-label">融資融券</div>
+        <div class="mf-margin-grid">
+          <div class="mf-margin-item">
+            <span class="mf-margin-label">融資餘額</span>
+            <span class="mf-margin-value">{{ (mg.marginBalance ?? 0) | number }}張</span>
+            <span class="mf-margin-change" [class.is-up]="(mg.marginBalanceChange ?? 0) > 0" [class.is-down]="(mg.marginBalanceChange ?? 0) < 0">{{ fmtMarginChange(mg.marginBalanceChange) }}</span>
           </div>
-        }
+          <div class="mf-margin-item">
+            <span class="mf-margin-label">融券餘額</span>
+            <span class="mf-margin-value">{{ (mg.shortBalance ?? 0) | number }}張</span>
+            <span class="mf-margin-change" [class.is-up]="(mg.shortBalanceChange ?? 0) > 0" [class.is-down]="(mg.shortBalanceChange ?? 0) < 0">{{ fmtMarginChange(mg.shortBalanceChange) }}</span>
+          </div>
+          <div class="mf-margin-item">
+            <span class="mf-margin-label">券資比</span>
+            <span class="mf-margin-value">{{ mg.shortToMarginRatio ?? 0 }}%</span>
+          </div>
+          <div class="mf-margin-item">
+            <span class="mf-margin-label">融資使用率</span>
+            <span class="mf-margin-value">{{ mg.marginUsageRate ?? 0 }}%</span>
+          </div>
+        </div>
       </div>
-    </div>
+    }
   </div>
 }
 

@@ -1,10 +1,10 @@
 import { Component, signal, computed, inject, OnInit } from '@angular/core';
 import { RouterLink } from '@angular/router';
 import { FormsModule } from '@angular/forms';
-import { forkJoin } from 'rxjs';
+import { forkJoin, catchError, of } from 'rxjs';
 import { WatchlistApiService } from '../../core/services/watchlist-api.service';
 import { StockApiService } from '../../core/services/stock-api.service';
-import { ApiWatchlistQuote } from '../../core/models';
+import { ApiWatchlistQuote, ApiWatchlistFlowStatus } from '../../core/models';
 
 type FlowStatus = 'inflow' | 'outflow' | 'neutral';
 type SortField = 'symbol' | 'price' | 'change' | 'volume';
@@ -148,21 +148,20 @@ export class Watchlist implements OnInit {
 
     this.watchlistApi.getWatchlist().subscribe({
       next: (data) => {
-        // Set categories
         this.categories.set(data.categories);
 
-        // Fetch quotes for all symbols
         if (data.symbols.length > 0) {
-          this.stockApi.getWatchlistQuotes(data.symbols).subscribe({
-            next: (quotes) => {
-              this.stocks.set(this.mapQuotesToStocks(quotes));
-              this.isLoading.set(false);
-            },
-            error: () => {
-              // Still show stocks without quotes
+          // Fetch quotes and flow status in parallel
+          forkJoin({
+            quotes: this.stockApi.getWatchlistQuotes(data.symbols).pipe(catchError(() => of([] as ApiWatchlistQuote[]))),
+            flowStatus: this.stockApi.getWatchlistFlowStatus(data.symbols).pipe(catchError(() => of([] as ApiWatchlistFlowStatus[]))),
+          }).subscribe(({ quotes, flowStatus }) => {
+            if (quotes.length > 0) {
+              this.stocks.set(this.mapQuotesToStocks(quotes, flowStatus));
+            } else {
               this.stocks.set(data.symbols.map(s => this.emptyStock(s)));
-              this.isLoading.set(false);
-            },
+            }
+            this.isLoading.set(false);
           });
         } else {
           this.isLoading.set(false);
@@ -174,10 +173,27 @@ export class Watchlist implements OnInit {
     });
   }
 
-  private mapQuotesToStocks(quotes: ApiWatchlistQuote[]): WatchlistStock[] {
+  private mapQuotesToStocks(quotes: ApiWatchlistQuote[], flowStatuses: ApiWatchlistFlowStatus[] = []): WatchlistStock[] {
+    const flowMap = new Map(flowStatuses.map(f => [f.symbol, f]));
+
     return quotes.map(q => {
       const isTw = /^\d/.test(q.symbol);
-      const flowStatus: FlowStatus = q.changePercent > 1 ? 'inflow' : q.changePercent < -1 ? 'outflow' : 'neutral';
+      const flow = flowMap.get(q.symbol);
+
+      // Use MFIE flow status if available, fallback to price-based
+      let flowStatus: FlowStatus;
+      let flowLabel: string;
+
+      if (flow) {
+        const dirMap: Record<string, FlowStatus> = { Inflow: 'inflow', Outflow: 'outflow', Neutral: 'neutral' };
+        const labelMap: Record<string, string> = { Inflow: '流入', Outflow: '流出', Neutral: '中性' };
+        flowStatus = dirMap[flow.flowDirection] ?? 'neutral';
+        flowLabel = labelMap[flow.flowDirection] ?? '中性';
+      } else {
+        flowStatus = q.changePercent > 1 ? 'inflow' : q.changePercent < -1 ? 'outflow' : 'neutral';
+        flowLabel = flowStatus === 'inflow' ? '上漲' : flowStatus === 'outflow' ? '下跌' : '持平';
+      }
+
       return {
         symbol: q.symbol,
         name: q.name ?? q.symbol,
@@ -187,7 +203,7 @@ export class Watchlist implements OnInit {
         changePercent: q.changePercent,
         volume: q.volume,
         flowStatus,
-        flowLabel: flowStatus === 'inflow' ? '上漲' : flowStatus === 'outflow' ? '下跌' : '持平',
+        flowLabel,
       };
     });
   }

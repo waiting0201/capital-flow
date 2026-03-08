@@ -1,10 +1,16 @@
 import { Component, input, signal, computed, effect, inject, DestroyRef } from '@angular/core';
-import { DecimalPipe } from '@angular/common';
+import { DecimalPipe, SlicePipe } from '@angular/common';
 import { RouterLink } from '@angular/router';
 import { NgApexchartsModule } from 'ng-apexcharts';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { forkJoin, catchError, of } from 'rxjs';
-import { Market, StockQuote, StockProfile, ApiStockQuote, ApiOhlc, ApiAiIndustryChain, ApiVolumeAnomaly } from '../../../core/models';
+import {
+  Market, StockQuote, StockProfile,
+  ApiStockQuote, ApiOhlc, ApiAiIndustryChain, ApiVolumeAnomaly,
+  ApiMoneyFlowSummary, ApiMoneyFlowReport, ApiChipAiAnalysis,
+  ApiMarginAiAnalysis, ApiFundamentalAttraction,
+  ApiInstitutionalTrading, ApiMarginTrading,
+} from '../../../core/models';
 import { StockApiService } from '../../../core/services/stock-api.service';
 import { WatchlistApiService } from '../../../core/services/watchlist-api.service';
 import { AiDisclaimer } from '../../../shared/components/ai-disclaimer/ai-disclaimer';
@@ -23,7 +29,7 @@ type DimensionSignal = 'positive' | 'neutral' | 'negative';
 @Component({
   selector: 'app-stock-detail',
   standalone: true,
-  imports: [RouterLink, NgApexchartsModule, DecimalPipe, AiDisclaimer],
+  imports: [RouterLink, NgApexchartsModule, DecimalPipe, SlicePipe, AiDisclaimer],
   templateUrl: './stock-detail.html',
   styleUrl: './stock-detail.scss',
 })
@@ -65,15 +71,45 @@ export class StockDetail {
   readonly aiLoading = signal(false);
   readonly volumeAnomaly = signal<ApiVolumeAnomaly | null>(null);
 
+  // ── MFIE signals ──
+  readonly mfieSummary = signal<ApiMoneyFlowSummary | null>(null);
+  readonly mfieReport = signal<ApiMoneyFlowReport | null>(null);
+  readonly mfieLoading = signal(false);
+  readonly chipAiAnalysis = signal<ApiChipAiAnalysis | null>(null);
+  readonly marginAiAnalysis = signal<ApiMarginAiAnalysis | null>(null);
+  readonly fundamentalAttraction = signal<ApiFundamentalAttraction | null>(null);
+
+  // ── Chip data signals ──
+  readonly institutionalData = signal<ApiInstitutionalTrading[]>([]);
+  readonly marginData = signal<ApiMarginTrading[]>([]);
+
+  // Track which tabs have been loaded to avoid duplicate fetches
+  private loadedTabs = new Set<StockTab>();
+
   constructor() {
     effect(() => {
       const sym = this.symbol();
+      this.loadedTabs.clear();
       this.loadStockData(sym);
     });
 
     effect(() => {
       this.chartRange();
       this.buildChartFromHistory();
+    });
+
+    // Lazy-load tab data when user switches tabs
+    effect(() => {
+      const tab = this.activeTab();
+      const sym = this.symbol();
+      if (!sym || this.loadedTabs.has(tab)) return;
+      this.loadedTabs.add(tab);
+
+      if (tab === 'flow') {
+        this.loadFlowTabData(sym);
+      } else if (tab === 'chip') {
+        this.loadChipTabData(sym);
+      }
     });
   }
 
@@ -88,17 +124,50 @@ export class StockDetail {
       watchlist: this.watchlistApi.getWatchlist().pipe(catchError(() => of({ symbols: [] as string[], categories: [] }))),
       aiIndustry: this.stockApi.getAiIndustryChain(sym).pipe(catchError(() => of(null))),
       volumeAnomaly: this.stockApi.getVolumeAnomaly(sym, market).pipe(catchError(() => of(null))),
+      mfieSummary: this.stockApi.getMoneyFlowSummary(sym).pipe(catchError(() => of(null))),
     }).pipe(
       takeUntilDestroyed(this.destroyRef),
-    ).subscribe(({ quote, history, watchlist, aiIndustry, volumeAnomaly }) => {
+    ).subscribe(({ quote, history, watchlist, aiIndustry, volumeAnomaly, mfieSummary }) => {
       this.liveQuote.set(quote);
       this.historyData.set(history);
       this.isInWatchlist.set(watchlist.symbols.includes(sym));
       this.aiIndustryChain.set(aiIndustry);
       this.volumeAnomaly.set(volumeAnomaly);
+      this.mfieSummary.set(mfieSummary);
       this.aiLoading.set(false);
       this.isLoading.set(false);
       this.buildChartFromHistory();
+    });
+  }
+
+  private loadFlowTabData(sym: string): void {
+    this.mfieLoading.set(true);
+    forkJoin({
+      report: this.stockApi.getMoneyFlowReport(sym).pipe(catchError(() => of(null))),
+      fundamental: this.stockApi.getFundamentalAttraction(sym).pipe(catchError(() => of(null))),
+    }).pipe(
+      takeUntilDestroyed(this.destroyRef),
+    ).subscribe(({ report, fundamental }) => {
+      this.mfieReport.set(report);
+      this.fundamentalAttraction.set(fundamental);
+      this.mfieLoading.set(false);
+    });
+  }
+
+  private loadChipTabData(sym: string): void {
+    const market = /^\d/.test(sym) ? 'TW' : 'US';
+    forkJoin({
+      institutional: this.stockApi.getInstitutionalTrading(sym, market).pipe(catchError(() => of([]))),
+      margin: this.stockApi.getMarginTrading(sym, market).pipe(catchError(() => of([]))),
+      chipAi: this.stockApi.getChipAiAnalysis(sym).pipe(catchError(() => of(null))),
+      marginAi: this.stockApi.getMarginAiAnalysis(sym).pipe(catchError(() => of(null))),
+    }).pipe(
+      takeUntilDestroyed(this.destroyRef),
+    ).subscribe(({ institutional, margin, chipAi, marginAi }) => {
+      this.institutionalData.set(institutional);
+      this.marginData.set(margin);
+      this.chipAiAnalysis.set(chipAi);
+      this.marginAiAnalysis.set(marginAi);
     });
   }
 
@@ -140,122 +209,42 @@ export class StockDetail {
 
   // ── 資金流向摘要 ──
   readonly moneyFlowSummary = computed(() => {
+    const s = this.mfieSummary();
+    if (!s) return { direction: 'neutral' as FlowDirection, label: '分析中...', strength: '—', conclusion: '正在取得資金流向分析...' };
+    const dirMap: Record<string, FlowDirection> = { Inflow: 'inflow', Outflow: 'outflow', Neutral: 'neutral' };
+    const labelMap: Record<string, string> = { Inflow: '資金流入', Outflow: '資金流出', Neutral: '資金中性' };
+    const strengthMap: Record<string, string> = { Strong: '強', Moderate: '中', Weak: '弱' };
     return {
-      direction: 'inflow' as FlowDirection,
-      label: '資金流入',
-      strength: '強',
-      conclusion: '外資連續 8 日買超 + Q3 營收年增 42% 吸引法人加碼，籌碼持續向大戶集中。量價配合，短期動能仍在。',
+      direction: dirMap[s.flowDirection] ?? 'neutral',
+      label: labelMap[s.flowDirection] ?? '資金中性',
+      strength: strengthMap[s.flowStrength] ?? s.flowStrength,
+      conclusion: s.summary,
     };
   });
 
-  // ── Tab: 資金分析 ──
-  readonly flowAnalysis = {
-    conclusion: {
-      direction: 'inflow' as FlowDirection,
-      strength: '強',
-      mainForce: '外資（連續 8 日買超，累計 +28,500 張）',
-      basis: '法人買賣超數據 + 集保分散表大戶比例上升',
-    },
-    whyIn: {
-      factors: [
-        { title: '基本面吸引力高', basis: '財務數據', detail: 'Q3 營收年增 42%，AI 相關營收佔比提升至 15%，毛利率維持 57% → 成長動能強勁，吸引法人持續加碼配置。' },
-        { title: '催化事件共振', basis: '新聞 + 產業動態', detail: 'NVIDIA 追加 CoWoS 訂單 + 法說會上調財測，兩個正面催化在同一週出現，加速資金進場。' },
-        { title: '籌碼面確認', basis: '法人買賣超 + 集保', detail: '外資與投信同步買進，大戶持股比例連 3 週上升，代表「聰明錢」正在進場。' },
-      ],
-    },
-    whyOut: {
-      factors: [
-        { title: '融資斷頭', basis: '融資餘額變化', detail: '融資餘額從上週 15,000 張降至 12,500 張，顯示前期追高的散戶在近期震盪中被迫出場。' },
-        { title: '自營商短線獲利了結', basis: '法人買賣超', detail: '自營商今日小幅賣超 120 張，屬於正常短線操作，不影響中期趨勢。' },
-      ],
-    },
-    dimensions: [
-      { name: '籌碼面', signal: 'positive' as DimensionSignal, summary: '外資+投信連買，大戶持股↑' },
-      { name: '基本面', signal: 'positive' as DimensionSignal, summary: '營收年增42%，毛利率57%' },
-      { name: '消息面', signal: 'positive' as DimensionSignal, summary: '法說會上調財測，NVIDIA加單' },
-      { name: '技術面', signal: 'positive' as DimensionSignal, summary: '量價配合，站穩所有均線上方' },
-      { name: '總經面', signal: 'neutral' as DimensionSignal, summary: 'Fed利率持平，外資持續匯入' },
-    ],
-    sustainability: '目前四個維度同時偏多，資金流入動能強勁。預估可持續 2-4 週，除非出現以下轉折條件：外資轉為連續賣超 3 日以上、成交量連續萎縮至均量以下、出現高催化強度的負面新聞。',
-    timing: { label: '合理持有', color: 'amber' as const, detail: '股價位於近一年 75% 位置，不算便宜但考量成長動能與資金持續流入，估值仍在合理範圍。', support: '$780～$800', resistance: '$880～$900' },
-    risks: [
-      { name: '地緣政治', severity: '高', detail: '台海局勢可能衝擊外資' },
-      { name: '景氣循環', severity: '中', detail: '半導體庫存需持續觀察' },
-      { name: '股價已高', severity: '低', detail: '短線漲多，回檔風險存在' },
-    ],
-  };
+  // ── Tab: 資金分析 (MFIE Report) ──
+  readonly flowReport = computed(() => this.mfieReport());
+  readonly flowSignals = computed(() => {
+    const s = this.mfieReport()?.signals;
+    if (!s) return [];
+    const mapSignal = (sig: string): DimensionSignal =>
+      sig === 'Positive' ? 'positive' : sig === 'Negative' ? 'negative' : 'neutral';
+    return [
+      { name: '籌碼面', signal: mapSignal(s.chipSignal), summary: s.chipDetail ?? '—' },
+      { name: '融資融券', signal: mapSignal(s.marginSignal), summary: s.marginDetail ?? '—' },
+      { name: '基本面', signal: mapSignal(s.fundamentalSignal), summary: s.fundamentalDetail ?? '—' },
+      { name: '量能面', signal: mapSignal(s.volumeSignal), summary: s.volumeDetail ?? '—' },
+    ];
+  });
+  readonly flowFundamental = computed(() => this.fundamentalAttraction());
 
-  // ── Tab: 籌碼動態 ──
-  readonly chipAnalysis = {
-    institutional: {
-      conclusion: '法人資金集體進場中。',
-      reason: '外資連續 8 天買超台積電，累計 +28,500 張。投信同步加碼（連買 5 天），代表內外資法人看法一致，這通常是資金流入的強訊號。',
-      basis: '外資買賣超連續性 + 投信買賣方向一致性 + 自營商僅小幅賣超（不構成反向訊號）',
-    },
-    institutionalData: [
-      { date: '02/28', foreign: '+3,250', investment: '+850', dealer: '-120', total: '+3,980', foreignStreak: '買超8天', investmentStreak: '買超5天' },
-      { date: '02/27', foreign: '+2,815', investment: '+540', dealer: '-225', total: '+3,130', foreignStreak: '', investmentStreak: '' },
-      { date: '02/26', foreign: '+4,120', investment: '-310', dealer: '+180', total: '+3,990', foreignStreak: '', investmentStreak: '' },
-      { date: '02/25', foreign: '+1,985', investment: '+720', dealer: '-560', total: '+2,145', foreignStreak: '', investmentStreak: '' },
-      { date: '02/24', foreign: '-820', investment: '+1,350', dealer: '+230', total: '+760', foreignStreak: '', investmentStreak: '' },
-    ],
-    margin: {
-      conclusion: '散戶槓桿資金正在被清洗。',
-      reason: '融資餘額從 15,000 張降至 12,500 張，代表前期追高的散戶在近日震盪中斷頭出場。但融券餘額穩定在 850 張，空頭沒有大幅增加，代表市場沒有形成看空共識。',
-      basis: '融資餘額變化率 + 券資比穩定性',
-    },
-    marginData: {
-      marginBalance: 12500,
-      marginChange: -2500,
-      shortBalance: 850,
-      shortChange: 0,
-      marginShortRatio: 6.8,
-      marginUsageRate: 28.5,
-    },
-    shareholder: {
-      conclusion: '籌碼持續向大戶集中，資金流入前兆。',
-      reason: '大戶持股比例連 3 週上升（71.8% → 72.3%），散戶持股比例同步下降（9.8% → 9.5%）。這代表散戶在賣出，大戶在接貨。歷史上這種模式通常出現在股價上漲的前期。',
-      basis: '連續 3 週的集保分散表趨勢',
-    },
-    shareholderData: [
-      { range: '大戶（400張↑）', pct: 72.3, change: '+0.5%' },
-      { range: '中實戶', pct: 18.2, change: '-0.2%' },
-      { range: '散戶（10張↓）', pct: 9.5, change: '-0.3%' },
-    ],
-  };
+  // ── Tab: 籌碼動態 (real data) ──
+  readonly latestInstitutional = computed(() => this.institutionalData()[0] ?? null);
+  readonly latestMargin = computed(() => this.marginData()[0] ?? null);
 
-  // ── Tab: 催化事件 ──
-  readonly catalystSummary = { strong: 2, medium: 3, weak: 5 };
-
-  readonly catalysts = [
-    {
-      strength: 'strong' as CatalystStrength,
-      title: '台積電法說會報喜：全年營收上修 25%',
-      time: '2 小時前', source: '經濟日報',
-      aiConclusion: '這則新聞會驅動資金流入。',
-      aiReason: '法說會上調全年營收目標，代表公司對未來訂單充滿信心。這類利多消息通常會吸引外資與投信在 1-2 週內持續加碼買進，因為他們需要重新調高目標價與持股比重。',
-      impactType: '外資（主要）+ 投信（次要）',
-      duration: '預估 1-2 週',
-    },
-    {
-      strength: 'strong' as CatalystStrength,
-      title: 'NVIDIA 下單 CoWoS 產能翻倍',
-      time: '5 小時前', source: '工商時報',
-      aiConclusion: '這則新聞會驅動資金流入。',
-      aiReason: 'NVIDIA 增加先進封裝訂單，直接增加台積電營收，且驗證 AI 晶片需求持續強勁。這對法人估算明年營收有正面影響。',
-      impactType: '外資（主要，需重新計算目標價）',
-      duration: '預估 2-3 週',
-    },
-    {
-      strength: 'medium' as CatalystStrength,
-      title: '美國考慮擴大晶片出口管制範圍',
-      time: '1 天前', source: 'Reuters',
-      aiConclusion: '這則新聞可能驅動部分資金觀望。',
-      aiReason: '出口管制可能影響對中國客戶的出貨，但目前影響範圍未定。歷史上類似新聞通常導致外資暫停加碼 1-3 天，等待政策細節明朗。不構成大規模資金撤退的理由，因為台積電非中國營收佔比已降至 10%。',
-      impactType: '外資（短期觀望）',
-      duration: '1-3 天觀望',
-    },
-  ];
+  // ── Tab: 催化事件 (Phase 3 — placeholder) ──
+  readonly catalystSummary = { strong: 0, medium: 0, weak: 0 };
+  readonly catalysts: { strength: CatalystStrength; title: string; time: string; source: string; aiConclusion: string; aiReason: string; impactType: string; duration: string }[] = [];
 
   // ── Watchlist & Alert State ──
   readonly isInWatchlist = signal(false);
@@ -276,6 +265,36 @@ export class StockDetail {
   // ── Methods ──
   setTab(tab: StockTab): void { this.activeTab.set(tab); }
   setChartRange(range: ChartRange): void { this.chartRange.set(range); }
+
+  regenerateMfie(): void {
+    this.mfieLoading.set(true);
+    forkJoin({
+      summary: this.stockApi.getMoneyFlowSummary(this.symbol(), true).pipe(catchError(() => of(null))),
+      report: this.stockApi.getMoneyFlowReport(this.symbol(), true).pipe(catchError(() => of(null))),
+    }).pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe(({ summary, report }) => {
+        this.mfieSummary.set(summary);
+        this.mfieReport.set(report);
+        this.mfieLoading.set(false);
+      });
+  }
+
+  fmtNet(v: number | null | undefined): string {
+    if (v == null) return '—';
+    const sign = v > 0 ? '+' : '';
+    return `${sign}${v.toLocaleString()}`;
+  }
+
+  fmtStreak(days: number | null | undefined): string {
+    if (days == null || days === 0) return '—';
+    return days > 0 ? `買超${days}天` : `賣超${Math.abs(days)}天`;
+  }
+
+  fmtMarginChange(v: number | null | undefined): string {
+    if (v == null) return '— 持平';
+    if (v === 0) return '─ 持平';
+    return v > 0 ? `▲${v.toLocaleString()}` : `▼${Math.abs(v).toLocaleString()}`;
+  }
 
   regenerateAiIndustry(): void {
     this.aiLoading.set(true);

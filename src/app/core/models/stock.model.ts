@@ -142,3 +142,117 @@ export interface ApiVolumeAnomaly {
   tradingDate: string;
   aiAnalysis: string | null;
 }
+
+// ── MFIE (Money Flow Intelligence Engine) DTOs ──
+
+export interface ApiMoneyFlowSummary {
+  flowDirection: string;   // "Inflow" | "Outflow" | "Neutral"
+  flowStrength: string;    // "Strong" | "Moderate" | "Weak"
+  summary: string;
+  dominantFund: string | null;
+  analysisDate: string;
+  generatedAt: string;
+  aiProvider: string;
+  cached: boolean;
+}
+
+export interface ApiSignalBreakdown {
+  chipSignal: string;
+  chipDetail: string | null;
+  marginSignal: string;
+  marginDetail: string | null;
+  fundamentalSignal: string;
+  fundamentalDetail: string | null;
+  volumeSignal: string;
+  volumeDetail: string | null;
+}
+
+export interface ApiMoneyFlowReport {
+  flowDirection: string;
+  flowStrength: string;
+  summary: string;
+  fullReport: string;
+  signals: ApiSignalBreakdown | null;
+  dominantFund: string | null;
+  analysisDate: string;
+  generatedAt: string;
+  aiProvider: string;
+  cached: boolean;
+}
+
+export interface ApiChipAiAnalysis {
+  analysis: string;
+  analysisDate: string;
+  generatedAt: string;
+  aiProvider: string;
+  cached: boolean;
+}
+
+export interface ApiMarginAiAnalysis {
+  analysis: string;
+  analysisDate: string;
+  generatedAt: string;
+  aiProvider: string;
+  cached: boolean;
+}
+
+export interface ApiFundamentalAttraction {
+  analysis: string;
+  analysisDate: string;
+  generatedAt: string;
+  aiProvider: string;
+  cached: boolean;
+}
+
+// ── Chip Data DTOs ──
+
+export interface ApiInstitutionalTrading {
+  tradingDate: string;
+  foreignBuyVolume: number | null;
+  foreignSellVolume: number | null;
+  foreignNetVolume: number | null;
+  foreignNetAmount: number | null;
+  foreignConsecutiveDays: number | null;
+  trustBuyVolume: number | null;
+  trustSellVolume: number | null;
+  trustNetVolume: number | null;
+  trustNetAmount: number | null;
+  trustConsecutiveDays: number | null;
+  dealerBuyVolume: number | null;
+  dealerSellVolume: number | null;
+  dealerNetVolume: number | null;
+  dealerNetAmount: number | null;
+  dealerConsecutiveDays: number | null;
+  totalNetVolume: number | null;
+}
+
+export interface ApiMarginTrading {
+  tradingDate: string;
+  marginBalance: number | null;
+  marginBalanceChange: number | null;
+  marginBuy: number | null;
+  marginSell: number | null;
+  marginRepay: number | null;
+  marginLimit: number | null;
+  marginUsageRate: number | null;
+  shortBalance: number | null;
+  shortBalanceChange: number | null;
+  shortSell: number | null;
+  shortBuy: number | null;
+  shortReturn: number | null;
+  shortToMarginRatio: number | null;
+}
+
+export interface ApiChipSummary {
+  latestInstitutional: ApiInstitutionalTrading | null;
+  latestMargin: ApiMarginTrading | null;
+}
+
+// ── Watchlist Flow Status ──
+
+export interface ApiWatchlistFlowStatus {
+  symbol: string;
+  flowDirection: string;   // "Inflow" | "Outflow" | "Neutral"
+  flowStrength: string;    // "Strong" | "Moderate" | "Weak"
+  summary: string;
+}
