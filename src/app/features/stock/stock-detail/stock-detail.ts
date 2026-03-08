@@ -4,9 +4,10 @@ import { RouterLink } from '@angular/router';
 import { NgApexchartsModule } from 'ng-apexcharts';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { forkJoin, catchError, of } from 'rxjs';
-import { Market, StockQuote, StockProfile, KLineData, ApiStockQuote, ApiOhlc } from '../../../core/models';
+import { Market, StockQuote, StockProfile, ApiStockQuote, ApiOhlc, ApiAiIndustryChain, ApiVolumeAnomaly } from '../../../core/models';
 import { StockApiService } from '../../../core/services/stock-api.service';
 import { WatchlistApiService } from '../../../core/services/watchlist-api.service';
+import { AiDisclaimer } from '../../../shared/components/ai-disclaimer/ai-disclaimer';
 import {
   ApexAxisChartSeries, ApexChart, ApexXAxis, ApexYAxis,
   ApexPlotOptions, ApexDataLabels, ApexStroke, ApexTooltip,
@@ -22,7 +23,7 @@ type DimensionSignal = 'positive' | 'neutral' | 'negative';
 @Component({
   selector: 'app-stock-detail',
   standalone: true,
-  imports: [RouterLink, NgApexchartsModule, DecimalPipe],
+  imports: [RouterLink, NgApexchartsModule, DecimalPipe, AiDisclaimer],
   templateUrl: './stock-detail.html',
   styleUrl: './stock-detail.scss',
 })
@@ -59,6 +60,11 @@ export class StockDetail {
   private readonly liveQuote = signal<ApiStockQuote | null>(null);
   private readonly historyData = signal<ApiOhlc[]>([]);
 
+  // ── AI signals ──
+  readonly aiIndustryChain = signal<ApiAiIndustryChain | null>(null);
+  readonly aiLoading = signal(false);
+  readonly volumeAnomaly = signal<ApiVolumeAnomaly | null>(null);
+
   constructor() {
     effect(() => {
       const sym = this.symbol();
@@ -73,19 +79,24 @@ export class StockDetail {
 
   private loadStockData(sym: string): void {
     this.isLoading.set(true);
+    this.aiLoading.set(true);
     const market = /^\d/.test(sym) ? 'TW' : 'US';
-    const limitMap: Record<ChartRange, number> = { '1D': 1, '5D': 5, '1M': 22, '3M': 66, '6M': 132, '1Y': 252, 'YTD': 60 };
 
     forkJoin({
       quote: this.stockApi.getQuote(sym, market).pipe(catchError(() => of(null))),
       history: this.stockApi.getHistory(sym, market, 252).pipe(catchError(() => of([] as ApiOhlc[]))),
       watchlist: this.watchlistApi.getWatchlist().pipe(catchError(() => of({ symbols: [] as string[], categories: [] }))),
+      aiIndustry: this.stockApi.getAiIndustryChain(sym).pipe(catchError(() => of(null))),
+      volumeAnomaly: this.stockApi.getVolumeAnomaly(sym, market).pipe(catchError(() => of(null))),
     }).pipe(
       takeUntilDestroyed(this.destroyRef),
-    ).subscribe(({ quote, history, watchlist }) => {
+    ).subscribe(({ quote, history, watchlist, aiIndustry, volumeAnomaly }) => {
       this.liveQuote.set(quote);
       this.historyData.set(history);
       this.isInWatchlist.set(watchlist.symbols.includes(sym));
+      this.aiIndustryChain.set(aiIndustry);
+      this.volumeAnomaly.set(volumeAnomaly);
+      this.aiLoading.set(false);
       this.isLoading.set(false);
       this.buildChartFromHistory();
     });
@@ -116,12 +127,14 @@ export class StockDetail {
   readonly profile = computed<StockProfile>(() => {
     const sym = this.symbol();
     const live = this.liveQuote();
+    const ai = this.aiIndustryChain();
     return {
       symbol: sym,
       name: live?.nameZh ?? live?.nameEn ?? sym,
       market: (/^\d/.test(sym) ? 'tw' : 'us') as Market,
       industry: '—',
       description: '',
+      aiIntroduction: ai?.content,
     };
   });
 
@@ -263,6 +276,16 @@ export class StockDetail {
   // ── Methods ──
   setTab(tab: StockTab): void { this.activeTab.set(tab); }
   setChartRange(range: ChartRange): void { this.chartRange.set(range); }
+
+  regenerateAiIndustry(): void {
+    this.aiLoading.set(true);
+    this.stockApi.getAiIndustryChain(this.symbol(), true)
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe({
+        next: (result) => { this.aiIndustryChain.set(result); this.aiLoading.set(false); },
+        error: () => { this.aiLoading.set(false); },
+      });
+  }
   toggleWatchlist(): void {
     const sym = this.symbol();
     const inList = this.isInWatchlist();

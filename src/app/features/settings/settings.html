@@ -198,6 +198,10 @@
             </div>
           </div>
 
+          @if (saveError()) {
+            <div class="setup-progress" style="color: #c44; padding: 12px 20px;">{{ saveError() }}</div>
+          }
+
           <div class="section-card-body">
             <!-- AI Providers -->
             <div class="api-group-label">AI 模型服務</div>

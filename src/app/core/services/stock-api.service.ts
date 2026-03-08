@@ -2,7 +2,7 @@ import { Injectable, inject } from '@angular/core';
 import { HttpClient, HttpParams } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { map } from 'rxjs/operators';
-import { ApiStockSearchResult, ApiStockQuote, ApiOhlc, ApiMarketOverview, ApiWatchlistQuote } from '../models';
+import { ApiStockSearchResult, ApiStockQuote, ApiOhlc, ApiMarketOverview, ApiWatchlistQuote, ApiAiIndustryChain, ApiVolumeAnomaly } from '../models';
 
 interface ApiResponse<T> {
   success: boolean;
@@ -43,5 +43,18 @@ export class StockApiService {
     const params = new HttpParams().set('symbols', symbols.join(','));
     return this.http.get<ApiResponse<ApiWatchlistQuote[]>>('/api/market/watchlist', { params })
       .pipe(map(r => r.data ?? []));
+  }
+
+  getAiIndustryChain(symbol: string, force = false): Observable<ApiAiIndustryChain | null> {
+    let params = new HttpParams();
+    if (force) params = params.set('force', 'true');
+    return this.http.get<ApiResponse<ApiAiIndustryChain>>(`/api/stocks/${symbol}/ai/industry-chain`, { params })
+      .pipe(map(r => r.data ?? null));
+  }
+
+  getVolumeAnomaly(symbol: string, market = 'TW'): Observable<ApiVolumeAnomaly | null> {
+    const params = new HttpParams().set('market', market);
+    return this.http.get<ApiResponse<ApiVolumeAnomaly>>(`/api/stocks/${symbol}/volume-anomaly`, { params })
+      .pipe(map(r => r.data ?? null));
   }
 }

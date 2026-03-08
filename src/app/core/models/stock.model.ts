@@ -123,3 +123,22 @@ export interface ApiOhlc {
   change: number | null;
   changePercent: number | null;
 }
+
+// ── AI API DTOs ──
+
+export interface ApiAiIndustryChain {
+  content: string;
+  generatedAt: string;
+  provider: string;
+  cached: boolean;
+}
+
+export interface ApiVolumeAnomaly {
+  currentVolume: number;
+  avgVolume: number;
+  avgDays: number;
+  ratio: number;
+  isAnomaly: boolean;
+  tradingDate: string;
+  aiAnalysis: string | null;
+}

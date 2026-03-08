@@ -161,6 +161,7 @@ export class Settings implements OnInit {
   readonly newApiKeyValue = signal('');
   readonly showCurrentPassword = signal(false);
   readonly showNewPassword = signal(false);
+  readonly loading = signal(true);
 
   // ── Lifecycle ──
 
@@ -187,6 +188,7 @@ export class Settings implements OnInit {
   }
 
   private loadSettings(): void {
+    this.loading.set(true);
     this.userApi.getSettings().subscribe({
       next: settings => {
         // Profile
@@ -200,9 +202,14 @@ export class Settings implements OnInit {
           plan: 'Free',
         });
         // API Keys
-        this.applyApiKeys(settings.apiKeys);
+        this.applyApiKeys(settings.apiKeys ?? []);
         // AI Preference
         this.applyAiPreference(settings.aiPreference);
+        this.loading.set(false);
+      },
+      error: () => {
+        this.loading.set(false);
+        this.saveError.set('無法載入設定，請重新整理頁面');
       },
     });
   }
@@ -338,9 +345,9 @@ export class Settings implements OnInit {
         this.newApiKeyValue.set('');
         this.saving.set(false);
       },
-      error: () => {
+      error: (err) => {
         this.saving.set(false);
-        this.saveError.set('API Key 儲存失敗');
+        this.saveError.set(err?.error?.message ?? 'API Key 儲存失敗');
       },
     });
   }

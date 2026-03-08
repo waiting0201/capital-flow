@@ -43,13 +43,34 @@
 </div>
 
 <!-- ══════ AI 產業鏈定位 ══════ -->
-@if (profile().aiIntroduction) {
-  <div class="sd-ai-position">
+@if (aiLoading() && !profile().aiIntroduction) {
+  <div class="sd-ai-position sd-ai-position--loading">
     <span class="ai-badge">
       <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2L2 7l10 5 10-5-10-5z"/><path d="M2 17l10 5 10-5"/><path d="M2 12l10 5 10-5"/></svg>
       AI 產業鏈定位
     </span>
+    <div class="sd-ai-skeleton">
+      <div class="skeleton-line"></div>
+      <div class="skeleton-line skeleton-line--short"></div>
+    </div>
+  </div>
+}
+@if (profile().aiIntroduction) {
+  <div class="sd-ai-position">
+    <div class="sd-ai-position-header">
+      <span class="ai-badge">
+        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2L2 7l10 5 10-5-10-5z"/><path d="M2 17l10 5 10-5"/><path d="M2 12l10 5 10-5"/></svg>
+        AI 產業鏈定位
+      </span>
+      <button class="sd-regenerate-btn" (click)="regenerateAiIndustry()" [disabled]="aiLoading()">
+        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="23 4 23 10 17 10"/><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"/></svg>
+        {{ aiLoading() ? '生成中...' : '重新生成' }}
+      </button>
+    </div>
     <p class="sd-ai-position-text">{{ profile().aiIntroduction }}</p>
+    @if (aiIndustryChain(); as ai) {
+      <span class="sd-ai-meta">{{ ai.provider }}{{ ai.cached ? '（快取）' : '' }}</span>
+    }
   </div>
 }
 
@@ -67,7 +88,9 @@
     <span class="sd-flow-strength">力道：{{ moneyFlowSummary().strength }}</span>
   </div>
   <p class="sd-flow-hero-text">{{ moneyFlowSummary().conclusion }}</p>
-  <div class="ai-disclaimer" style="color: rgba(255,255,255,0.45)">僅供參考，非投資建議</div>
+  <div class="sd-flow-hero-disc">
+    <app-ai-disclaimer />
+  </div>
 </div>
 
 <!-- ══════ Chart Section ══════ -->
@@ -91,6 +114,30 @@
     <apx-chart [series]="volumeSeries()" [chart]="volumeChart" [xaxis]="xAxis" [yaxis]="volumeYAxis" [dataLabels]="dataLabels" [plotOptions]="{ bar: { columnWidth: '60%' } }" [grid]="grid" [legend]="legend" [tooltip]="volumeTooltip"></apx-chart>
   </div>
 </div>
+
+<!-- ══════ 量能異常偵測 ══════ -->
+@if (volumeAnomaly(); as va) {
+  @if (va.isAnomaly) {
+    <div class="sd-volume-anomaly">
+      <div class="sd-va-header">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--amber)" stroke-width="2"><path d="M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+        <span class="sd-va-title">量能異常偵測</span>
+        <span class="sd-va-badge">{{ va.ratio }}x</span>
+      </div>
+      <p class="sd-va-text">今日成交量為 {{ va.avgDays }} 日均量的 <strong>{{ va.ratio }} 倍</strong>（{{ va.currentVolume | number }} 張 / 均量 {{ va.avgVolume | number }} 張）</p>
+      @if (va.aiAnalysis) {
+        <div class="sd-va-ai">
+          <span class="ai-badge">
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2L2 7l10 5 10-5-10-5z"/><path d="M2 17l10 5 10-5"/><path d="M2 12l10 5 10-5"/></svg>
+            AI 分析
+          </span>
+          <p>{{ va.aiAnalysis }}</p>
+          <app-ai-disclaimer />
+        </div>
+      }
+    </div>
+  }
+}
 
 <!-- ══════ Tab Navigation ══════ -->
 <div class="sd-tabs">
@@ -218,7 +265,7 @@
       }
     </div>
 
-    <div class="ai-disclaimer" style="margin-top:8px">以上所有 AI 分析內容僅供參考，不構成任何投資建議。投資決策應基於個人判斷與風險承受能力。</div>
+    <app-ai-disclaimer variant="block" />
   </div>
 }
 
@@ -241,7 +288,7 @@
           <span class="mf-label-tag mf-label-tag--muted">判斷依據</span>{{ chipAnalysis.institutional.basis }}
         </div>
       </div>
-      <div class="ai-disclaimer">僅供參考，非投資建議</div>
+      <app-ai-disclaimer />
     </div>
 
     <!-- 三大法人買賣超 -->
@@ -398,7 +445,7 @@
               <span>催化持續時間：{{ item.duration }}</span>
             </div>
           </div>
-          <div class="ai-disclaimer">僅供參考，非投資建議</div>
+          <app-ai-disclaimer />
         </div>
       }
     </div>
