@@ -165,6 +165,8 @@ export interface ApiSignalBreakdown {
   fundamentalDetail: string | null;
   volumeSignal: string;
   volumeDetail: string | null;
+  mediaSignal: string | null;
+  mediaDetail: string | null;
 }
 
 export interface ApiMoneyFlowReport {
@@ -246,6 +248,42 @@ export interface ApiMarginTrading {
 export interface ApiChipSummary {
   latestInstitutional: ApiInstitutionalTrading | null;
   latestMargin: ApiMarginTrading | null;
+}
+
+// ── News (Module B: 資金催化偵測) ──
+
+export interface ApiNewsArticle {
+  id: number;
+  source: string;
+  title: string;
+  summary: string | null;
+  url: string;
+  imageUrl: string | null;
+  publishedAt: string;
+  relevanceScore: number | null;
+  relevanceReason: string | null;
+  relationType: string | null;
+  moneyFlowImpact: string | null;
+  catalystStrength: string | null;
+  catalystType: string | null;
+  affectedMoneyType: string | null;
+  conclusion: string | null;
+  reason: string | null;
+  evidence: string | null;
+}
+
+export interface ApiNewsListResponse {
+  items: ApiNewsArticle[];
+  totalCount: number;
+  page: number;
+  pageSize: number;
+}
+
+export interface ApiNewsFetchResult {
+  fetched: number;
+  newArticles: number;
+  aiProcessed: number;
+  message: string;
 }
 
 // ── Watchlist Flow Status ──

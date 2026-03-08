@@ -351,6 +351,13 @@
 <!-- ══════ Tab: 催化事件 ══════ -->
 @if (activeTab() === 'catalyst') {
   <div class="sd-tab-content">
+
+    @if (newsLoading()) {
+      <div class="mf-card mf-card--loading">
+        <div class="sd-ai-skeleton"><div class="skeleton-line"></div><div class="skeleton-line skeleton-line--short"></div></div>
+      </div>
+    }
+
     <div class="mf-card">
       <div class="mf-card-icon-label">
         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--amber)" stroke-width="2"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>
@@ -358,36 +365,47 @@
       </div>
 
       <div class="ct-summary">
-        <span class="ct-count ct-strong">強 {{ catalystSummary.strong }}</span>
-        <span class="ct-count ct-medium">中 {{ catalystSummary.medium }}</span>
-        <span class="ct-count ct-weak">弱 {{ catalystSummary.weak }}</span>
+        <span class="ct-count ct-strong">強 {{ catalystSummary().strong }}</span>
+        <span class="ct-count ct-medium">中 {{ catalystSummary().medium }}</span>
+        <span class="ct-count ct-weak">弱 {{ catalystSummary().weak }}</span>
       </div>
 
-      @for (item of catalysts; track item.title) {
+      @if (catalysts().length === 0 && !newsLoading()) {
+        <div class="ct-empty">
+          <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="var(--gray-faint)" stroke-width="1.5"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>
+          <p>目前尚無催化事件資料</p>
+        </div>
+      }
+
+      @for (item of catalysts(); track item.id) {
         <div class="ct-item" [class]="getStrengthClass(item.strength)">
           <div class="ct-item-header">
-            <span class="ct-strength-badge">{{ getStrengthLabel(item.strength) }}</span>
-            <span class="ct-title">{{ item.title }}</span>
+            @if (item.hasAiAnalysis) {
+              <span class="ct-strength-badge">{{ getStrengthLabel(item.strength) }}</span>
+            }
+            <a class="ct-title ct-title--link" [href]="item.url" target="_blank" rel="noopener">{{ item.title }}</a>
           </div>
           <div class="ct-meta">
-            <span class="ct-time">{{ item.time }}</span>
+            <span class="ct-time">{{ item.time | slice:0:16 }}</span>
             <span class="ct-source">{{ item.source }}</span>
           </div>
-          <div class="ct-ai-analysis">
-            <span class="ai-badge">
-              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2L2 7l10 5 10-5-10-5z"/><path d="M2 17l10 5 10-5"/><path d="M2 12l10 5 10-5"/></svg>
-              資金影響分析
-            </span>
-            <p class="ct-ai-conclusion">{{ item.aiConclusion }}</p>
-            <div class="ct-ai-reason">
-              <span class="mf-label-tag">原因</span>{{ item.aiReason }}
+          @if (item.hasAiAnalysis) {
+            <div class="ct-ai-analysis">
+              <span class="ai-badge">
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2L2 7l10 5 10-5-10-5z"/><path d="M2 17l10 5 10-5"/><path d="M2 12l10 5 10-5"/></svg>
+                資金影響分析
+              </span>
+              <p class="ct-ai-conclusion">{{ item.aiConclusion }}</p>
+              <div class="ct-ai-reason">
+                <span class="mf-label-tag">原因</span>{{ item.aiReason }}
+              </div>
+              <div class="ct-ai-meta">
+                <span>影響資金類型：{{ item.impactType }}</span>
+                <span>資金方向：{{ item.moneyFlowImpact }}</span>
+              </div>
             </div>
-            <div class="ct-ai-meta">
-              <span>影響資金類型：{{ item.impactType }}</span>
-              <span>催化持續時間：{{ item.duration }}</span>
-            </div>
-          </div>
-          <app-ai-disclaimer />
+            <app-ai-disclaimer />
+          }
         </div>
       }
     </div>

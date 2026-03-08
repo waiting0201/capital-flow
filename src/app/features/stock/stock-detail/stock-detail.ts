@@ -10,6 +10,7 @@ import {
   ApiMoneyFlowSummary, ApiMoneyFlowReport, ApiChipAiAnalysis,
   ApiMarginAiAnalysis, ApiFundamentalAttraction,
   ApiInstitutionalTrading, ApiMarginTrading,
+  ApiNewsArticle,
 } from '../../../core/models';
 import { StockApiService } from '../../../core/services/stock-api.service';
 import { WatchlistApiService } from '../../../core/services/watchlist-api.service';
@@ -109,6 +110,8 @@ export class StockDetail {
         this.loadFlowTabData(sym);
       } else if (tab === 'chip') {
         this.loadChipTabData(sym);
+      } else if (tab === 'catalyst') {
+        this.loadCatalystTabData(sym);
       }
     });
   }
@@ -168,6 +171,17 @@ export class StockDetail {
       this.marginData.set(margin);
       this.chipAiAnalysis.set(chipAi);
       this.marginAiAnalysis.set(marginAi);
+    });
+  }
+
+  private loadCatalystTabData(sym: string): void {
+    this.newsLoading.set(true);
+    this.stockApi.getNews(sym, 1, 30).pipe(
+      takeUntilDestroyed(this.destroyRef),
+      catchError(() => of({ items: [] as ApiNewsArticle[], totalCount: 0, page: 1, pageSize: 30 })),
+    ).subscribe(result => {
+      this.newsArticles.set(result.items);
+      this.newsLoading.set(false);
     });
   }
 
@@ -234,6 +248,7 @@ export class StockDetail {
       { name: '融資融券', signal: mapSignal(s.marginSignal), summary: s.marginDetail ?? '—' },
       { name: '基本面', signal: mapSignal(s.fundamentalSignal), summary: s.fundamentalDetail ?? '—' },
       { name: '量能面', signal: mapSignal(s.volumeSignal), summary: s.volumeDetail ?? '—' },
+      ...(s.mediaSignal ? [{ name: '消息面', signal: mapSignal(s.mediaSignal), summary: s.mediaDetail ?? '—' }] : []),
     ];
   });
   readonly flowFundamental = computed(() => this.fundamentalAttraction());
@@ -242,9 +257,32 @@ export class StockDetail {
   readonly latestInstitutional = computed(() => this.institutionalData()[0] ?? null);
   readonly latestMargin = computed(() => this.marginData()[0] ?? null);
 
-  // ── Tab: 催化事件 (Phase 3 — placeholder) ──
-  readonly catalystSummary = { strong: 0, medium: 0, weak: 0 };
-  readonly catalysts: { strength: CatalystStrength; title: string; time: string; source: string; aiConclusion: string; aiReason: string; impactType: string; duration: string }[] = [];
+  // ── Tab: 催化事件 (Phase 3 — real data) ──
+  readonly newsArticles = signal<ApiNewsArticle[]>([]);
+  readonly newsLoading = signal(false);
+  readonly catalystSummary = computed(() => {
+    const articles = this.newsArticles();
+    return {
+      strong: articles.filter(a => a.catalystStrength === 'High').length,
+      medium: articles.filter(a => a.catalystStrength === 'Medium').length,
+      weak: articles.filter(a => a.catalystStrength === 'Low').length,
+    };
+  });
+  readonly catalysts = computed(() =>
+    this.newsArticles().map(a => ({
+      id: a.id,
+      strength: (a.catalystStrength === 'High' ? 'strong' : a.catalystStrength === 'Medium' ? 'medium' : 'weak') as CatalystStrength,
+      title: a.title,
+      time: a.publishedAt,
+      source: a.source,
+      url: a.url,
+      aiConclusion: a.conclusion ?? '—',
+      aiReason: a.reason ?? '—',
+      impactType: a.affectedMoneyType ?? '—',
+      moneyFlowImpact: a.moneyFlowImpact ?? '—',
+      hasAiAnalysis: !!a.catalystStrength,
+    }))
+  );
 
   // ── Watchlist & Alert State ──
   readonly isInWatchlist = signal(false);

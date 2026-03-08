@@ -7,7 +7,7 @@ import {
   ApiAiIndustryChain, ApiVolumeAnomaly,
   ApiMoneyFlowSummary, ApiMoneyFlowReport, ApiChipAiAnalysis, ApiMarginAiAnalysis,
   ApiFundamentalAttraction, ApiInstitutionalTrading, ApiMarginTrading, ApiChipSummary,
-  ApiWatchlistFlowStatus,
+  ApiWatchlistFlowStatus, ApiNewsListResponse, ApiNewsArticle,
 } from '../models';
 
 interface ApiResponse<T> {
@@ -121,6 +121,20 @@ export class StockApiService {
     const params = new HttpParams().set('market', market).set('limit', limit);
     return this.http.get<ApiResponse<ApiMarginTrading[]>>(`/api/stocks/${symbol}/chip/margin`, { params })
       .pipe(map(r => r.data ?? []));
+  }
+
+  // ── News (Module B: 資金催化偵測) ──
+
+  getNews(symbol: string, page = 1, pageSize = 20): Observable<ApiNewsListResponse> {
+    const params = new HttpParams().set('page', page).set('pageSize', pageSize);
+    return this.http.get<ApiResponse<ApiNewsListResponse>>(`/api/stocks/${symbol}/news`, { params })
+      .pipe(map(r => r.data ?? { items: [], totalCount: 0, page: 1, pageSize: 20 }));
+  }
+
+  getNewsAi(symbol: string, newsId: number): Observable<ApiNewsArticle | null> {
+    const params = new HttpParams().set('newsId', newsId);
+    return this.http.get<ApiResponse<ApiNewsArticle>>(`/api/stocks/${symbol}/news/ai`, { params })
+      .pipe(map(r => r.data ?? null));
   }
 
   // ── Watchlist Flow Status ──
