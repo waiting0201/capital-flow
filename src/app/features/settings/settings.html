@@ -412,8 +412,8 @@
                   class="select-input"
                   [ngModel]="aiPrefs().simpleTaskModel"
                   (ngModelChange)="updateAiPref('simpleTaskModel', $event)">
-                  @for (model of currentModels().simple; track model) {
-                    <option [value]="model">{{ model }}</option>
+                  @for (model of currentModels().simple; track model.id) {
+                    <option [value]="model.id">{{ model.displayName }}</option>
                   }
                 </select>
               </div>
@@ -430,8 +430,8 @@
                   class="select-input"
                   [ngModel]="aiPrefs().complexTaskModel"
                   (ngModelChange)="updateAiPref('complexTaskModel', $event)">
-                  @for (model of currentModels().complex; track model) {
-                    <option [value]="model">{{ model }}</option>
+                  @for (model of currentModels().complex; track model.id) {
+                    <option [value]="model.id">{{ model.displayName }}</option>
                   }
                 </select>
               </div>
