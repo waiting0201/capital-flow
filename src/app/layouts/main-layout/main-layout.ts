@@ -1,6 +1,7 @@
-import { Component, inject, signal, HostListener } from '@angular/core';
+import { Component, inject, signal, HostListener, OnInit } from '@angular/core';
 import { Router, RouterOutlet, RouterLink, RouterLinkActive, NavigationEnd } from '@angular/router';
 import { AuthService } from '../../core/services/auth.service';
+import { AlertNotificationService } from '../../core/services/alert-notification.service';
 import { filter } from 'rxjs/operators';
 
 @Component({
@@ -10,9 +11,10 @@ import { filter } from 'rxjs/operators';
   templateUrl: './main-layout.html',
   styleUrl: './main-layout.scss',
 })
-export class MainLayout {
+export class MainLayout implements OnInit {
   private readonly auth = inject(AuthService);
   private readonly router = inject(Router);
+  readonly alertNotification = inject(AlertNotificationService);
 
   readonly market = signal<'tw' | 'us'>('tw');
   readonly menuOpen = signal(false);
@@ -22,6 +24,10 @@ export class MainLayout {
     this.router.events
       .pipe(filter((e) => e instanceof NavigationEnd))
       .subscribe(() => this.sidebarOpen.set(false));
+  }
+
+  ngOnInit(): void {
+    this.alertNotification.start();
   }
 
   toggleMarket(m: 'tw' | 'us'): void {
@@ -43,6 +49,7 @@ export class MainLayout {
   logout(): void {
     this.menuOpen.set(false);
     this.sidebarOpen.set(false);
+    this.alertNotification.reset();
     this.auth.logout();
     this.router.navigate(['/auth/login']);
   }

@@ -76,26 +76,20 @@ export class Settings implements OnInit {
   });
 
   // ── Provider metadata for display ──
-  private static readonly providerMeta: Record<string, { label: string; icon: string; group: 'ai' | 'data' | 'media' }> = {
+  private static readonly providerMeta: Record<string, { label: string; icon: string; group: 'ai' | 'data' }> = {
     Claude: { label: 'Anthropic (Claude)', icon: 'A', group: 'ai' },
     OpenAI: { label: 'OpenAI (GPT)', icon: 'O', group: 'ai' },
     Gemini: { label: 'Google (Gemini)', icon: 'G', group: 'ai' },
     Finnhub: { label: 'Finnhub', icon: 'F', group: 'data' },
-    FMP: { label: 'Financial Modeling Prep', icon: 'M', group: 'data' },
-    FRED: { label: 'FRED (聯準會)', icon: 'R', group: 'data' },
     FinMind: { label: 'FinMind (台股)', icon: 'T', group: 'data' },
-    NewsAPI: { label: 'News API', icon: 'N', group: 'media' },
-    Fugle: { label: 'Fugle (台灣)', icon: '富', group: 'media' },
-    Polygon: { label: 'Polygon.io', icon: 'P', group: 'media' },
   };
 
   // ── API Keys ──
   readonly aiProviders = signal<ApiKeyEntry[]>([]);
   readonly dataSources = signal<ApiKeyEntry[]>([]);
-  readonly mediaProviders = signal<ApiKeyEntry[]>([]);
 
   readonly apiKeySetupProgress = computed(() => {
-    const all = [...this.aiProviders(), ...this.dataSources(), ...this.mediaProviders()];
+    const all = [...this.aiProviders(), ...this.dataSources()];
     const configured = all.filter(k => k.isValid).length;
     return { configured, total: all.length, percent: all.length > 0 ? Math.round((configured / all.length) * 100) : 0 };
   });
@@ -229,19 +223,17 @@ export class Settings implements OnInit {
 
     const ai: ApiKeyEntry[] = [];
     const data: ApiKeyEntry[] = [];
-    const media: ApiKeyEntry[] = [];
 
     for (const dto of apiKeys) {
-      const group = Settings.providerMeta[dto.provider]?.group ?? 'data';
+      const meta = Settings.providerMeta[dto.provider];
+      if (!meta) continue;
       const entry = toEntry(dto);
-      if (group === 'ai') ai.push(entry);
-      else if (group === 'data') data.push(entry);
-      else media.push(entry);
+      if (meta.group === 'ai') ai.push(entry);
+      else data.push(entry);
     }
 
     this.aiProviders.set(ai);
     this.dataSources.set(data);
-    this.mediaProviders.set(media);
   }
 
   private applyAiPreference(pref: AiPreferenceDto): void {
@@ -318,7 +310,7 @@ export class Settings implements OnInit {
     this.newApiKeyValue.set('');
   }
 
-  saveApiKey(provider: string, list: 'ai' | 'data' | 'media'): void {
+  saveApiKey(provider: string): void {
     const value = this.newApiKeyValue();
     if (!value) return;
 
@@ -337,10 +329,8 @@ export class Settings implements OnInit {
               : e
           );
 
-        if (list === 'ai') this.aiProviders.update(updateFn);
-        else if (list === 'data') this.dataSources.update(updateFn);
-        else this.mediaProviders.update(updateFn);
-
+        this.aiProviders.update(updateFn);
+        this.dataSources.update(updateFn);
         this.editingApiKey.set(null);
         this.newApiKeyValue.set('');
         this.saving.set(false);
@@ -352,7 +342,7 @@ export class Settings implements OnInit {
     });
   }
 
-  removeApiKey(provider: string, list: 'ai' | 'data' | 'media'): void {
+  removeApiKey(provider: string): void {
     this.userApi.removeApiKey(provider).subscribe({
       next: () => {
         const updateFn = (entries: ApiKeyEntry[]) =>
@@ -361,10 +351,8 @@ export class Settings implements OnInit {
               ? { ...e, maskedKey: '', isValid: false, lastVerified: '' }
               : e
           );
-
-        if (list === 'ai') this.aiProviders.update(updateFn);
-        else if (list === 'data') this.dataSources.update(updateFn);
-        else this.mediaProviders.update(updateFn);
+        this.aiProviders.update(updateFn);
+        this.dataSources.update(updateFn);
       },
     });
   }

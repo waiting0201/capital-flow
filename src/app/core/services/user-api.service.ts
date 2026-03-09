@@ -62,7 +62,8 @@ export class UserApiService {
 
   removeApiKey(provider: string): Observable<void> {
     const params = new HttpParams().set('provider', provider);
-    return this.http.delete<void>('/api/user/settings/api-keys', { params });
+    return this.http.delete('/api/user/settings/api-keys', { params, responseType: 'text' })
+      .pipe(map(() => void 0));
   }
 
   validateApiKey(provider: string, apiKey: string): Observable<{ isValid: boolean }> {

@@ -4,6 +4,7 @@ import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { forkJoin, catchError, of } from 'rxjs';
 import { Alert, AlertHistoryItem, AlertType, ALERT_TYPE_TO_UI_CATEGORY } from '../../core/models';
 import { AlertApiService } from '../../core/services/alert-api.service';
+import { AlertNotificationService } from '../../core/services/alert-notification.service';
 import { StockApiService } from '../../core/services/stock-api.service';
 
 type AlertCategory = 'all' | 'flow-reversal' | 'volume' | 'institutional' | 'price' | 'catalyst';
@@ -66,6 +67,7 @@ function alertDescription(alert: Alert): string {
 })
 export class Alerts implements OnInit {
   private readonly alertApi = inject(AlertApiService);
+  private readonly alertNotification = inject(AlertNotificationService);
   private readonly stockApi = inject(StockApiService);
   private readonly destroyRef = inject(DestroyRef);
 
@@ -204,6 +206,7 @@ export class Alerts implements OnInit {
         list.map(n => n.id === id ? { ...n, isRead: true } : n)
       );
       this.unreadCount.update(c => Math.max(0, c - 1));
+      this.alertNotification.refresh();
     });
   }
 
@@ -217,6 +220,7 @@ export class Alerts implements OnInit {
         list.map(n => ({ ...n, isRead: true }))
       );
       this.unreadCount.set(0);
+      this.alertNotification.refresh();
     });
   }
 

@@ -230,7 +230,7 @@
                   <div class="api-actions">
                     @if (key.isValid) {
                       <button class="btn-sm btn-sm-outline" (click)="startEditApiKey(key.provider)">更新</button>
-                      <button class="btn-sm btn-sm-danger" (click)="removeApiKey(key.provider, 'ai')">移除</button>
+                      <button class="btn-sm btn-sm-danger" (click)="removeApiKey(key.provider)">移除</button>
                     } @else {
                       <button class="btn-sm btn-sm-primary" (click)="startEditApiKey(key.provider)">
                         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
@@ -250,7 +250,7 @@
                       [ngModel]="newApiKeyValue()"
                       (ngModelChange)="newApiKeyValue.set($event)"
                       placeholder="貼上您的 API Key...">
-                    <button class="btn-sm btn-sm-primary" (click)="saveApiKey(key.provider, 'ai')">確認</button>
+                    <button class="btn-sm btn-sm-primary" (click)="saveApiKey(key.provider)">確認</button>
                     <button class="btn-sm btn-sm-outline" (click)="cancelEditApiKey()">取消</button>
                   </div>
                 }
@@ -284,7 +284,7 @@
                   <div class="api-actions">
                     @if (key.isValid) {
                       <button class="btn-sm btn-sm-outline" (click)="startEditApiKey(key.provider)">更新</button>
-                      <button class="btn-sm btn-sm-danger" (click)="removeApiKey(key.provider, 'data')">移除</button>
+                      <button class="btn-sm btn-sm-danger" (click)="removeApiKey(key.provider)">移除</button>
                     } @else {
                       <button class="btn-sm btn-sm-primary" (click)="startEditApiKey(key.provider)">
                         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
@@ -304,66 +304,13 @@
                       [ngModel]="newApiKeyValue()"
                       (ngModelChange)="newApiKeyValue.set($event)"
                       placeholder="貼上您的 API Key...">
-                    <button class="btn-sm btn-sm-primary" (click)="saveApiKey(key.provider, 'data')">確認</button>
+                    <button class="btn-sm btn-sm-primary" (click)="saveApiKey(key.provider)">確認</button>
                     <button class="btn-sm btn-sm-outline" (click)="cancelEditApiKey()">取消</button>
                   </div>
                 }
               }
             </div>
 
-            <!-- Media Providers -->
-            <div class="api-group-label">新聞與媒體</div>
-            <div class="api-key-list">
-              @for (key of mediaProviders(); track key.provider) {
-                <div class="api-key-row">
-                  <div class="api-provider-icon">{{ key.icon }}</div>
-                  <div class="api-provider-info">
-                    <div class="api-provider-name">{{ key.label }}</div>
-                    @if (key.isValid) {
-                      <div class="api-key-masked">{{ key.maskedKey }}</div>
-                      <div class="api-key-verified">
-                        <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3">
-                          <polyline points="20 6 9 17 4 12"/>
-                        </svg>
-                        驗證於 {{ key.lastVerified }}
-                      </div>
-                    }
-                  </div>
-                  <div class="api-status">
-                    <span class="status-dot" [class.connected]="key.isValid" [class.disconnected]="!key.isValid"></span>
-                    <span class="status-label" [class.connected]="key.isValid" [class.disconnected]="!key.isValid">
-                      {{ key.isValid ? '已連接' : '未設定' }}
-                    </span>
-                  </div>
-                  <div class="api-actions">
-                    @if (key.isValid) {
-                      <button class="btn-sm btn-sm-outline" (click)="startEditApiKey(key.provider)">更新</button>
-                      <button class="btn-sm btn-sm-danger" (click)="removeApiKey(key.provider, 'media')">移除</button>
-                    } @else {
-                      <button class="btn-sm btn-sm-primary" (click)="startEditApiKey(key.provider)">
-                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
-                          <line x1="12" y1="5" x2="12" y2="19"/>
-                          <line x1="5" y1="12" x2="19" y2="12"/>
-                        </svg>
-                        設定
-                      </button>
-                    }
-                  </div>
-                </div>
-                @if (editingApiKey() === key.provider) {
-                  <div class="api-key-edit">
-                    <input
-                      class="form-input"
-                      type="text"
-                      [ngModel]="newApiKeyValue()"
-                      (ngModelChange)="newApiKeyValue.set($event)"
-                      placeholder="貼上您的 API Key...">
-                    <button class="btn-sm btn-sm-primary" (click)="saveApiKey(key.provider, 'media')">確認</button>
-                    <button class="btn-sm btn-sm-outline" (click)="cancelEditApiKey()">取消</button>
-                  </div>
-                }
-              }
-            </div>
           </div>
         </div>
       </div>
