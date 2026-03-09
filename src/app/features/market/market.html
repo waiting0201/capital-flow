@@ -18,29 +18,29 @@
     <div class="mk-cap-metric mk-cap-metric--hero">
       <span class="mk-cap-label">外資今日</span>
       <span class="mk-cap-value" [class.is-up]="capitalLevel().foreign.direction === 'buy'" [class.is-down]="capitalLevel().foreign.direction === 'sell'">
-        {{ capitalLevel().foreign.direction === 'buy' ? '▲ 買超' : '▼ 賣超' }} {{ capitalLevel().foreign.value }} 億
+        {{ capitalLevel().foreign.direction === 'buy' ? '▲ 買超' : '▼ 賣超' }} <span class="nowrap">{{ capitalLevel().foreign.value | number }}&nbsp;億</span>
       </span>
     </div>
     <div class="mk-cap-metric">
       <span class="mk-cap-label">投信今日</span>
       <span class="mk-cap-value" [class.is-up]="capitalLevel().sitc.direction === 'buy'" [class.is-down]="capitalLevel().sitc.direction === 'sell'">
-        {{ capitalLevel().sitc.direction === 'buy' ? '買超' : '賣超' }} {{ capitalLevel().sitc.value }} 億
+        {{ capitalLevel().sitc.direction === 'buy' ? '買超' : '賣超' }} <span class="nowrap">{{ capitalLevel().sitc.value | number }}&nbsp;億</span>
       </span>
     </div>
     <div class="mk-cap-metric">
       <span class="mk-cap-label">自營商今日</span>
       <span class="mk-cap-value" [class.is-up]="capitalLevel().dealer.direction === 'buy'" [class.is-down]="capitalLevel().dealer.direction === 'sell'">
-        {{ capitalLevel().dealer.direction === 'buy' ? '買超' : '賣超' }} {{ capitalLevel().dealer.value }} 億
+        {{ capitalLevel().dealer.direction === 'buy' ? '買超' : '賣超' }} <span class="nowrap">{{ capitalLevel().dealer.value | number }}&nbsp;億</span>
       </span>
     </div>
     <div class="mk-cap-metric">
       <span class="mk-cap-label">大盤量能</span>
-      <span class="mk-cap-value">{{ capitalLevel().marketVolume.value }} 億</span>
+      <span class="mk-cap-value"><span class="nowrap">{{ capitalLevel().marketVolume.value | number }}&nbsp;億</span></span>
     </div>
     <div class="mk-cap-metric">
       <span class="mk-cap-label">融資增減</span>
       <span class="mk-cap-value" [class.is-up]="capitalLevel().marginChange.value > 0" [class.is-down]="capitalLevel().marginChange.value < 0">
-        {{ capitalLevel().marginChange.value > 0 ? '+' : '' }}{{ capitalLevel().marginChange.value }} 千張
+        <span class="nowrap">{{ capitalLevel().marginChange.value > 0 ? '+' : '' }}{{ capitalLevel().marginChange.value | number }}&nbsp;千張</span>
       </span>
       <span class="mk-cap-sub">{{ capitalLevel().marginChange.label }}</span>
     </div>
@@ -49,7 +49,7 @@
   <div class="mk-breadth-row">
     <span class="mk-b-stat">
       <span class="mk-b-dot" style="background:var(--up)"></span>
-      上漲 {{ capitalLevel().breadth.up }}
+      上漲 {{ capitalLevel().breadth.up | number }}
     </span>
     <div class="mk-b-bar">
       <div class="mk-b-up" [style.width.%]="capitalLevel().breadth.up / breadthTotal() * 100"></div>
@@ -57,10 +57,10 @@
       <div class="mk-b-down" [style.width.%]="capitalLevel().breadth.down / breadthTotal() * 100"></div>
     </div>
     <span class="mk-b-stat">
-      下跌 {{ capitalLevel().breadth.down }}
+      下跌 {{ capitalLevel().breadth.down | number }}
       <span class="mk-b-dot" style="background:var(--down)"></span>
     </span>
-    <span class="mk-b-extra">漲停 {{ capitalLevel().breadth.limitUp }} ｜ 跌停 {{ capitalLevel().breadth.limitDown }}</span>
+    <span class="mk-b-extra">漲停 {{ capitalLevel().breadth.limitUp | number }} ｜ 跌停 {{ capitalLevel().breadth.limitDown | number }}</span>
   </div>
 </div>
 
@@ -102,13 +102,13 @@
                 {{ s.changePercent > 0 ? '+' : '' }}{{ s.changePercent.toFixed(2) }}%
               </td>
               <td class="mk-td-breadth">
-                <span class="is-up">{{ s.advancingCount }}</span>
+                <span class="is-up">{{ s.advancingCount | number }}</span>
                 <span class="mk-sep">/</span>
-                <span class="is-down">{{ s.decliningCount }}</span>
+                <span class="is-down">{{ s.decliningCount | number }}</span>
               </td>
               <td class="mk-td-mono" [class.is-up]="(s.foreignNetBuy ?? 0) > 0" [class.is-down]="(s.foreignNetBuy ?? 0) < 0">
                 @if (s.foreignNetBuy !== null) {
-                  {{ s.foreignNetBuy > 0 ? '+' : '' }}{{ s.foreignNetBuy.toFixed(0) }}
+                  {{ s.foreignNetBuy > 0 ? '+' : '' }}{{ s.foreignNetBuy | number:'1.0-0' }}
                 } @else {
                   --
                 }

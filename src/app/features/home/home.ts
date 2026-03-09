@@ -5,7 +5,7 @@ import { forkJoin, of } from 'rxjs';
 import { catchError, switchMap } from 'rxjs/operators';
 import { StockApiService } from '../../core/services/stock-api.service';
 import { WatchlistApiService } from '../../core/services/watchlist-api.service';
-import { ApiMarketOverview, ApiWatchlistQuote, ApiInstitutionalRankingItem } from '../../core/models';
+import { ApiMarketOverview, ApiWatchlistQuote, ApiInstitutionalRankingItem, ApiSectorRotation } from '../../core/models';
 
 type FlowStatus = 'inflow' | 'outflow' | 'neutral';
 type AlertLevel = 'critical' | 'warning';
@@ -18,11 +18,6 @@ interface WatchlistItem {
   changePercent: number;
   flowStatus: FlowStatus;
   flowLabel: string;
-}
-
-interface SectorFlow {
-  name: string;
-  amount: number;
 }
 
 interface FlowAlert {
@@ -72,24 +67,9 @@ export class Home implements OnInit {
     return total > 0 ? (b.down / total) * 100 : 0;
   });
 
-  // ── AI 板塊資金輪動（暫保留靜態，待 AI 分析功能上線） ──
-  readonly sectorRotation = {
-    conclusion: '資金輪動分析載入中...',
-    reason: '待 AI 分析模組上線後，將根據即時法人籌碼自動生成。',
-    basis: '各板塊法人淨買賣變化 + 量能分佈 + 產業動態',
-  };
-
-  readonly sectorInflows: SectorFlow[] = [];
-  readonly sectorOutflows: SectorFlow[] = [];
-
-  readonly maxSectorFlow = computed(() => {
-    const max = Math.max(
-      ...this.sectorInflows.map(s => s.amount),
-      ...this.sectorOutflows.map(s => s.amount),
-      0,
-    );
-    return max || 1;
-  });
+  // ── AI 板塊資金輪動 ──
+  readonly rotation = signal<ApiSectorRotation | null>(null);
+  readonly rotationLoading = signal(false);
 
   // ── 三大法人買賣超排行 ──
   readonly buyRanking = signal<ApiInstitutionalRankingItem[]>([]);
@@ -104,6 +84,7 @@ export class Home implements OnInit {
 
   ngOnInit(): void {
     this.loadMarketData();
+    this.loadRotation();
   }
 
   private loadMarketData(): void {
@@ -111,8 +92,8 @@ export class Home implements OnInit {
 
     // Fetch market overview + watchlist + ranking in parallel
     forkJoin({
-      overview: this.stockApi.getMarketOverview(),
-      watchlistData: this.watchlistApi.getWatchlist(),
+      overview: this.stockApi.getMarketOverview().pipe(catchError(() => of(null))),
+      watchlistData: this.watchlistApi.getWatchlist().pipe(catchError(() => of({ symbols: [] as string[], categories: [] as never[] }))),
       ranking: this.stockApi.getInstitutionalRanking().pipe(catchError(() => of(null))),
     }).pipe(
       switchMap(({ overview, watchlistData, ranking }) => {
@@ -131,9 +112,9 @@ export class Home implements OnInit {
         // Fetch quotes for watchlist symbols
         const symbols = watchlistData.symbols;
         if (symbols.length > 0) {
-          return this.stockApi.getWatchlistQuotes(symbols);
+          return this.stockApi.getWatchlistQuotes(symbols).pipe(catchError(() => of([] as ApiWatchlistQuote[])));
         }
-        return [];
+        return of([] as ApiWatchlistQuote[]);
       }),
     ).subscribe({
       next: (quotes: ApiWatchlistQuote[]) => {
@@ -183,14 +164,34 @@ export class Home implements OnInit {
     });
   }
 
-  getFlowBarWidth(amount: number): number {
-    return (amount / this.maxSectorFlow()) * 100;
+  private loadRotation(): void {
+    this.rotationLoading.set(true);
+    this.stockApi.getSectorRotation().pipe(catchError(() => of(null))).subscribe({
+      next: (data) => {
+        this.rotation.set(data);
+        this.rotationLoading.set(false);
+      },
+      error: () => this.rotationLoading.set(false),
+    });
   }
 
-  formatNetAmount(amount: number): string {
-    const abs = Math.abs(amount);
-    if (abs >= 100) return (amount / 100).toFixed(1) + ' 億';
-    return amount.toFixed(0) + ' 百萬';
+  getRotationStageLabel(stage: string): string {
+    const map: Record<string, string> = {
+      'Accumulation': '吸籌期',
+      'Momentum': '動能期',
+      'Acceleration': '加速期',
+      'Reversal': '反轉期',
+    };
+    return map[stage] ?? stage;
+  }
+
+  getFlowIntensityLabel(intensity: string): string {
+    const map: Record<string, string> = {
+      'High': '強',
+      'Medium': '中',
+      'Low': '弱',
+    };
+    return map[intensity] ?? intensity;
   }
 
   getConsecutiveBadge(item: ApiInstitutionalRankingItem): string | null {

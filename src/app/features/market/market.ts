@@ -1,4 +1,5 @@
 import { Component, inject, signal, computed, OnInit } from '@angular/core';
+import { DecimalPipe } from '@angular/common';
 import { StockApiService } from '../../core/services/stock-api.service';
 import { AiDisclaimer } from '../../shared/components/ai-disclaimer/ai-disclaimer';
 import {
@@ -9,7 +10,7 @@ import {
 @Component({
   selector: 'app-market',
   standalone: true,
-  imports: [AiDisclaimer],
+  imports: [AiDisclaimer, DecimalPipe],
   templateUrl: './market.html',
   styleUrl: './market.scss',
 })

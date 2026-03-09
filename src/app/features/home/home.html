@@ -19,23 +19,23 @@
       <span class="cl-metric-label">外資今日</span>
       <span class="cl-metric-value" [class.is-up]="capitalLevel().foreignFlow.direction === 'buy'" [class.is-down]="capitalLevel().foreignFlow.direction === 'sell'">
         <span class="cl-arrow">{{ capitalLevel().foreignFlow.direction === 'buy' ? '▲' : '▼' }}</span>
-        {{ capitalLevel().foreignFlow.direction === 'buy' ? '買超' : '賣超' }} {{ capitalLevel().foreignFlow.value }} 億
+        {{ capitalLevel().foreignFlow.direction === 'buy' ? '買超' : '賣超' }} <span class="nowrap">{{ capitalLevel().foreignFlow.value | number }}&nbsp;億</span>
       </span>
     </div>
     <div class="cl-metric">
       <span class="cl-metric-label">投信今日</span>
       <span class="cl-metric-value" [class.is-up]="capitalLevel().institutional.sitcNet >= 0" [class.is-down]="capitalLevel().institutional.sitcNet < 0">
-        {{ capitalLevel().institutional.sitcNet >= 0 ? '買超' : '賣超' }} {{ capitalLevel().institutional.sitcNet >= 0 ? capitalLevel().institutional.sitcNet : -capitalLevel().institutional.sitcNet }} 億
+        {{ capitalLevel().institutional.sitcNet >= 0 ? '買超' : '賣超' }} <span class="nowrap">{{ (capitalLevel().institutional.sitcNet >= 0 ? capitalLevel().institutional.sitcNet : -capitalLevel().institutional.sitcNet) | number }}&nbsp;億</span>
       </span>
     </div>
     <div class="cl-metric">
       <span class="cl-metric-label">大盤量能</span>
-      <span class="cl-metric-value">{{ capitalLevel().marketVolume.value | number }} 億</span>
+      <span class="cl-metric-value"><span class="nowrap">{{ capitalLevel().marketVolume.value | number }}&nbsp;億</span></span>
     </div>
     <div class="cl-metric">
       <span class="cl-metric-label">融資增減</span>
       <span class="cl-metric-value" [class.is-up]="capitalLevel().marginChange.value > 0" [class.is-down]="capitalLevel().marginChange.value < 0">
-        {{ capitalLevel().marginChange.value > 0 ? '+' : '' }}{{ capitalLevel().marginChange.value }} 千張
+        <span class="nowrap">{{ capitalLevel().marginChange.value > 0 ? '+' : '' }}{{ capitalLevel().marginChange.value | number }}&nbsp;千張</span>
       </span>
       <span class="cl-metric-sub">{{ capitalLevel().marginChange.label }}</span>
     </div>
@@ -44,7 +44,7 @@
   <div class="cl-breadth">
     <div class="cl-breadth-stat">
       <span class="cl-dot" style="background:var(--up)"></span>
-      上漲 {{ capitalLevel().breadth.up }}
+      上漲 {{ capitalLevel().breadth.up | number }}
     </div>
     <div class="cl-breadth-bar">
       <div class="cl-bar-up" [style.width.%]="breadthUpPct()"></div>
@@ -52,11 +52,11 @@
       <div class="cl-bar-down" [style.width.%]="breadthDownPct()"></div>
     </div>
     <div class="cl-breadth-stat">
-      下跌 {{ capitalLevel().breadth.down }}
+      下跌 {{ capitalLevel().breadth.down | number }}
       <span class="cl-dot" style="background:var(--down)"></span>
     </div>
     <div class="cl-breadth-extra">
-      漲停 {{ capitalLevel().breadth.limitUp }} ｜ 跌停 {{ capitalLevel().breadth.limitDown }}
+      漲停 {{ capitalLevel().breadth.limitUp | number }} ｜ 跌停 {{ capitalLevel().breadth.limitDown | number }}
     </div>
   </div>
 </div>
@@ -163,51 +163,43 @@
     </span>
   </div>
 
-  <div class="sr-conclusion">{{ sectorRotation.conclusion }}</div>
+  @if (rotationLoading() && !rotation()) {
+    <div class="sr-conclusion">AI 分析中...</div>
+  } @else if (rotation()?.rotationAnalysis; as analysis) {
+    <div class="sr-stage">
+      <span class="sr-stage-badge">{{ getRotationStageLabel(analysis.rotationStage) }}</span>
+    </div>
+    <div class="sr-conclusion">{{ analysis.conclusion }}</div>
 
-  @if (sectorInflows.length > 0 || sectorOutflows.length > 0) {
-    <div class="sr-flow-grid">
-      <div class="sr-flow-col">
-        <div class="sr-flow-heading is-up">
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="23 6 13.5 15.5 8.5 10.5 1 18"/><polyline points="17 6 23 6 23 12"/></svg>
-          資金流入
-        </div>
-        @for (sector of sectorInflows; track sector.name) {
-          <div class="sr-flow-row">
-            <span class="sr-sector-name">{{ sector.name }}</span>
-            <div class="sr-flow-bar-track">
-              <div class="sr-flow-bar sr-flow-bar--in" [style.width.%]="getFlowBarWidth(sector.amount)"></div>
-            </div>
-            <span class="sr-flow-amount is-up">+{{ sector.amount }}億</span>
+    @if (analysis.flowDirection && analysis.flowDirection.length > 0) {
+      <div class="sr-flow-directions">
+        @for (flow of analysis.flowDirection; track flow.from + flow.to) {
+          <div class="sr-flow-dir-item">
+            <span class="sr-flow-dir-from">{{ flow.from }}</span>
+            <span class="sr-flow-dir-arrow">→</span>
+            <span class="sr-flow-dir-to">{{ flow.to }}</span>
+            <span class="sr-flow-dir-intensity" [attr.data-level]="flow.intensity">{{ getFlowIntensityLabel(flow.intensity) }}</span>
           </div>
         }
       </div>
-      <div class="sr-flow-col">
-        <div class="sr-flow-heading is-down">
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="23 18 13.5 8.5 8.5 13.5 1 6"/><polyline points="17 18 23 18 23 12"/></svg>
-          資金流出
-        </div>
-        @for (sector of sectorOutflows; track sector.name) {
-          <div class="sr-flow-row">
-            <span class="sr-sector-name">{{ sector.name }}</span>
-            <div class="sr-flow-bar-track">
-              <div class="sr-flow-bar sr-flow-bar--out" [style.width.%]="getFlowBarWidth(sector.amount)"></div>
-            </div>
-            <span class="sr-flow-amount is-down">-{{ sector.amount }}億</span>
-          </div>
-        }
-      </div>
+    }
+
+    <div class="sr-reason">
+      <span class="sr-reason-label">原因</span>
+      {{ analysis.reason }}
+    </div>
+    <div class="sr-basis">
+      <span class="sr-basis-label">判斷依據</span>
+      {{ analysis.evidence }}
+    </div>
+  } @else {
+    <div class="sr-conclusion">板塊資金輪動分析尚未產生</div>
+    <div class="sr-reason">
+      <span class="sr-reason-label">提示</span>
+      請至「大盤資金」頁面觸發 AI 分析
     </div>
   }
 
-  <div class="sr-reason">
-    <span class="sr-reason-label">原因</span>
-    {{ sectorRotation.reason }}
-  </div>
-  <div class="sr-basis">
-    <span class="sr-basis-label">判斷依據</span>
-    {{ sectorRotation.basis }}
-  </div>
   <div class="ai-disclaimer">僅供參考，非投資建議</div>
 </div>
 
@@ -245,8 +237,8 @@
           </div>
           <div class="wl-right">
             <div class="wl-price-group" [class.is-up]="item.changePercent >= 0" [class.is-down]="item.changePercent < 0">
-              <span class="wl-price">{{ item.price }}</span>
-              <span class="wl-change">{{ item.changePercent >= 0 ? '+' : '' }}{{ item.changePercent }}%</span>
+              <span class="wl-price">{{ item.price | number:'1.2-2' }}</span>
+              <span class="wl-change">{{ item.changePercent >= 0 ? '+' : '' }}{{ item.changePercent | number:'1.2-2' }}%</span>
             </div>
           </div>
         </a>
