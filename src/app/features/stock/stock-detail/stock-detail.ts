@@ -11,6 +11,7 @@ import {
   ApiMarginAiAnalysis, ApiFundamentalAttraction,
   ApiInstitutionalTrading, ApiMarginTrading,
   ApiNewsArticle,
+  ApiShareholderConcentrationAi, ApiInvestmentTiming,
 } from '../../../core/models';
 import { StockApiService } from '../../../core/services/stock-api.service';
 import { WatchlistApiService } from '../../../core/services/watchlist-api.service';
@@ -84,6 +85,11 @@ export class StockDetail {
   // ── Chip data signals ──
   readonly institutionalData = signal<ApiInstitutionalTrading[]>([]);
   readonly marginData = signal<ApiMarginTrading[]>([]);
+  readonly shareholderAi = signal<ApiShareholderConcentrationAi | null>(null);
+
+  // ── Investment Timing ──
+  readonly investmentTiming = signal<ApiInvestmentTiming | null>(null);
+  readonly investmentTimingLoading = signal(false);
 
   // Track which tabs have been loaded to avoid duplicate fetches
   private loadedTabs = new Set<StockTab>();
@@ -129,15 +135,17 @@ export class StockDetail {
       aiIndustry: this.stockApi.getAiIndustryChain(sym).pipe(catchError(() => of(null))),
       volumeAnomaly: this.stockApi.getVolumeAnomaly(sym, market).pipe(catchError(() => of(null))),
       mfieSummary: this.stockApi.getMoneyFlowSummary(sym).pipe(catchError(() => of(null))),
+      investmentTiming: this.stockApi.getInvestmentTiming(sym).pipe(catchError(() => of(null))),
     }).pipe(
       takeUntilDestroyed(this.destroyRef),
-    ).subscribe(({ quote, history, watchlist, aiIndustry, volumeAnomaly, mfieSummary }) => {
+    ).subscribe(({ quote, history, watchlist, aiIndustry, volumeAnomaly, mfieSummary, investmentTiming }) => {
       this.liveQuote.set(quote);
       this.historyData.set(history);
       this.isInWatchlist.set(watchlist.symbols.includes(sym));
       this.aiIndustryChain.set(aiIndustry);
       this.volumeAnomaly.set(volumeAnomaly);
       this.mfieSummary.set(mfieSummary);
+      this.investmentTiming.set(investmentTiming);
       this.aiLoading.set(false);
       this.isLoading.set(false);
       this.buildChartFromHistory();
@@ -165,13 +173,15 @@ export class StockDetail {
       margin: this.stockApi.getMarginTrading(sym, market).pipe(catchError(() => of([]))),
       chipAi: this.stockApi.getChipAiAnalysis(sym).pipe(catchError(() => of(null))),
       marginAi: this.stockApi.getMarginAiAnalysis(sym).pipe(catchError(() => of(null))),
+      shareholderAi: this.stockApi.getShareholderConcentrationAi(sym).pipe(catchError(() => of(null))),
     }).pipe(
       takeUntilDestroyed(this.destroyRef),
-    ).subscribe(({ institutional, margin, chipAi, marginAi }) => {
+    ).subscribe(({ institutional, margin, chipAi, marginAi, shareholderAi }) => {
       this.institutionalData.set(institutional);
       this.marginData.set(margin);
       this.chipAiAnalysis.set(chipAi);
       this.marginAiAnalysis.set(marginAi);
+      this.shareholderAi.set(shareholderAi);
     });
   }
 
@@ -333,6 +343,35 @@ export class StockDetail {
     if (v == null) return '— 持平';
     if (v === 0) return '─ 持平';
     return v > 0 ? `▲${v.toLocaleString()}` : `▼${Math.abs(v).toLocaleString()}`;
+  }
+
+  refreshInvestmentTiming(): void {
+    this.investmentTimingLoading.set(true);
+    this.stockApi.getInvestmentTiming(this.symbol(), true)
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe({
+        next: (result) => { this.investmentTiming.set(result); this.investmentTimingLoading.set(false); },
+        error: () => { this.investmentTimingLoading.set(false); },
+      });
+  }
+
+  getTimingScoreClass(score: string): string {
+    const n = parseInt(score, 10);
+    if (isNaN(n)) return '';
+    if (n >= 70) return 'timing-good';
+    if (n >= 40) return 'timing-neutral';
+    return 'timing-bad';
+  }
+
+  getRiskClass(level: string): string {
+    if (level === 'High') return 'risk-high';
+    if (level === 'Low') return 'risk-low';
+    return 'risk-medium';
+  }
+
+  getRiskLabel(level: string): string {
+    const map: Record<string, string> = { 'High': '高風險', 'Medium': '中風險', 'Low': '低風險' };
+    return map[level] ?? level;
   }
 
   regenerateAiIndustry(): void {

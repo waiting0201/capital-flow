@@ -512,4 +512,58 @@
   .mf-sh-row { grid-template-columns: 80px 1fr 40px 50px; }
   .mf-sh-range { font-size: var(--text-xs); }
   .mf-factor-detail { padding-left: 10px; }
+  .sd-timing-card { padding: 16px; }
+  .sd-timing-scores { flex-direction: column; gap: 10px; }
+}
+
+// ═══════════ AI 投資時機判斷 ═══════════
+.sd-timing-card {
+  background: var(--surface-card); border: 1px solid var(--border);
+  border-radius: 14px; padding: 20px 24px; margin-bottom: 20px;
+  box-shadow: var(--shadow-sm);
+}
+.sd-timing-header {
+  display: flex; align-items: center; justify-content: space-between;
+  margin-bottom: 16px;
+}
+.sd-timing-title-row {
+  display: flex; align-items: center; gap: 8px;
+  font-size: var(--text-lg); font-weight: 700; color: var(--olivine);
+}
+.sd-timing-actions {
+  display: flex; align-items: center; gap: 10px;
+}
+.sd-timing-scores {
+  display: flex; gap: 16px; margin-bottom: 16px;
+}
+.sd-timing-score-item {
+  flex: 1; text-align: center; padding: 14px 16px;
+  background: var(--surface-elevated); border: 1px solid var(--border);
+  border-radius: 10px;
+
+  &.timing-good { border-color: rgba(225, 79, 79, 0.3); background: var(--up-bg); }
+  &.timing-neutral { border-color: rgba(197, 160, 89, 0.3); background: var(--amber-glow); }
+  &.timing-bad { border-color: rgba(34, 193, 161, 0.3); background: var(--down-bg); }
+  &.risk-high { border-color: rgba(225, 79, 79, 0.3); }
+  &.risk-medium { border-color: rgba(197, 160, 89, 0.3); }
+  &.risk-low { border-color: rgba(34, 193, 161, 0.3); }
+}
+.sd-timing-score-label {
+  display: block; font-size: var(--text-2xs); font-weight: 600;
+  letter-spacing: 0.5px; color: var(--gray-light); margin-bottom: 6px;
+}
+.sd-timing-score-value {
+  display: block; font-family: var(--font-mono); font-size: var(--text-2xl);
+  font-weight: 800; color: var(--olivine);
+}
+.sd-timing-conclusion {
+  font-size: var(--text-base); font-weight: 700; color: var(--olivine);
+  line-height: 1.5; margin-bottom: 12px;
+}
+.sd-timing-detail {
+  margin-bottom: 8px;
+
+  p {
+    font-size: var(--text-sm); color: var(--gray); line-height: 1.8; margin: 4px 0 0;
+  }
 }

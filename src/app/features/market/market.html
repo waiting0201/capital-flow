@@ -64,6 +64,72 @@
   </div>
 </div>
 
+<!-- ══════ 類股資金流向排行 ══════ -->
+@if (sectors().length > 0) {
+  <div class="card mk-sector-card">
+    <div class="card-header">
+      <div class="card-title">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--amber)" stroke-width="2"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/></svg>
+        類股資金流向排行
+      </div>
+    </div>
+    <div class="mk-sector-table-wrap">
+      <table class="data-table mk-sector-table">
+        <thead>
+          <tr>
+            <th class="mk-th-name">板塊</th>
+            <th class="mk-th-sortable" (click)="sortSectors('changePercent')">
+              漲跌幅
+              @if (sectorSortKey() === 'changePercent') {
+                <span class="mk-sort-arrow">{{ sectorSortAsc() ? '▲' : '▼' }}</span>
+              }
+            </th>
+            <th>漲/跌家數</th>
+            <th class="mk-th-sortable" (click)="sortSectors('foreignNetBuy')">
+              外資淨買
+              @if (sectorSortKey() === 'foreignNetBuy') {
+                <span class="mk-sort-arrow">{{ sectorSortAsc() ? '▲' : '▼' }}</span>
+              }
+            </th>
+            <th class="mk-th-bar">趨勢</th>
+          </tr>
+        </thead>
+        <tbody>
+          @for (s of sortedSectors(); track s.sectorName; let i = $index) {
+            <tr>
+              <td class="row-label">{{ s.sectorName }}</td>
+              <td class="mk-td-mono" [class.is-up]="s.changePercent > 0" [class.is-down]="s.changePercent < 0">
+                {{ s.changePercent > 0 ? '+' : '' }}{{ s.changePercent.toFixed(2) }}%
+              </td>
+              <td class="mk-td-breadth">
+                <span class="is-up">{{ s.advancingCount }}</span>
+                <span class="mk-sep">/</span>
+                <span class="is-down">{{ s.decliningCount }}</span>
+              </td>
+              <td class="mk-td-mono" [class.is-up]="(s.foreignNetBuy ?? 0) > 0" [class.is-down]="(s.foreignNetBuy ?? 0) < 0">
+                @if (s.foreignNetBuy !== null) {
+                  {{ s.foreignNetBuy > 0 ? '+' : '' }}{{ s.foreignNetBuy.toFixed(0) }}
+                } @else {
+                  --
+                }
+              </td>
+              <td class="mk-td-bar">
+                <div class="mk-pct-bar-track">
+                  @if (s.changePercent >= 0) {
+                    <div class="mk-pct-bar mk-pct-bar--up" [style.width.%]="Math.min(Math.abs(s.changePercent) * 10, 100)"></div>
+                  } @else {
+                    <div class="mk-pct-bar mk-pct-bar--down" [style.width.%]="Math.min(Math.abs(s.changePercent) * 10, 100)"></div>
+                  }
+                </div>
+              </td>
+            </tr>
+          }
+        </tbody>
+      </table>
+    </div>
+  </div>
+}
+
 <!-- ══════ AI 板塊資金輪動分析 ══════ -->
 <div class="mk-rotation-card">
   <div class="mk-rotation-header">
@@ -75,111 +141,173 @@
       </svg>
       <span>AI 板塊資金輪動分析</span>
     </div>
-    <span class="ai-badge">
-      <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2L2 7l10 5 10-5-10-5z"/><path d="M2 17l10 5 10-5"/><path d="M2 12l10 5 10-5"/></svg>
-      AI 分析
-    </span>
+    <div class="mk-rotation-actions">
+      <span class="ai-badge">
+        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2L2 7l10 5 10-5-10-5z"/><path d="M2 17l10 5 10-5"/><path d="M2 12l10 5 10-5"/></svg>
+        AI 分析
+      </span>
+      <button class="mk-refresh-btn" (click)="refreshRotation()" [disabled]="rotationLoading()">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" [class.mk-spin]="rotationLoading()">
+          <polyline points="23 4 23 10 17 10"/><path d="M20.49 15a9 9 0 11-2.12-9.36L23 10"/>
+        </svg>
+      </button>
+    </div>
   </div>
 
-  <div class="mk-rotation-conclusion">{{ rotation().conclusion }}</div>
+  @if (rotationLoading() && !rotation()) {
+    <div class="mk-ai-loading">AI 分析中...</div>
+  } @else if (rotation()?.rotationAnalysis; as analysis) {
+    <div class="mk-rotation-stage">
+      <span class="mk-stage-badge">{{ getRotationStageLabel(analysis.rotationStage) }}</span>
+    </div>
+    <div class="mk-rotation-conclusion">{{ analysis.conclusion }}</div>
+    <div class="mk-rotation-reason">
+      <span class="mk-tag">原因</span>
+      {{ analysis.reason }}
+    </div>
+    <div class="mk-rotation-basis">
+      <span class="mk-tag mk-tag--muted">判斷依據</span>
+      {{ analysis.evidence }}
+    </div>
 
-  <div class="mk-rotation-reason">
-    <span class="mk-tag">原因</span>
-    {{ rotation().reason }}
-  </div>
-  <div class="mk-rotation-basis">
-    <span class="mk-tag mk-tag--muted">判斷依據</span>
-    {{ rotation().basis }}
-  </div>
+    @if (analysis.flowDirection && analysis.flowDirection.length > 0) {
+      <div class="mk-flow-directions">
+        <span class="mk-flow-dir-title">資金流向</span>
+        <div class="mk-flow-dir-list">
+          @for (flow of analysis.flowDirection; track flow.from + flow.to) {
+            <div class="mk-flow-dir-item">
+              <span class="mk-flow-dir-from">{{ flow.from }}</span>
+              <svg width="16" height="12" viewBox="0 0 16 12" fill="none" class="mk-flow-dir-arrow">
+                <path d="M1 6h12M10 2l4 4-4 4" stroke="var(--amber)" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+              </svg>
+              <span class="mk-flow-dir-to">{{ flow.to }}</span>
+              <span class="mk-flow-dir-intensity" [attr.data-level]="flow.intensity">{{ getFlowIntensityLabel(flow.intensity) }}</span>
+            </div>
+          }
+        </div>
+      </div>
+    }
+  } @else {
+    <div class="mk-rotation-conclusion">板塊資金輪動分析尚未產生</div>
+    <div class="mk-rotation-reason">
+      <span class="mk-tag">提示</span>
+      點擊右上角重新整理按鈕以觸發 AI 分析
+    </div>
+  }
 
-  <div class="ai-disclaimer" style="margin-top: 12px">僅供參考，非投資建議</div>
+  <app-ai-disclaimer variant="inline" />
 </div>
-
-<!-- ══════ 板塊資金流向排行 ══════ -->
-@if (sectorInflows().length > 0 || sectorOutflows().length > 0) {
-  <div class="mk-flow-grid">
-    <!-- 資金流入 -->
-    <div class="card">
-      <div class="card-header">
-        <div class="card-title mk-flow-in-title">
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="23 6 13.5 15.5 8.5 10.5 1 18"/><polyline points="17 6 23 6 23 12"/></svg>
-          資金流入
-        </div>
-      </div>
-      <div class="mk-flow-list">
-        @for (sector of sectorInflows(); track sector.name; let i = $index) {
-          <div class="mk-flow-row">
-            <span class="mk-flow-rank">{{ i + 1 }}.</span>
-            <span class="mk-flow-name">{{ sector.name }}</span>
-            <div class="mk-flow-bar-track">
-              <div class="mk-flow-bar mk-flow-bar--in" [style.width.%]="getFlowBarWidth(sector.amount)"></div>
-            </div>
-            <span class="mk-flow-amount is-up">+{{ sector.amount }}億</span>
-          </div>
-        }
-      </div>
-    </div>
-
-    <!-- 資金流出 -->
-    <div class="card">
-      <div class="card-header">
-        <div class="card-title mk-flow-out-title">
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="23 18 13.5 8.5 8.5 13.5 1 6"/><polyline points="17 18 23 18 23 12"/></svg>
-          資金流出
-        </div>
-      </div>
-      <div class="mk-flow-list">
-        @for (sector of sectorOutflows(); track sector.name; let i = $index) {
-          <div class="mk-flow-row">
-            <span class="mk-flow-rank">{{ i + 1 }}.</span>
-            <span class="mk-flow-name">{{ sector.name }}</span>
-            <div class="mk-flow-bar-track">
-              <div class="mk-flow-bar mk-flow-bar--out" [style.width.%]="getFlowBarWidth(sector.amount)"></div>
-            </div>
-            <span class="mk-flow-amount is-down">-{{ sector.amount }}億</span>
-          </div>
-        }
-      </div>
-    </div>
-  </div>
-}
 
 <!-- ══════ AI 總經資金環境解讀 ══════ -->
 <div class="mk-macro-card">
   <div class="mk-macro-header">
-    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="var(--amber)" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 014 10 15.3 15.3 0 01-4 10 15.3 15.3 0 01-4-10 15.3 15.3 0 014-10z"/></svg>
-    <span class="mk-macro-title">AI 總經資金環境解讀</span>
+    <div class="mk-macro-header-left">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="var(--amber)" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 014 10 15.3 15.3 0 01-4 10 15.3 15.3 0 01-4-10 15.3 15.3 0 014-10z"/></svg>
+      <span class="mk-macro-title">AI 總經資金環境解讀</span>
+    </div>
+    <button class="mk-refresh-btn mk-refresh-btn--light" (click)="refreshMacro()" [disabled]="macroLoading()">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" [class.mk-spin]="macroLoading()">
+        <polyline points="23 4 23 10 17 10"/><path d="M20.49 15a9 9 0 11-2.12-9.36L23 10"/>
+      </svg>
+    </button>
   </div>
 
-  <div class="mk-macro-indicators">
-    @for (ind of macroIndicators(); track ind.label) {
-      <div class="mk-macro-ind">
-        <span class="mk-macro-ind-label">{{ ind.label }}</span>
-        <span class="mk-macro-ind-value">{{ ind.value }}</span>
+  @if (macroLoading() && !macro()) {
+    <div class="mk-loading">載入總經數據中...</div>
+  } @else if (macro(); as m) {
+    <!-- 總經指標卡片 -->
+    @if (m.indicators.length > 0) {
+      <div class="mk-macro-indicators">
+        @for (ind of m.indicators; track ind.indicatorCode) {
+          <div class="mk-macro-ind">
+            <span class="mk-macro-ind-label">{{ ind.indicatorName }}</span>
+            <span class="mk-macro-ind-value">{{ ind.value }}</span>
+            @if (ind.unit) {
+              <span class="mk-macro-ind-unit">{{ ind.unit }}</span>
+            }
+          </div>
+        }
       </div>
     }
+
+    <!-- AI 分析 -->
+    @if (m.aiAnalysis; as ai) {
+      <div class="mk-macro-ai">
+        <span class="ai-badge">
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2L2 7l10 5 10-5-10-5z"/><path d="M2 17l10 5 10-5"/><path d="M2 12l10 5 10-5"/></svg>
+          AI 解讀
+        </span>
+
+        <div class="mk-macro-conclusion">{{ ai.conclusion }}</div>
+
+        <div class="mk-macro-chain">
+          <span class="mk-tag mk-tag--basis">原因</span>
+          <p class="mk-macro-chain-text">{{ ai.reason }}</p>
+        </div>
+
+        <div class="mk-macro-chain">
+          <span class="mk-tag mk-tag--basis">判斷依據</span>
+          <p class="mk-macro-chain-text">{{ ai.evidence }}</p>
+        </div>
+
+        <div class="mk-macro-outlook">
+          <span class="mk-tag">外資動向展望</span>
+          {{ ai.foreignFlowOutlook }}
+        </div>
+      </div>
+    }
+  } @else {
+    <div class="mk-macro-empty">尚無總經數據，請點擊重新整理</div>
+  }
+
+  <app-ai-disclaimer variant="inline" />
+</div>
+
+<!-- ══════ AI 跨市場資金偏好 ══════ -->
+<div class="mk-cross-card">
+  <div class="mk-cross-header">
+    <div class="mk-cross-header-left">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="var(--amber)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M18 20V10"/><path d="M12 20V4"/><path d="M6 20v-6"/>
+      </svg>
+      <span class="mk-cross-title">AI 跨市場資金偏好</span>
+    </div>
+    <button class="mk-refresh-btn mk-refresh-btn--light" (click)="refreshCrossMarket()" [disabled]="crossMarketLoading()">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" [class.mk-spin]="crossMarketLoading()">
+        <polyline points="23 4 23 10 17 10"/><path d="M20.49 15a9 9 0 11-2.12-9.36L23 10"/>
+      </svg>
+    </button>
   </div>
 
-  <div class="mk-macro-ai">
-    <span class="ai-badge">
-      <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2L2 7l10 5 10-5-10-5z"/><path d="M2 17l10 5 10-5"/><path d="M2 12l10 5 10-5"/></svg>
-      AI 解讀
-    </span>
+  @if (crossMarketLoading() && !crossMarket()) {
+    <div class="mk-loading">AI 分析中...</div>
+  } @else if (crossMarket()?.analysis; as cm) {
+    <div class="mk-cross-ai">
+      <span class="ai-badge">
+        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2L2 7l10 5 10-5-10-5z"/><path d="M2 17l10 5 10-5"/><path d="M2 12l10 5 10-5"/></svg>
+        AI 分析
+      </span>
 
-    <div class="mk-macro-conclusion">{{ macroAnalysis.conclusion }}</div>
+      <div class="mk-cross-tw-us">
+        <span class="mk-tag">台美比較</span>
+        {{ cm.twVsUs }}
+      </div>
 
-    <div class="mk-macro-chain">
-      <span class="mk-tag">原因（因果鏈）</span>
-      <p class="mk-macro-chain-text">{{ macroAnalysis.causalChain }}</p>
+      <div class="mk-cross-conclusion">{{ cm.conclusion }}</div>
+
+      <div class="mk-cross-detail">
+        <span class="mk-tag mk-tag--basis">原因</span>
+        <p>{{ cm.reason }}</p>
+      </div>
+
+      <div class="mk-cross-detail">
+        <span class="mk-tag mk-tag--basis">判斷依據</span>
+        <p>{{ cm.evidence }}</p>
+      </div>
     </div>
+  } @else {
+    <div class="mk-cross-empty">尚無跨市場分析，請點擊重新整理</div>
+  }
 
-    <p class="mk-macro-judgment">{{ macroAnalysis.judgment }}</p>
-
-    <div class="mk-macro-basis-row">
-      <span class="mk-tag mk-tag--basis">判斷依據</span>
-      {{ macroAnalysis.basis }}
-    </div>
-  </div>
-
-  <div class="ai-disclaimer" style="margin-top: 12px">僅供參考，非投資建議</div>
+  <app-ai-disclaimer variant="inline" />
 </div>

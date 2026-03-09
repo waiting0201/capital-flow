@@ -312,6 +312,95 @@ export interface ApiInstitutionalRanking {
   sellRanking: ApiInstitutionalRankingItem[];
 }
 
+// ── Phase 4: Market Analysis DTOs ──
+
+export interface ApiSectorPerformance {
+  sectorName: string;
+  market: string;
+  changePercent: number;
+  advancingCount: number;
+  decliningCount: number;
+  averageVolume: number;
+  foreignNetBuy: number | null;
+}
+
+export interface ApiFlowDirection {
+  from: string;
+  to: string;
+  intensity: string;  // "High" | "Medium" | "Low"
+}
+
+export interface ApiSectorRotationAnalysis {
+  conclusion: string;
+  reason: string;
+  evidence: string;
+  rotationStage: string;  // "Accumulation" | "Momentum" | "Acceleration" | "Reversal"
+  flowDirection: ApiFlowDirection[] | null;
+}
+
+export interface ApiSectorRotation {
+  tradingDate: string;
+  sectorPerformance: ApiSectorPerformance[];
+  rotationAnalysis: ApiSectorRotationAnalysis | null;
+  aiProvider: string;
+  cached: boolean;
+}
+
+export interface ApiMacroIndicator {
+  indicatorCode: string;
+  indicatorName: string;
+  value: number;
+  unit: string | null;
+  releaseDate: string;
+}
+
+export interface ApiMacroAnalysis {
+  conclusion: string;
+  reason: string;
+  evidence: string;
+  foreignFlowOutlook: string;
+}
+
+export interface ApiMacroEnvironment {
+  indicators: ApiMacroIndicator[];
+  aiAnalysis: ApiMacroAnalysis | null;
+  aiProvider: string;
+  cached: boolean;
+}
+
+export interface ApiCrossMarketAnalysis {
+  conclusion: string;
+  reason: string;
+  evidence: string;
+  twVsUs: string;
+}
+
+export interface ApiCrossMarket {
+  analysis: ApiCrossMarketAnalysis | null;
+  aiProvider: string;
+  cached: boolean;
+}
+
+export interface ApiShareholderConcentrationAi {
+  analysis: string;
+  analysisDate: string;
+  generatedAt: string;
+  aiProvider: string;
+  cached: boolean;
+}
+
+export interface ApiInvestmentTiming {
+  conclusion: string;
+  reason: string;
+  evidence: string;
+  timingScore: string;
+  riskLevel: string;  // "Low" | "Medium" | "High"
+  analysisDate: string;
+  generatedAt: string;
+  aiProvider: string;
+  cached: boolean;
+}
+
 // ── Watchlist Flow Status ──
 
 export interface ApiWatchlistFlowStatus {

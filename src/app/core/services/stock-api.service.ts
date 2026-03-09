@@ -9,6 +9,8 @@ import {
   ApiFundamentalAttraction, ApiInstitutionalTrading, ApiMarginTrading, ApiChipSummary,
   ApiWatchlistFlowStatus, ApiNewsListResponse, ApiNewsArticle,
   ApiInstitutionalRanking,
+  ApiSectorPerformance, ApiSectorRotation, ApiMacroEnvironment, ApiCrossMarket,
+  ApiShareholderConcentrationAi, ApiInvestmentTiming,
 } from '../models';
 
 interface ApiResponse<T> {
@@ -144,6 +146,49 @@ export class StockApiService {
     const params = new HttpParams().set('symbols', symbols.join(','));
     return this.http.get<ApiResponse<ApiWatchlistFlowStatus[]>>('/api/watchlist/moneyflow-status', { params })
       .pipe(map(r => r.data ?? []));
+  }
+
+  // ── Phase 4: Market Analysis ──
+
+  getSectorPerformance(market = 'TW'): Observable<ApiSectorPerformance[]> {
+    const params = new HttpParams().set('market', market);
+    return this.http.get<ApiResponse<ApiSectorPerformance[]>>('/api/market/sectors', { params })
+      .pipe(map(r => r.data ?? []));
+  }
+
+  getSectorRotation(market = 'TW', force = false): Observable<ApiSectorRotation | null> {
+    let params = new HttpParams().set('market', market);
+    if (force) params = params.set('force', 'true');
+    return this.http.get<ApiResponse<ApiSectorRotation>>('/api/market/sectors/rotation', { params })
+      .pipe(map(r => r.data ?? null));
+  }
+
+  getMacroEnvironment(force = false): Observable<ApiMacroEnvironment | null> {
+    let params = new HttpParams();
+    if (force) params = params.set('force', 'true');
+    return this.http.get<ApiResponse<ApiMacroEnvironment>>('/api/market/environment', { params })
+      .pipe(map(r => r.data ?? null));
+  }
+
+  getCrossMarket(force = false): Observable<ApiCrossMarket | null> {
+    let params = new HttpParams();
+    if (force) params = params.set('force', 'true');
+    return this.http.get<ApiResponse<ApiCrossMarket>>('/api/market/crossmarket', { params })
+      .pipe(map(r => r.data ?? null));
+  }
+
+  getShareholderConcentrationAi(symbol: string, force = false): Observable<ApiShareholderConcentrationAi | null> {
+    let params = new HttpParams();
+    if (force) params = params.set('force', 'true');
+    return this.http.get<ApiResponse<ApiShareholderConcentrationAi>>(`/api/stocks/${symbol}/chip/shareholders/ai`, { params })
+      .pipe(map(r => r.data ?? null));
+  }
+
+  getInvestmentTiming(symbol: string, force = false): Observable<ApiInvestmentTiming | null> {
+    let params = new HttpParams();
+    if (force) params = params.set('force', 'true');
+    return this.http.get<ApiResponse<ApiInvestmentTiming>>(`/api/stocks/${symbol}/investment-timing`, { params })
+      .pipe(map(r => r.data ?? null));
   }
 
   // ── Institutional Ranking (買賣超排行) ──

@@ -1,20 +1,21 @@
 import { Component, inject, signal, computed, OnInit } from '@angular/core';
 import { StockApiService } from '../../core/services/stock-api.service';
+import { AiDisclaimer } from '../../shared/components/ai-disclaimer/ai-disclaimer';
+import {
+  ApiSectorPerformance, ApiSectorRotation, ApiMacroEnvironment, ApiCrossMarket,
+} from '../../core/models';
 
-interface SectorFlow {
-  name: string;
-  amount: number;
-}
 
 @Component({
   selector: 'app-market',
   standalone: true,
-  imports: [],
+  imports: [AiDisclaimer],
   templateUrl: './market.html',
   styleUrl: './market.scss',
 })
 export class Market implements OnInit {
   private readonly stockApi = inject(StockApiService);
+  readonly Math = Math;
 
   readonly isLoading = signal(true);
 
@@ -33,46 +34,45 @@ export class Market implements OnInit {
     return b.up + b.down + b.flat || 1;
   });
 
-  // ── AI 板塊資金輪動分析（placeholder） ──
-  readonly rotation = signal({
-    conclusion: '資金輪動分析載入中...',
-    reason: '待 AI 分析模組上線後，將根據即時法人籌碼自動生成。',
-    basis: '各板塊法人淨買賣變化 + 量能分佈 + 產業動態',
+  // ── 類股資金流向排行 ──
+  readonly sectors = signal<ApiSectorPerformance[]>([]);
+  readonly sectorSortKey = signal<'changePercent' | 'foreignNetBuy'>('changePercent');
+  readonly sectorSortAsc = signal(false);
+
+  readonly sortedSectors = computed(() => {
+    const key = this.sectorSortKey();
+    const asc = this.sectorSortAsc();
+    return [...this.sectors()].sort((a, b) => {
+      const va = key === 'foreignNetBuy' ? (a.foreignNetBuy ?? 0) : a.changePercent;
+      const vb = key === 'foreignNetBuy' ? (b.foreignNetBuy ?? 0) : b.changePercent;
+      return asc ? va - vb : vb - va;
+    });
   });
 
-  readonly sectorInflows = signal<SectorFlow[]>([]);
-  readonly sectorOutflows = signal<SectorFlow[]>([]);
+  // ── AI 板塊資金輪動分析 ──
+  readonly rotation = signal<ApiSectorRotation | null>(null);
+  readonly rotationLoading = signal(false);
 
-  readonly maxSectorFlow = computed(() => {
-    const max = Math.max(
-      ...this.sectorInflows().map(s => s.amount),
-      ...this.sectorOutflows().map(s => s.amount),
-      0,
-    );
-    return max || 1;
-  });
+  // ── AI 總經資金環境 ──
+  readonly macro = signal<ApiMacroEnvironment | null>(null);
+  readonly macroLoading = signal(false);
 
-  // ── AI 總經資金環境解讀（placeholder） ──
-  readonly macroIndicators = signal([
-    { label: 'Fed 利率', value: '--' },
-    { label: '美元指數', value: '--' },
-    { label: 'VIX 恐慌', value: '--' },
-  ]);
-
-  readonly macroAnalysis = {
-    conclusion: '待總經數據 API 串接後自動更新。',
-    causalChain: '目前尚未串接總經數據來源，後續將整合 Fed 利率、美債殖利率、美元指數等指標。',
-    judgment: '請參考其他總經資訊平台取得即時數據。',
-    basis: 'Fed 利率聲明 + 美債殖利率走勢 + 美元指數 + VIX 波動率',
-  };
+  // ── AI 跨市場資金偏好 ──
+  readonly crossMarket = signal<ApiCrossMarket | null>(null);
+  readonly crossMarketLoading = signal(false);
 
   ngOnInit(): void {
     this.loadMarketData();
+    this.loadSectors();
+    this.loadRotation();
+    this.loadMacro();
+    this.loadCrossMarket();
   }
+
+  // ── Data Loading ──
 
   private loadMarketData(): void {
     this.isLoading.set(true);
-
     this.stockApi.getMarketOverview().subscribe({
       next: (overview) => {
         if (overview) {
@@ -110,13 +110,118 @@ export class Market implements OnInit {
         }
         this.isLoading.set(false);
       },
-      error: () => {
-        this.isLoading.set(false);
-      },
+      error: () => this.isLoading.set(false),
     });
   }
 
-  getFlowBarWidth(amount: number): number {
-    return (amount / this.maxSectorFlow()) * 100;
+  private loadSectors(): void {
+    this.stockApi.getSectorPerformance().subscribe({
+      next: (data) => this.sectors.set(data),
+    });
+  }
+
+  private loadRotation(): void {
+    this.rotationLoading.set(true);
+    this.stockApi.getSectorRotation().subscribe({
+      next: (data) => {
+        this.rotation.set(data);
+        this.rotationLoading.set(false);
+      },
+      error: () => this.rotationLoading.set(false),
+    });
+  }
+
+  private loadMacro(): void {
+    this.macroLoading.set(true);
+    this.stockApi.getMacroEnvironment().subscribe({
+      next: (data) => {
+        this.macro.set(data);
+        this.macroLoading.set(false);
+      },
+      error: () => this.macroLoading.set(false),
+    });
+  }
+
+  private loadCrossMarket(): void {
+    this.crossMarketLoading.set(true);
+    this.stockApi.getCrossMarket().subscribe({
+      next: (data) => {
+        this.crossMarket.set(data);
+        this.crossMarketLoading.set(false);
+      },
+      error: () => this.crossMarketLoading.set(false),
+    });
+  }
+
+  // ── Actions ──
+
+  refreshRotation(): void {
+    this.rotationLoading.set(true);
+    this.stockApi.getSectorRotation('TW', true).subscribe({
+      next: (data) => {
+        this.rotation.set(data);
+        this.rotationLoading.set(false);
+      },
+      error: () => this.rotationLoading.set(false),
+    });
+  }
+
+  refreshMacro(): void {
+    this.macroLoading.set(true);
+    this.stockApi.getMacroEnvironment(true).subscribe({
+      next: (data) => {
+        this.macro.set(data);
+        this.macroLoading.set(false);
+      },
+      error: () => this.macroLoading.set(false),
+    });
+  }
+
+  refreshCrossMarket(): void {
+    this.crossMarketLoading.set(true);
+    this.stockApi.getCrossMarket(true).subscribe({
+      next: (data) => {
+        this.crossMarket.set(data);
+        this.crossMarketLoading.set(false);
+      },
+      error: () => this.crossMarketLoading.set(false),
+    });
+  }
+
+  sortSectors(key: 'changePercent' | 'foreignNetBuy'): void {
+    if (this.sectorSortKey() === key) {
+      this.sectorSortAsc.update(v => !v);
+    } else {
+      this.sectorSortKey.set(key);
+      this.sectorSortAsc.set(false);
+    }
+  }
+
+  getRotationStageLabel(stage: string): string {
+    const map: Record<string, string> = {
+      'Accumulation': '吸籌期',
+      'Momentum': '動能期',
+      'Acceleration': '加速期',
+      'Reversal': '反轉期',
+    };
+    return map[stage] ?? stage;
+  }
+
+  getFlowIntensityLabel(intensity: string): string {
+    const map: Record<string, string> = {
+      'High': '強',
+      'Medium': '中',
+      'Low': '弱',
+    };
+    return map[intensity] ?? intensity;
+  }
+
+  getRiskLabel(level: string): string {
+    const map: Record<string, string> = {
+      'High': '高風險',
+      'Medium': '中風險',
+      'Low': '低風險',
+    };
+    return map[level] ?? level;
   }
 }
