@@ -1,5 +1,3 @@
 export const environment = {
-  production: true,
-  apiUrl: 'https://capital-flow.azurewebsites.net',
   googleClientId: '1059404553248-ud8dulmh0ob979ngo1a1dn9hn4vte99d.apps.googleusercontent.com',
 };

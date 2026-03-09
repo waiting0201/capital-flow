@@ -1,7 +1,9 @@
-import { Component, inject, signal } from '@angular/core';
+import { Component, inject, signal, OnInit } from '@angular/core';
 import { AbstractControl, FormBuilder, ReactiveFormsModule, ValidationErrors, Validators } from '@angular/forms';
 import { Router, RouterLink } from '@angular/router';
 import { AuthService } from '../../../core/services/auth.service';
+import { GoogleAuthService } from '../../../core/services/google-auth.service';
+import { environment } from '../../../core/environment';
 
 @Component({
   selector: 'app-register',
@@ -10,10 +12,11 @@ import { AuthService } from '../../../core/services/auth.service';
   templateUrl: './register.html',
   styleUrl: './register.scss',
 })
-export class Register {
+export class Register implements OnInit {
   private readonly fb = inject(FormBuilder);
   private readonly auth = inject(AuthService);
   private readonly router = inject(Router);
+  protected readonly googleAuth = inject(GoogleAuthService);
 
   protected readonly showPassword = signal(false);
   protected readonly showConfirm = signal(false);
@@ -35,6 +38,16 @@ export class Register {
     const pw = group.get('password')?.value;
     const confirm = group.get('confirmPassword')?.value;
     return pw === confirm ? null : { passwordMismatch: true };
+  }
+
+  ngOnInit(): void {
+    if (environment.googleClientId) {
+      this.googleAuth.initialize(environment.googleClientId);
+    }
+  }
+
+  protected onGoogleRegister(): void {
+    this.googleAuth.signIn();
   }
 
   protected togglePassword(): void {

@@ -47,6 +47,24 @@ export class AuthService {
     return this.http.post<ApiResponse<string>>('/api/auth/resend-verification', { email });
   }
 
+  forgotPassword(email: string): Observable<ApiResponse<string>> {
+    return this.http.post<ApiResponse<string>>('/api/auth/forgot-password', { email });
+  }
+
+  resetPassword(email: string, code: string, newPassword: string): Observable<ApiResponse<string>> {
+    return this.http.post<ApiResponse<string>>('/api/auth/reset-password', { email, code, newPassword });
+  }
+
+  googleOAuth(idToken: string): Observable<ApiResponse<AuthResponse>> {
+    return this.http.post<ApiResponse<AuthResponse>>('/api/auth/google', { idToken }).pipe(
+      tap(res => {
+        if (res.success && res.data) {
+          this.handleAuthResponse(res.data);
+        }
+      }),
+    );
+  }
+
   refreshToken(): Observable<ApiResponse<RefreshTokenResponse> | null> {
     const stored = this.tokens();
     if (!stored?.refreshToken) return of(null);
